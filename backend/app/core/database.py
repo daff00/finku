@@ -16,7 +16,7 @@ engine = create_engine(sqlite_url, connect_args=connect_args)
 # Create session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base calss for database models
+# Base class for database models
 class Base(DeclarativeBase):
     pass
 
