@@ -60,7 +60,7 @@ def get_net_worth(db: DbSession):
                 .filter(
                     Transaction.account_id == acc.id,
                     Transaction.type == TransactionTypeEnum.INCOME,
-                    Transaction.date > latest.recorded_at.date(),
+                    Transaction.date >= latest.recorded_at.date(),
                 )
                 .scalar()
             ) or Decimal("0")
@@ -70,7 +70,7 @@ def get_net_worth(db: DbSession):
                 .filter(
                     Transaction.account_id == acc.id,
                     Transaction.type == TransactionTypeEnum.EXPENSE,
-                    Transaction.date > latest.recorded_at.date(),
+                    Transaction.date >= latest.recorded_at.date(),
                 )
                 .scalar()
             ) or Decimal("0")
