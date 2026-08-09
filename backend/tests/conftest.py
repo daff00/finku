@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 from app.core.database import Base, get_db
 from app.main import app
@@ -101,12 +102,12 @@ def sample_jago_account(client):
 
 @pytest.fixture
 def sample_transaction(client, sample_account):
-    """Creates a salary transaction and returns the response data."""
+    now = datetime.now()
     response = client.post(
         "/api/v1/transactions",
         json={
             "account_id": sample_account["id"],
-            "date": "2026-07-25",
+            "date": f"{now.year}-{now.month:02d}-25",
             "amount": "12500000",
             "type": "INCOME",
             "category": "SALARY",
@@ -118,12 +119,12 @@ def sample_transaction(client, sample_account):
 
 @pytest.fixture
 def sample_expense(client, sample_account):
-    """Creates a food expense and returns the response data."""
+    now = datetime.now()
     response = client.post(
         "/api/v1/transactions",
         json={
             "account_id": sample_account["id"],
-            "date": "2026-07-12",
+            "date": f"{now.year}-{now.month:02d}-12",
             "amount": "48000",
             "type": "EXPENSE",
             "category": "FOOD",
