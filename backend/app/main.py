@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -7,8 +8,20 @@ from app.core.logging import setup_logging, LoggingMiddleware
 from app.core.exceptions import register_exception_handlers
 from app.api.routes import accounts, transactions, balances, analytics, imports
 
-# setup logging first — before anything else
+# setup logging first
 setup_logging()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Startup ───────────────────────────────
+    logger.info("🚀 Finku API started")
+    logger.info("📄 Docs available at /docs")
+    logger.info(f"🗄️  Database: {settings.DATABASE_URL}")
+    yield
+    # ── Shutdown ──────────────────────────────
+    logger.info("👋 Finku API shutting down")
+
 
 app = FastAPI(
     title="Finku API",
@@ -16,9 +29,10 @@ app = FastAPI(
     description="Personal finance tracker — track all your Indonesian bank accounts in one place",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
-# middleware — order matters! logging first
+# middleware
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
@@ -37,13 +51,6 @@ app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(balances.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(imports.router, prefix="/api/v1")
-
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("🚀 Finku API started")
-    logger.info(f"📄 Docs available at /docs")
-    logger.info(f"🗄️  Database: {settings.DATABASE_URL}")
 
 
 @app.get("/")
