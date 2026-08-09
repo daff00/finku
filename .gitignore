@@ -38,5 +38,5 @@ Thumbs.db
 *.swp
 
 # ── Logs ──────────────────────────────────
-logs/*.log
-!logs/.gitkeep
+**/logs/*.log
+!**/logs/.gitkeep
