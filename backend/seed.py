@@ -12,9 +12,11 @@ from app.models.models import (
     SourceEnum,
     Transaction,
     TransactionTypeEnum,
+    TransferPair,
 )
 
 db = SessionLocal()
+
 
 def seed():
     print("🌱 Seeding database...")
@@ -34,20 +36,31 @@ def seed():
         color="#F5A623",
         currency=CurrencyEnum.IDR,
     )
-    jago = Account(
-        name="Bank Jago",
+
+    # Jago — all pockets are independent (no parent_id)
+    # net worth = sum of all jago pockets
+    jago_main = Account(
+        name="Jago — Main",
         bank=BankEnum.JAGO,
-        type=AccountTypeEnum.SAVINGS,
+        type=AccountTypeEnum.POCKET,
         color="#00B14F",
         currency=CurrencyEnum.IDR,
     )
-    jago_pocket = Account(
+    jago_liburan = Account(
         name="Jago — Liburan",
         bank=BankEnum.JAGO,
         type=AccountTypeEnum.POCKET,
         color="#00B14F",
         currency=CurrencyEnum.IDR,
     )
+    jago_darurat = Account(
+        name="Jago — Darurat",
+        bank=BankEnum.JAGO,
+        type=AccountTypeEnum.POCKET,
+        color="#00B14F",
+        currency=CurrencyEnum.IDR,
+    )
+
     seabank = Account(
         name="Seabank",
         bank=BankEnum.SEABANK,
@@ -77,25 +90,25 @@ def seed():
         currency=CurrencyEnum.IDR,
     )
 
-    db.add_all([bca, mandiri, jago, seabank, ovo, gopay, rdn])
-    db.flush()  # get IDs
-
-    # set jago pocket parent
-    jago_pocket.parent_id = jago.id
-    db.add(jago_pocket)
+    accounts = [bca, mandiri, jago_main, jago_liburan,
+                jago_darurat, seabank, ovo, gopay, rdn]
+    db.add_all(accounts)
     db.flush()
 
-    print(f"✅ Created {8} accounts")
+    print(f"✅ Created {len(accounts)} accounts")
 
     # ── Balance Snapshots ─────────────────────────────────────────
+    # Jago MyAssets total = 15jt + 7jt + 3jt = 25jt
     balances = [
-        Balance(account_id=bca.id,     amount=Decimal("32100000")),
-        Balance(account_id=mandiri.id,  amount=Decimal("8500000")),
-        Balance(account_id=jago.id,     amount=Decimal("25000000")),
-        Balance(account_id=seabank.id,  amount=Decimal("4200000")),
-        Balance(account_id=ovo.id,      amount=Decimal("1600000")),
-        Balance(account_id=gopay.id,    amount=Decimal("1000000")),
-        Balance(account_id=rdn.id,      amount=Decimal("11800000")),
+        Balance(account_id=bca.id,          amount=Decimal("32100000")),
+        Balance(account_id=mandiri.id,       amount=Decimal("8500000")),
+        Balance(account_id=jago_main.id,     amount=Decimal("15000000")),
+        Balance(account_id=jago_liburan.id,  amount=Decimal("7000000")),
+        Balance(account_id=jago_darurat.id,  amount=Decimal("3000000")),
+        Balance(account_id=seabank.id,       amount=Decimal("4200000")),
+        Balance(account_id=ovo.id,           amount=Decimal("1600000")),
+        Balance(account_id=gopay.id,         amount=Decimal("1000000")),
+        Balance(account_id=rdn.id,           amount=Decimal("11800000")),
     ]
     db.add_all(balances)
     db.flush()
@@ -190,8 +203,43 @@ def seed():
 
     print(f"✅ Created {len(transactions)} transactions")
 
+    # ── Transfer between Jago pockets ─────────────────────────────
+    # example: move 2jt from main to liburan pocket
+    from_tx = Transaction(
+        account_id=jago_main.id,
+        date=date(2026, 7, 1),
+        amount=Decimal("2000000"),
+        type=TransactionTypeEnum.TRANSFER,
+        category=CategoryEnum.TRANSFER,
+        note="Nabung liburan",
+        source=SourceEnum.MANUAL,
+        ref_id="jago-transfer-main-liburan-2026-07-01-OUT",
+    )
+    to_tx = Transaction(
+        account_id=jago_liburan.id,
+        date=date(2026, 7, 1),
+        amount=Decimal("2000000"),
+        type=TransactionTypeEnum.TRANSFER,
+        category=CategoryEnum.TRANSFER,
+        note="Nabung liburan",
+        source=SourceEnum.MANUAL,
+        ref_id="jago-transfer-main-liburan-2026-07-01-IN",
+    )
+    db.add_all([from_tx, to_tx])
+    db.flush()
+
+    pair = TransferPair(
+        from_transaction_id=from_tx.id,
+        to_transaction_id=to_tx.id,
+    )
+    db.add(pair)
+    db.flush()
+
+    print("✅ Created 1 transfer pair (Jago Main → Liburan)")
+
     db.commit()
     print("🎉 Seeding complete!")
+
 
 if __name__ == "__main__":
     seed()
