@@ -1,5 +1,0 @@
-2026-08-09 11:43:26 | INFO     | app.core.logging:41 | ✅ Logging initialized
-2026-08-09 11:43:27 | INFO     | app.core.logging:41 | ✅ Logging initialized
-2026-08-09 11:43:27 | INFO     | app.main:44 | 🚀 Finku API started
-2026-08-09 11:43:27 | INFO     | app.main:45 | 📄 Docs available at /docs
-2026-08-09 11:43:27 | INFO     | app.main:46 | 🗄️  Database: sqlite:///./finku.db
