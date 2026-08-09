@@ -47,8 +47,8 @@ npm run dev
 
 ## Roadmap
 - [x] Project scaffolding
-- [ ] Database schema + migrations
-- [ ] REST API (accounts, transactions, analytics)
+- [x] Database schema + migrations
+- [x] REST API (accounts, transactions, analytics)
 - [ ] CSV import (Mandiri, Seabank, Bank Jago)
 - [ ] PDF import (BCA)
 - [ ] Dashboard UI
