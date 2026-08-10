@@ -40,8 +40,6 @@ class AccountOut(BaseModel):
 class AccountUpdate(BaseModel):
     parent_id: int | None = None
     name: str | None = None
-    bank: BankEnum | None = None
-    type: AccountTypeEnum | None = None
     color: str | None = None
     currency: CurrencyEnum | None = None
     is_active: bool | None = None
@@ -75,6 +73,7 @@ class TransactionOut(BaseModel):
     ref_id: str | None
     original_amount: Decimal | None
     original_currency: CurrencyEnum | None
+    created_at : datetime
     
 class TransactionUpdate(BaseModel):
     date: date_type | None = None
