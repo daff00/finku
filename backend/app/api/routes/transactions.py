@@ -13,6 +13,7 @@ from app.models.models import (
     Transaction,
     TransactionTypeEnum,
     TransferPair,
+    SourceEnum,
 )
 from app.schemas.schemas import (
     TransactionCreate,
@@ -88,6 +89,24 @@ def create_transfer(payload: TransferCreate, db: DbSession):
 
     db.add_all([from_tx, to_tx])
     db.flush()  # get IDs without committing yet
+    
+    if payload.fee > 0:
+        fee_tx = Transaction(
+            account_id=payload.from_account_id,
+            date=payload.date,
+            amount=payload.fee,
+            type=TransactionTypeEnum.EXPENSE,
+            category=CategoryEnum.BILLS,
+            note="BI-FAST transfer fee",
+            source=SourceEnum.MANUAL,
+            ref_id=make_ref_id(
+                payload.from_account_id,
+                payload.date,
+                payload.fee,
+                "FEE"
+            ),
+        )
+        db.add(fee_tx)
 
     # link them together
     pair = TransferPair(

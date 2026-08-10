@@ -94,6 +94,7 @@ class TransferCreate(BaseModel):
     date: date_type
     amount: Decimal
     note: str = ""
+    fee: Decimal = Decimal(0)
 
 
 # Balance Schemas
