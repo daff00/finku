@@ -186,6 +186,7 @@ export type TransferCreate = {
     date: string
     amount: string
     note?: string
+    fee?: string
 }
 
 export type BalanceCreate = {
