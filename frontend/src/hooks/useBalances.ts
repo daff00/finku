@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { balanceService } from '@/services'
-import type { BalanceCreate, Balance } from '@/types'
+import type { BalanceCreate } from '@/types'
 
 // ── Query Keys ────────────────────────────────────────────────────
 export const balanceKeys = {
