@@ -12,7 +12,7 @@ export const analyticsService = {
         })
         return response.data
     },
-    getCategories: async(month: string): Promise<CategoryBreakdown[]> => {
+    getCategories: async(month?: string): Promise<CategoryBreakdown[]> => {
         const response = await api.get('/analytics/categories', {
             params: month ? { month } : {}
         })
