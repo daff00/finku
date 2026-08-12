@@ -76,9 +76,23 @@ class CurrencyEnum(str, Enum):
 
 
 # Tables
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[dt] = mapped_column(
+        DateTime(timezone=True), default=lambda: dt.now(timezone.utc)
+    )
+
+    accounts: Mapped[list["Account"]] = relationship("Account", back_populates="user")
+
 class Account(Base):
     __tablename__ = "accounts"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("accounts.id"), default=None
     )
@@ -93,6 +107,7 @@ class Account(Base):
     created_at: Mapped[dt] = mapped_column(
         DateTime(timezone=True), default=lambda: dt.now(timezone.utc)
     )
+    user: Mapped["User"] = relationship("User", back_populates="accounts")
     children: Mapped[list["Account"]] = relationship("Account", back_populates="parent")
     parent: Mapped["Account | None"] = relationship(
         "Account", back_populates="children", remote_side=[id]
@@ -108,6 +123,7 @@ class Account(Base):
 class Transaction(Base):
     __tablename__ = "transactions"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
     date: Mapped[date_type] = mapped_column(Date)
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
@@ -143,17 +159,20 @@ class Transaction(Base):
         back_populates="to_transaction",
         uselist=False,
     )
+    user: Mapped["User"] = relationship("User")
 
 
 class Balance(Base):
     __tablename__ = "balances"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
     recorded_at: Mapped[dt] = mapped_column(
         DateTime(timezone=True), default=lambda: dt.now(timezone.utc)
     )
     account: Mapped["Account"] = relationship("Account", back_populates="balances")
+    user: Mapped["User"] = relationship("User")
 
 
 class TransferPair(Base):
