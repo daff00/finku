@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     app_name: str = "Finku - Backend"
     DATABASE_URL: str
     SECRET_KEY: str
+    JWT_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
     
