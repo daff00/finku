@@ -6,7 +6,7 @@ from loguru import logger
 from app.core.config import settings
 from app.core.logging import setup_logging, LoggingMiddleware
 from app.core.exceptions import register_exception_handlers
-from app.api.routes import accounts, transactions, balances, analytics, imports
+from app.api.routes import accounts, transactions, balances, analytics, imports, auth
 
 # setup logging first
 setup_logging()
@@ -51,6 +51,7 @@ app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(balances.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(imports.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 
 @app.get("/")
