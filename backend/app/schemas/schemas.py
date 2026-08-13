@@ -136,3 +136,28 @@ class CategoryBreakdownOut(BaseModel):
     category: CategoryEnum
     total: Decimal
     percentage: float
+
+# Auth Schemas
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    display_name: str
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    display_name: str
+    is_active: bool
+    created_at: datetime
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    username: str | None = None
