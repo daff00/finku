@@ -2,7 +2,7 @@ from datetime import date as date_type
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 # import your enums from models
 from app.models.models import (
@@ -136,3 +136,35 @@ class CategoryBreakdownOut(BaseModel):
     category: CategoryEnum
     total: Decimal
     percentage: float
+
+# Auth Schemas
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    display_name: str
+
+    @field_validator("password")
+    @classmethod
+    def password_max_length(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password cannot be longer than 72 characters")
+        return v
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    display_name: str
+    is_active: bool
+    created_at: datetime
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    username: str | None = None
