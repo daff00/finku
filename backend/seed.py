@@ -262,9 +262,6 @@ def seed():
 
     db.commit()
     print("🎉 Seeding complete!")
-    print(f"\n📋 Login credentials:")
-    print(f"   Username: rizky")
-    print(f"   Password: finku123")
 
 
 if __name__ == "__main__":

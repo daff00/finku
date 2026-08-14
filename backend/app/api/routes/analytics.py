@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.dependencies import CurrentUser, DbSession
 from app.models.models import (
     Account,
     Balance,
@@ -23,8 +23,6 @@ from app.schemas.schemas import (
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
-DbSession = Annotated[Session, Depends(get_db)]
-
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 def get_month_range(year: int, month: int) -> tuple[date, date]:
@@ -36,9 +34,13 @@ def get_month_range(year: int, month: int) -> tuple[date, date]:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.get("/networth", response_model=NetWorthOut)
-def get_net_worth(db: DbSession):
+def get_net_worth(
+    current_user: CurrentUser,
+    db: DbSession,
+):
     accounts = db.query(Account).filter(
-        Account.is_active.is_(True)
+        Account.user_id == current_user.id,
+        Account.is_active.is_(True),
     ).all()
 
     per_account = []
@@ -47,7 +49,10 @@ def get_net_worth(db: DbSession):
     for acc in accounts:
         latest = (
             db.query(Balance)
-            .filter(Balance.account_id == acc.id)
+            .filter(
+                Balance.account_id == acc.id,
+                Balance.user_id == current_user.id,
+            )
             .order_by(Balance.recorded_at.desc())
             .first()
         )
@@ -59,6 +64,7 @@ def get_net_worth(db: DbSession):
                 db.query(func.sum(Transaction.amount))
                 .filter(
                     Transaction.account_id == acc.id,
+                    Transaction.user_id == current_user.id,
                     Transaction.type == TransactionTypeEnum.INCOME,
                     Transaction.date >= latest.recorded_at.date(),
                 )
@@ -69,6 +75,7 @@ def get_net_worth(db: DbSession):
                 db.query(func.sum(Transaction.amount))
                 .filter(
                     Transaction.account_id == acc.id,
+                    Transaction.user_id == current_user.id,
                     Transaction.type == TransactionTypeEnum.EXPENSE,
                     Transaction.date >= latest.recorded_at.date(),
                 )
@@ -93,6 +100,7 @@ def get_net_worth(db: DbSession):
 
 @router.get("/monthly", response_model=list[MonthlySummaryOut])
 def get_monthly_summary(
+    current_user: CurrentUser,
     db: DbSession,
     months: int = Query(6, ge=1, le=24),
 ):
@@ -102,8 +110,6 @@ def get_monthly_summary(
     for i in range(months - 1, -1, -1):
         year = now.year
         month = now.month - i
-
-        # handle year rollover
         while month <= 0:
             month += 12
             year -= 1
@@ -114,6 +120,7 @@ def get_monthly_summary(
         income = (
             db.query(func.sum(Transaction.amount))
             .filter(
+                Transaction.user_id == current_user.id,
                 Transaction.type == TransactionTypeEnum.INCOME,
                 Transaction.date >= start,
                 Transaction.date <= end,
@@ -124,6 +131,7 @@ def get_monthly_summary(
         expenses = (
             db.query(func.sum(Transaction.amount))
             .filter(
+                Transaction.user_id == current_user.id,
                 Transaction.type == TransactionTypeEnum.EXPENSE,
                 Transaction.date >= start,
                 Transaction.date <= end,
@@ -145,6 +153,7 @@ def get_monthly_summary(
 
 @router.get("/categories", response_model=list[CategoryBreakdownOut])
 def get_category_breakdown(
+    current_user: CurrentUser,
     db: DbSession,
     month: str | None = Query(
         None, description="Format: YYYY-MM, defaults to current month"
@@ -164,6 +173,7 @@ def get_category_breakdown(
             func.sum(Transaction.amount).label("total"),
         )
         .filter(
+            Transaction.user_id == current_user.id,
             Transaction.type == TransactionTypeEnum.EXPENSE,
             Transaction.date >= start,
             Transaction.date <= end,
@@ -187,6 +197,7 @@ def get_category_breakdown(
 
 @router.get("/accounts", response_model=list[AccountBalanceOut])
 def get_spending_by_account(
+    current_user: CurrentUser,
     db: DbSession,
     month: str | None = Query(
         None, description="Format: YYYY-MM, defaults to current month"
@@ -206,6 +217,7 @@ def get_spending_by_account(
             func.sum(Transaction.amount).label("total"),
         )
         .filter(
+            Transaction.user_id == current_user.id,
             Transaction.type == TransactionTypeEnum.EXPENSE,
             Transaction.date >= start,
             Transaction.date <= end,
@@ -217,7 +229,10 @@ def get_spending_by_account(
 
     result = []
     for r in rows:
-        acc = db.query(Account).filter(Account.id == r.account_id).first()
+        acc = db.query(Account).filter(
+            Account.id == r.account_id,
+            Account.user_id == current_user.id,
+        ).first()
         if acc:
             result.append(
                 AccountBalanceOut(
