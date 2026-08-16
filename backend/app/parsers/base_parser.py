@@ -157,20 +157,40 @@ class BaseParser:
 # ── Shared Utilities ──────────────────────────────────────────────────────────
 
 def safe_decimal(value: str) -> Decimal:
-    """
-    Convert string amount to Decimal safely.
-    Handles Indonesian number format: 1.000.000,50 → 1000000.50
-    """
     if not value:
         return Decimal("0")
+    
     cleaned = (
         value.strip()
         .replace("Rp", "")
         .replace("IDR", "")
+        .replace("DB", "")
+        .replace("CR", "")
         .replace(" ", "")
-        .replace(".", "")
-        .replace(",", ".")
     )
+    
+    if not cleaned:
+        return Decimal("0")
+
+    # BCA format: 60,000.00 (comma=thousands, dot=decimal)
+    # count dots and commas to determine format
+    dot_count = cleaned.count(".")
+    comma_count = cleaned.count(",")
+
+    if dot_count >= 1 and comma_count >= 1:
+        # has both → comma is thousands, dot is decimal
+        # "60,000.00" → remove commas → "60000.00"
+        cleaned = cleaned.replace(",", "")
+    elif comma_count == 1:
+        # only comma → might be decimal separator
+        # "60,00" → "60.00"
+        cleaned = cleaned.replace(",", ".")
+    elif dot_count > 1:
+        # multiple dots → dots are thousands separator
+        # "60.000.00" → remove all dots except last
+        parts = cleaned.rsplit(".", 1)
+        cleaned = parts[0].replace(".", "") + "." + parts[1]
+
     try:
         return Decimal(cleaned)
     except InvalidOperation:
