@@ -2,9 +2,10 @@ import calendar
 import hashlib
 from datetime import date
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import transactions_limit
 from app.models.models import (
     Account,
     CategoryEnum,
@@ -31,7 +32,10 @@ def make_ref_id(account_id: int, txn_date: date, amount, note: str) -> str:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.post("/transfer", response_model=list[TransactionOut], status_code=201)
+@transactions_limit
 def create_transfer(
+    request: Request,
+    response: Response,
     payload: TransferCreate,
     current_user: CurrentUser,
     db: DbSession,
@@ -113,7 +117,10 @@ def create_transfer(
 
 
 @router.get("/", response_model=list[TransactionOut])
+@transactions_limit
 def list_transactions(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     account_id: int | None = Query(None),
@@ -151,7 +158,10 @@ def list_transactions(
 
 
 @router.post("/", response_model=TransactionOut, status_code=201)
+@transactions_limit
 def create_transaction(
+    request: Request,
+    response: Response,
     payload: TransactionCreate,
     current_user: CurrentUser,
     db: DbSession,
@@ -192,8 +202,11 @@ def create_transaction(
 
 
 @router.get("/{transaction_id}", response_model=TransactionOut)
+@transactions_limit
 def get_transaction(
     transaction_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):
@@ -207,8 +220,11 @@ def get_transaction(
 
 
 @router.patch("/{transaction_id}", response_model=TransactionOut)
+@transactions_limit
 def update_transaction(
     transaction_id: int,
+    request: Request,
+    response: Response,
     payload: TransactionUpdate,
     current_user: CurrentUser,
     db: DbSession,
@@ -234,8 +250,11 @@ def update_transaction(
 
 
 @router.delete("/{transaction_id}", status_code=204)
+@transactions_limit
 def delete_transaction(
     transaction_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):

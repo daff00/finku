@@ -3,11 +3,12 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import analytics_limit
 from app.models.models import (
     Account,
     Balance,
@@ -34,7 +35,10 @@ def get_month_range(year: int, month: int) -> tuple[date, date]:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.get("/networth", response_model=NetWorthOut)
+@analytics_limit
 def get_net_worth(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):
@@ -99,7 +103,10 @@ def get_net_worth(
 
 
 @router.get("/monthly", response_model=list[MonthlySummaryOut])
+@analytics_limit
 def get_monthly_summary(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     months: int = Query(6, ge=1, le=24),
@@ -152,7 +159,10 @@ def get_monthly_summary(
 
 
 @router.get("/categories", response_model=list[CategoryBreakdownOut])
+@analytics_limit
 def get_category_breakdown(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     month: str | None = Query(
@@ -196,7 +206,10 @@ def get_category_breakdown(
 
 
 @router.get("/accounts", response_model=list[AccountBalanceOut])
+@analytics_limit
 def get_spending_by_account(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     month: str | None = Query(

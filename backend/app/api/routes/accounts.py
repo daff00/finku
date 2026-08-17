@@ -1,14 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import accounts_limit
 from app.models.models import Account, Transaction
 from app.schemas.schemas import AccountCreate, AccountOut, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 
-@router.get("/", response_model=list[AccountOut])
+@router.get("", response_model=list[AccountOut])
+@accounts_limit
 def list_accounts(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     limit: int = 100,
@@ -27,8 +31,11 @@ def list_accounts(
     )
 
 
-@router.post("/", response_model=AccountOut, status_code=201)
+@router.post("", response_model=AccountOut, status_code=201)
+@accounts_limit
 def create_account(
+    request: Request,
+    response: Response,
     payload: AccountCreate,
     current_user: CurrentUser,
     db: DbSession,
@@ -52,8 +59,11 @@ def create_account(
 
 
 @router.get("/{account_id}", response_model=AccountOut)
+@accounts_limit
 def get_account(
     account_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):
@@ -67,8 +77,11 @@ def get_account(
 
 
 @router.get("/{account_id}/transactions")
+@accounts_limit
 def get_account_transactions(
     account_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     limit: int = 50,
@@ -95,8 +108,11 @@ def get_account_transactions(
 
 
 @router.patch("/{account_id}", response_model=AccountOut)
+@accounts_limit
 def update_account(
     account_id: int,
+    request: Request,
+    response: Response,
     payload: AccountUpdate,
     current_user: CurrentUser,
     db: DbSession,
@@ -116,8 +132,11 @@ def update_account(
 
 
 @router.delete("/{account_id}", status_code=204)
+@accounts_limit
 def delete_account(
     account_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):

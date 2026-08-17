@@ -78,6 +78,9 @@ def client(db):
         yield test_client
 
     # clean up override after test
+    limiter = getattr(app.state, "limiter", None)
+    if limiter is not None and hasattr(limiter, "reset"):
+        limiter.reset()
     app.dependency_overrides.clear()
 
 
