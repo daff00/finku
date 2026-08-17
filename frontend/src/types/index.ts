@@ -136,6 +136,14 @@ export type CategoryBreakdown = {
     percentage: number
 }
 
+export type ImportResult = {
+    total_parsed: number
+    imported: number
+    duplicates: number
+    errors: number
+    error_details: string[]
+}
+
 // ── Request Types ─────────────────────────────────────────────────
 
 export type AccountCreate = {

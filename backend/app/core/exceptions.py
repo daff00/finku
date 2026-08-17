@@ -2,6 +2,9 @@ from loguru import logger
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+
+from app.core.rate_limit import rate_limit_exceeded_handler
 
 
 def register_exception_handlers(app: FastAPI):
@@ -49,6 +52,10 @@ def register_exception_handlers(app: FastAPI):
                 "details": details,
             },
         )
+
+    @app.exception_handler(RateLimitExceeded)
+    async def slowapi_exception_handler(request: Request, exc: RateLimitExceeded):
+        return rate_limit_exceeded_handler(request, exc)
 
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
