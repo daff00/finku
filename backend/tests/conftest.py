@@ -4,7 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
+from app.core.auth_utils import create_access_token, hash_password
 from app.core.database import Base, get_db
+from app.models.models import User
 from app.main import app
 
 # ── Test Database Setup ───────────────────────────────────────────────────────
@@ -37,6 +39,15 @@ def db():
 
     session = TestSessionLocal()
     try:
+        test_user = User(
+            username="testuser",
+            password_hash=hash_password("password"),
+            display_name="Test User",
+            is_active=True,
+        )
+        session.add(test_user)
+        session.commit()
+        session.refresh(test_user)
         yield session
     finally:
         session.close()
@@ -56,10 +67,14 @@ def client(db):
         finally:
             pass
 
+    test_user = db.query(User).filter(User.username == "testuser").first()
+    token = create_access_token({"sub": test_user.username})
+
     # swap real DB → test DB
     app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(app) as test_client:
+        test_client.headers.update({"Authorization": f"Bearer {token}"})
         yield test_client
 
     # clean up override after test
@@ -124,7 +139,7 @@ def sample_expense(client, sample_account):
         "/api/v1/transactions",
         json={
             "account_id": sample_account["id"],
-            "date": f"{now.year}-{now.month:02d}-12",
+            "date": f"{now.year}-{now.month:02d}-28",
             "amount": "48000",
             "type": "EXPENSE",
             "category": "FOOD",

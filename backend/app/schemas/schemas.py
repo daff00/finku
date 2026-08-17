@@ -111,6 +111,15 @@ class BalanceOut(BaseModel):
     recorded_at: datetime
 
 
+class ImportResultOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    total_parsed: int
+    imported: int
+    duplicates: int
+    errors: int
+    error_details: list[str]
+
+
 # Analytics Schemas
 class AccountBalanceOut(BaseModel):
     account_id: int
