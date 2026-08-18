@@ -60,60 +60,92 @@ def create_transfer(
             detail="Cannot transfer to the same account"
         )
 
-    from_tx = Transaction(
-        user_id=current_user.id,
-        account_id=payload.from_account_id,
-        date=payload.date,
-        amount=payload.amount,
-        type=TransactionTypeEnum.TRANSFER,
-        category=CategoryEnum.TRANSFER,
-        note=payload.note or f"Transfer to {to_account.name}",
-        ref_id=make_ref_id(
+    try:
+        # Generate ref_ids for deduplication
+        # Use deterministic hash: from_account_id:date:amount:OUT
+        from_ref_id = make_ref_id(
             payload.from_account_id, payload.date, payload.amount, "OUT"
-        ),
-    )
-    to_tx = Transaction(
-        user_id=current_user.id,
-        account_id=payload.to_account_id,
-        date=payload.date,
-        amount=payload.amount,
-        type=TransactionTypeEnum.TRANSFER,
-        category=CategoryEnum.TRANSFER,
-        note=payload.note or f"Transfer from {from_account.name}",
-        ref_id=make_ref_id(
+        )
+        to_ref_id = make_ref_id(
             payload.to_account_id, payload.date, payload.amount, "IN"
-        ),
-    )
+        )
 
-    db.add_all([from_tx, to_tx])
-    db.flush()
+        # Check for duplicate BEFORE creating transactions
+        # This catches retries of the exact same transfer request
+        existing_from_tx = db.query(Transaction).filter(
+            Transaction.ref_id == from_ref_id,
+            Transaction.user_id == current_user.id,
+        ).first()
+        if existing_from_tx:
+            raise HTTPException(
+                status_code=409,
+                detail="Duplicate transfer — this transfer already exists"
+            )
 
-    pair = TransferPair(
-        from_transaction_id=from_tx.id,
-        to_transaction_id=to_tx.id,
-    )
-    db.add(pair)
-
-    # ── BI-FAST fee transaction ───────────────────────────────────
-    if payload.fee and payload.fee > 0:
-        fee_tx = Transaction(
+        from_tx = Transaction(
             user_id=current_user.id,
             account_id=payload.from_account_id,
             date=payload.date,
-            amount=payload.fee,
-            type=TransactionTypeEnum.EXPENSE,
-            category=CategoryEnum.BILLS,
-            note="BI-FAST transfer fee",
-            ref_id=make_ref_id(
-                payload.from_account_id, payload.date, payload.fee, "FEE"
-            ),
+            amount=payload.amount,
+            type=TransactionTypeEnum.TRANSFER,
+            category=CategoryEnum.TRANSFER,
+            note=payload.note or f"Transfer to {to_account.name}",
+            ref_id=from_ref_id,
         )
-        db.add(fee_tx)
+        to_tx = Transaction(
+            user_id=current_user.id,
+            account_id=payload.to_account_id,
+            date=payload.date,
+            amount=payload.amount,
+            type=TransactionTypeEnum.TRANSFER,
+            category=CategoryEnum.TRANSFER,
+            note=payload.note or f"Transfer from {from_account.name}",
+            ref_id=to_ref_id,
+        )
 
-    db.commit()
-    db.refresh(from_tx)
-    db.refresh(to_tx)
-    return [from_tx, to_tx]
+        db.add_all([from_tx, to_tx])
+        db.flush()  # Assign IDs to transactions without committing
+
+        # Create transfer pair linking the two transactions
+        pair = TransferPair(
+            from_transaction_id=from_tx.id,
+            to_transaction_id=to_tx.id,
+        )
+        db.add(pair)
+
+        # ── BI-FAST fee transaction ───────────────────────────────────
+        # Fee transactions also need deduplication
+        if payload.fee and payload.fee > 0:
+            fee_ref_id = make_ref_id(
+                payload.from_account_id, payload.date, payload.fee, "FEE"
+            )
+            fee_tx = Transaction(
+                user_id=current_user.id,
+                account_id=payload.from_account_id,
+                date=payload.date,
+                amount=payload.fee,
+                type=TransactionTypeEnum.EXPENSE,
+                category=CategoryEnum.BILLS,
+                note="BI-FAST transfer fee",
+                ref_id=fee_ref_id,
+            )
+            db.add(fee_tx)
+
+        db.commit()
+        db.refresh(from_tx)
+        db.refresh(to_tx)
+        return [from_tx, to_tx]
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (e.g., 404, 409, 400)
+        raise
+    except Exception as e:
+        # Rollback on any unexpected error to prevent orphaned transactions
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Transfer creation failed: {str(e)}"
+        ) from e
 
 
 @router.get("/", response_model=list[TransactionOut])
@@ -258,13 +290,17 @@ def delete_transaction(
     current_user: CurrentUser,
     db: DbSession,
 ):
+    # Idempotency: Fetch transaction if exists
     tx = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == current_user.id,
     ).first()
-    if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
 
+    # If transaction doesn't exist, return 204 (idempotent)
+    if not tx:
+        return response
+
+    # If transaction is a transfer, cascade delete both sides
     if tx.type == TransactionTypeEnum.TRANSFER:
         pair = db.query(TransferPair).filter(
             (TransferPair.from_transaction_id == tx.id) |
@@ -288,3 +324,4 @@ def delete_transaction(
 
     db.delete(tx)
     db.commit()
+    return response

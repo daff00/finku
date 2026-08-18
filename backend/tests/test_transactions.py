@@ -73,6 +73,43 @@ def test_create_duplicate_transaction(client, sample_account, sample_transaction
     assert "Duplicate" in response.json()["error"]
 
 
+def test_create_duplicate_transaction_retry(client, sample_account):
+    """Test idempotency: retry same transaction request twice, expect 409 both times."""
+    from datetime import datetime
+    now = datetime.now()
+
+    # ── Arrange ───────────────────────────────
+    payload = {
+        "account_id": sample_account["id"],
+        "date": f"{now.year}-{now.month:02d}-20",
+        "amount": "5000000",
+        "type": "INCOME",
+        "category": "SALARY",
+        "note": "Retry test transaction",
+    }
+
+    # ── Act — First request ───────────────────
+    response1 = client.post("/api/v1/transactions", json=payload)
+
+    # ── Assert — First request succeeds ──────
+    assert response1.status_code == 201
+    tx1_data = response1.json()
+    assert tx1_data["ref_id"] is not None
+
+    # ── Act — Retry request ──────────────────
+    response2 = client.post("/api/v1/transactions", json=payload)
+
+    # ── Assert — Retry returns 409 ──────────
+    assert response2.status_code == 409
+    assert "Duplicate" in response2.json()["error"]
+
+    # ── Act — Second retry ───────────────────
+    response3 = client.post("/api/v1/transactions", json=payload)
+
+    # ── Assert — Second retry also 409 ──────
+    assert response3.status_code == 409
+
+
 def test_list_transactions(client, sample_transaction):
     # ── Act ───────────────────────────────────
     response = client.get("/api/v1/transactions")
@@ -198,12 +235,44 @@ def test_delete_transaction(client, sample_transaction):
     assert get_response.status_code == 404
 
 
+def test_delete_transaction_idempotent(client, sample_transaction):
+    """Test idempotency: delete same transaction twice, both return 204."""
+    # ── Arrange ───────────────────────────────
+    transaction_id = sample_transaction["id"]
+
+    # ── Act — First delete ───────────────────
+    response1 = client.delete(f"/api/v1/transactions/{transaction_id}")
+
+    # ── Assert — First delete succeeds ──────
+    assert response1.status_code == 204
+
+    # ── Act — Retry delete ───────────────────
+    response2 = client.delete(f"/api/v1/transactions/{transaction_id}")
+
+    # ── Assert — Retry also returns 204 ────
+    assert response2.status_code == 204
+
+    # ── Verify — Transaction is gone ────────
+    get_response = client.get(f"/api/v1/transactions/{transaction_id}")
+    assert get_response.status_code == 404
+
+
+def test_delete_nonexistent_transaction(client):
+    """Test idempotency: delete non-existent transaction returns 204."""
+    # ── Act ───────────────────────────────────
+    response = client.delete("/api/v1/transactions/999999")
+
+    # ── Assert ────────────────────────────────
+    assert response.status_code == 204
+
+
 def test_delete_transaction_not_found(client):
     # ── Act ───────────────────────────────────
     response = client.delete("/api/v1/transactions/999")
 
     # ── Assert ────────────────────────────────
-    assert response.status_code == 404
+    # Idempotent: return 204 even if not found
+    assert response.status_code == 204
 
 
 def test_create_transfer(client, sample_account, sample_jago_account):
@@ -284,3 +353,117 @@ def test_delete_transfer_cascades(client, sample_transfer):
 
     to_response = client.get(f"/api/v1/transactions/{to_tx_id}")
     assert to_response.status_code == 404
+
+
+def test_create_transfer_idempotent(client, sample_account, sample_jago_account):
+    """Test idempotency: retry same transfer twice, expect 409 on retry."""
+    # ── Arrange ───────────────────────────────
+    payload = {
+        "from_account_id": sample_account["id"],
+        "to_account_id": sample_jago_account["id"],
+        "date": "2026-08-15",
+        "amount": "10000000",
+        "note": "Idempotency test transfer",
+    }
+
+    # ── Act — First request ───────────────────
+    response1 = client.post("/api/v1/transactions/transfer", json=payload)
+
+    # ── Assert — First request succeeds ──────
+    assert response1.status_code == 201
+    data1 = response1.json()
+    assert len(data1) == 2
+    from_tx_id_1 = data1[0]["id"]
+
+    # ── Act — Retry request ──────────────────
+    response2 = client.post("/api/v1/transactions/transfer", json=payload)
+
+    # ── Assert — Retry returns 409 ──────────
+    assert response2.status_code == 409
+    assert "Duplicate" in response2.json()["error"]
+
+    # ── Act — Verify no new transactions created ──
+    response3 = client.get("/api/v1/transactions")
+    assert response3.status_code == 200
+    assert len(response3.json()) == 2  # Only the original 2 transfers
+
+
+def test_create_transfer_with_fee_idempotent(client, sample_account, sample_jago_account):
+    """Test idempotency: transfer with fee included, retry twice."""
+    # ── Arrange ───────────────────────────────
+    payload = {
+        "from_account_id": sample_account["id"],
+        "to_account_id": sample_jago_account["id"],
+        "date": "2026-08-20",
+        "amount": "7500000",
+        "fee": "10000",
+        "note": "Transfer with fee",
+    }
+
+    # ── Act — First request ───────────────────
+    response1 = client.post("/api/v1/transactions/transfer", json=payload)
+
+    # ── Assert — First request succeeds ──────
+    assert response1.status_code == 201
+    data1 = response1.json()
+    assert len(data1) == 2  # from_tx, to_tx (fee is separate)
+
+    # ── Act — Retry request ──────────────────
+    response2 = client.post("/api/v1/transactions/transfer", json=payload)
+
+    # ── Assert — Retry returns 409 ──────────
+    assert response2.status_code == 409
+    assert "Duplicate" in response2.json()["error"]
+
+    # ── Act — Verify only 3 transactions created (from, to, fee) ──
+    response3 = client.get("/api/v1/transactions")
+    assert response3.status_code == 200
+    assert len(response3.json()) == 3  # from_tx, to_tx, fee_tx
+
+
+def test_create_transfer_rollback_on_failure(client, sample_account, sample_jago_account, db):
+    """Test rollback: if database error occurs, no orphaned transactions remain."""
+    # ── Arrange ───────────────────────────────
+    payload = {
+        "from_account_id": sample_account["id"],
+        "to_account_id": sample_jago_account["id"],
+        "date": "2026-08-25",
+        "amount": "3000000",
+        "note": "Rollback test transfer",
+    }
+
+    # ── Act — Mock database failure by making transaction unique constraint fail
+    # Create a transaction with the same ref_id that would be created
+    import hashlib
+    from datetime import date
+    ref_id = hashlib.sha256(
+        f"{sample_account['id']}:{payload['date']}:{payload['amount']}:OUT".encode()
+    ).hexdigest()
+
+    # Add a conflicting transaction to cause a unique constraint violation
+    from app.models.models import Transaction, TransactionTypeEnum, CategoryEnum
+    conflict_tx = Transaction(
+        user_id=1,  # same user
+        account_id=sample_account["id"],
+        date=date.fromisoformat(payload["date"]),
+        amount=payload["amount"],
+        type=TransactionTypeEnum.TRANSFER,
+        category=CategoryEnum.TRANSFER,
+        note="Conflict",
+        ref_id=ref_id,
+    )
+    db.add(conflict_tx)
+    db.commit()
+
+    # ── Act — Try to create transfer that will conflict ──
+    response = client.post("/api/v1/transactions/transfer", json=payload)
+
+    # ── Assert — Should return 409 due to duplicate ref_id ──
+    assert response.status_code == 409
+    assert "Duplicate" in response.json()["error"]
+
+    # ── Verify — Only 1 transaction exists (the conflicting one) ──
+    all_txs = db.query(Transaction).filter(
+        Transaction.account_id.in_([sample_account["id"], sample_jago_account["id"]])
+    ).all()
+    assert len(all_txs) == 1  # No orphaned transactions
