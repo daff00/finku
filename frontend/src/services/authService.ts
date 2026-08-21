@@ -1,4 +1,5 @@
 import api from '@/services/api'
+import type { User } from '@/types'
 
 export type LoginRequest = {
     username: string
@@ -8,14 +9,6 @@ export type LoginRequest = {
 export type TokenOut = {
     access_token: string
     token_type: string
-}
-
-export type UserOut = {
-    id: number
-    username: string
-    display_name: string
-    is_active: boolean
-    created_at: string
 }
 
 export const authService = {
@@ -36,7 +29,7 @@ export const authService = {
         localStorage.removeItem('token')
     },
 
-    me: async (): Promise<UserOut> => {
+    me: async (): Promise<User> => {
         const response = await api.get('/auth/me')
         return response.data
     },

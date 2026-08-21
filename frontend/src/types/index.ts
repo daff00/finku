@@ -210,3 +210,11 @@ export type TransactionFilters = {
     limit?: number
     offset?: number
 }
+
+export interface User {
+  id: number;
+  username: string;
+  display_name: string | null;   // can be null if not set
+  is_active: boolean;
+  created_at: string;            // ISO 8601 date string
+}
