@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/services'
 
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 
@@ -85,13 +86,13 @@ export default function LoginPage() {
                     )}
 
                     {/* Submit */}
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
                         className="btn-accent w-full mt-2"
                     >
                         {loading ? 'Logging in...' : 'Login'}
-                    </button>
+                    </Button>
                 </form>
 
                 {/* ── Footer ───────────────────────────────── */}
