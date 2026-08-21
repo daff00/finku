@@ -1,4 +1,7 @@
+/* ── Only import Tailwind ONCE in your entire project ── */
 @import "tailwindcss";
+
+/* Font imports – ensure these packages are installed */
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
@@ -6,69 +9,74 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
+/* ── Custom theme variables (v4) ── */
 @theme {
-  /* ── Fonts ────────────────────────────────────────────────── */
+  /* Fonts */
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* ── Border Radius ────────────────────────────────────────── */
+  /* Border Radius */
   --radius: 4px;
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
 
-  /* ── Light Mode Colors ────────────────────────────────────── */
-  --color-bg:              #FAFAF8;   /* washi paper */
-  --color-surface:         #FFFFFF;   /* card background */
-  --color-border:          #E8E4DE;   /* hairline border */
-  --color-border-strong:   #C4B5A0;   /* stronger border */
+  /* Light Mode Colors */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-border: #E8E4DE;
+  --color-border-strong: #C4B5A0;
 
-  --color-text-primary:    #1C1410;   /* deep warm black */
-  --color-text-secondary:  #8B7355;   /* warm brown-gray */
-  --color-text-muted:      #C4B5A0;   /* light warm gray */
+  --color-text-primary: #1C1410;
+  --color-text-secondary: #8B7355;
+  --color-text-muted: #C4B5A0;
 
-  --color-accent:          #C0392B;   /* torii gate red */
-  --color-accent-hover:    #96281B;   /* darker red on hover */
-  --color-accent-subtle:   #F9ECEB;   /* light red tint */
+  --color-accent: #C0392B;
+  --color-accent-hover: #96281B;
+  --color-accent-subtle: #F9ECEB;
 
-  --color-income:          #27AE60;   /* green for income */
-  --color-income-subtle:   #E8F8F0;   /* light green tint */
-  --color-expense:         #C0392B;   /* red for expense */
-  --color-expense-subtle:  #FEE8E8;   /* light red tint */
+  --color-income: #27AE60;
+  --color-income-subtle: #E8F8F0;
+  --color-expense: #C0392B;
+  --color-expense-subtle: #FEE8E8;
 
-  /* ── Dark Mode Colors ─────────────────────────────────────── */
-  --color-dark-bg:             #0F0D0B;   /* sumi ink */
-  --color-dark-surface:        #1A1714;   /* slightly lighter */
-  --color-dark-border:         #2C2820;   /* warm dark border */
-  --color-dark-border-strong:  #3D3530;
-
-  --color-dark-text-primary:   #F0EBE3;   /* warm off-white */
-  --color-dark-text-secondary: #8B7B6B;   /* warm mid gray */
-  --color-dark-text-muted:     #5C4F44;   /* dark warm gray */
-
-  --color-dark-accent:         #E0453A;   /* slightly brighter red on dark */
-  --color-dark-accent-hover:   #C0392B;
-
-  /* ── Bank Colors ──────────────────────────────────────────── */
-  --color-bank-bca:         #0066AE;
-  --color-bank-mandiri:     #F5A623;
+  /* Bank Colors */
+  --color-bank-bca: #0066AE;
+  --color-bank-mandiri: #F5A623;
   --color-bank-mandiri-rdn: #E8750A;
-  --color-bank-jago:        #00B14F;
-  --color-bank-seabank:     #FF5C00;
-  --color-bank-ovo:         #4C3494;
-  --color-bank-gopay:       #00AED6;
-  --color-bank-mt4:         #2962FF;
-  --color-bank-crypto:      #F7931A;
-  --color-bank-cash:        #607D8B;
-  --color-bank-other:       #9E9E9E;
+  --color-bank-jago: #00B14F;
+  --color-bank-seabank: #FF5C00;
+  --color-bank-ovo: #4C3494;
+  --color-bank-gopay: #00AED6;
+  --color-bank-mt4: #2962FF;
+  --color-bank-crypto: #F7931A;
+  --color-bank-cash: #607D8B;
+  --color-bank-other: #9E9E9E;
 
-  /* ── Spacing ──────────────────────────────────────────────── */
-  --section-gap:   32px;
+  /* Spacing */
+  --section-gap: 32px;
   --card-padding-x: 16px;
   --card-padding-y: 14px;
 }
 
-/* ── Base Styles ──────────────────────────────────────────────── */
+/* ── Dark Mode overrides (shadcn uses .dark on <html>) ── */
+.dark {
+  --color-bg: #0F0D0B;
+  --color-surface: #1A1714;
+  --color-border: #2C2820;
+  --color-border-strong: #3D3530;
+
+  --color-text-primary: #F0EBE3;
+  --color-text-secondary: #8B7B6B;
+  --color-text-muted: #5C4F44;
+
+  --color-accent: #E0453A;
+  --color-accent-hover: #C0392B;
+
+  /* Bank colors stay the same, but you can override if needed */
+}
+
+/* ── Base styles ──────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -88,28 +96,11 @@ body {
   background-color: var(--color-bg);
 }
 
-/* ── Dark Mode ────────────────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  html {
-    background-color: var(--color-dark-bg);
-    color: var(--color-dark-text-primary);
-  }
-  body {
-    background-color: var(--color-dark-bg);
-  }
-}
-
-.dark {
-  background-color: var(--color-dark-bg);
-  color: var(--color-dark-text-primary);
-}
-
-/* ── Typography ───────────────────────────────────────────────── */
+/* ── Utilities (unchanged) ───────────────────────────────────── */
 .font-mono {
   font-family: var(--font-mono);
 }
 
-/* section label style — used everywhere */
 .label-section {
   font-size: 10px;
   font-weight: 600;
@@ -205,4 +196,38 @@ body {
 
 .btn-ghost:hover {
   border-color: var(--color-text-muted);
+}
+
+/* ── Custom Utilities untuk Login Page ── */
+
+@utility bg-bg {
+  background-color: var(--color-bg);
+}
+
+@utility text-expense {
+  color: var(--color-expense);
+}
+
+@utility input-underline {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  width: 100%;
+  color: var(--color-text-primary);
+
+  /* Biar placeholder-nya sesuai tema */
+  &::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 300;
+  }
+
+  /* Fokus garis bawah berubah warna aksen */
+  &:focus {
+    border-bottom-color: var(--color-accent);
+  }
 }

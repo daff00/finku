@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/services'
 
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+
 export default function LoginPage() {
     const navigate = useNavigate()
     const [username, setUsername] = useState('')
@@ -25,52 +28,29 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-dvh flex items-center justify-center px-6"
-            style={{ background: 'var(--color-bg)' }}
-        >
+        <div className="min-h-dvh flex items-center justify-center px-6 bg-bg">
             <div className="w-full max-w-sm">
 
-                {/* ── Logo ───────────────────────────────── */}
+                {/* ── Logo ─────────────────────────────────── */}
                 <div className="flex flex-col items-center mb-12">
-                    <div
-                        className="mb-4"
-                        style={{
-                            width: '3px',
-                            height: '28px',
-                            background: 'var(--color-accent)',
-                            borderRadius: '2px',
-                        }}
-                    />
-                    <h1
-                        className="text-2xl tracking-tight"
-                        style={{
-                            fontWeight: 300,
-                            color: 'var(--color-text-primary)',
-                            letterSpacing: '-0.5px',
-                        }}
-                    >
+                    <div className="size-9 bg-accent rounded-sm mb-4 flex items-center justify-center">
+                        <p className="text-white text-xl">金</p>
+                    </div>
+                    <h1 className="text-2xl font-light text-text-primary tracking-tight">
                         Finku
                     </h1>
-                    <p
-                        className="mt-1.5 text-xs tracking-widest"
-                        style={{ color: 'var(--color-text-muted)' }}
-                    >
-                        personal finance
+                    <p className="mt-1.5 text-[11px] tracking-widest text-text-muted">
+                        Personal Finance
                     </p>
                 </div>
 
-                {/* ── Form ───────────────────────────────── */}
+                {/* ── Form ─────────────────────────────────── */}
                 <form onSubmit={handleLogin} className="flex flex-col gap-6">
 
                     {/* Username */}
                     <div className="flex flex-col gap-2">
-                        <label
-                            htmlFor="username"
-                            className="label-section"
-                        >
-                            Username
-                        </label>
-                        <input
+                        <Label htmlFor="username" className="label-section">Username</Label>
+                        <Input
                             id="username"
                             type="text"
                             value={username}
@@ -78,30 +58,14 @@ export default function LoginPage() {
                             placeholder="username"
                             required
                             autoComplete="username"
-                            className="w-full py-2.5 text-sm bg-transparent outline-none transition-colors placeholder:text-[var(--color-text-muted)]"
-                            style={{
-                                borderBottom: '1px solid var(--color-border)',
-                                color: 'var(--color-text-primary)',
-                                fontFamily: 'var(--font-sans)',
-                            }}
-                            onFocus={e => {
-                                e.target.style.borderBottomColor = 'var(--color-accent)'
-                            }}
-                            onBlur={e => {
-                                e.target.style.borderBottomColor = 'var(--color-border)'
-                            }}
+                            className="h-auto rounded-none border-0 border-b border-border px-0 py-2 shadow-none bg-transparent text-text-primary placeholder:text-text-muted focus:border-accent focus-visible:ring-0"
                         />
                     </div>
 
                     {/* Password */}
                     <div className="flex flex-col gap-2">
-                        <label
-                            htmlFor="password"
-                            className="label-section"
-                        >
-                            Password
-                        </label>
-                        <input
+                        <Label htmlFor="password" className="label-section">Password</Label>
+                        <Input
                             id="password"
                             type="password"
                             value={password}
@@ -109,27 +73,13 @@ export default function LoginPage() {
                             placeholder="••••••••"
                             required
                             autoComplete="current-password"
-                            className="w-full py-2.5 text-sm bg-transparent outline-none placeholder:text-[var(--color-text-muted)]"
-                            style={{
-                                borderBottom: '1px solid var(--color-border)',
-                                color: 'var(--color-text-primary)',
-                                fontFamily: 'var(--font-sans)',
-                            }}
-                            onFocus={e => {
-                                e.target.style.borderBottomColor = 'var(--color-accent)'
-                            }}
-                            onBlur={e => {
-                                e.target.style.borderBottomColor = 'var(--color-border)'
-                            }}
+                            className="h-auto rounded-none border-0 border-b border-border px-0 py-2 shadow-none bg-transparent text-text-primary placeholder:text-text-muted focus:border-accent focus-visible:ring-0"
                         />
                     </div>
 
-                    {/* Error message */}
+                    {/* Error */}
                     {error && (
-                        <p
-                            className="text-xs text-center"
-                            style={{ color: 'var(--color-expense)' }}
-                        >
+                        <p className="text-xs text-center text-expense">
                             {error}
                         </p>
                     )}
@@ -138,21 +88,16 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-accent w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-accent w-full mt-2"
                     >
-                        {loading ? 'Masuk...' : 'Masuk'}
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
-
                 </form>
 
-                {/* ── Footer ─────────────────────────────── */}
-                <p
-                    className="text-center text-xs mt-8"
-                    style={{ color: 'var(--color-text-muted)' }}
-                >
+                {/* ── Footer ───────────────────────────────── */}
+                <p className="text-center text-[11px] text-text-muted mt-8">
                     Finku · Personal Finance
                 </p>
-
             </div>
         </div>
     )
