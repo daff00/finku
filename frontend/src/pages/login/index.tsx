@@ -40,7 +40,7 @@ export default function LoginPage() {
           <div className="size-10 bg-accent rounded-sm mb-4 flex items-center justify-center shadow-sm">
             <span className="text-white text-xl font-mono tracking-tight">金</span>
           </div>
-          <h1 className="text-2xl font-light text-text-primary tracking-tight">
+          <h1 className="text-2xl font-light text-text-primary tracking-tight font-playfair">
             Finku
           </h1>
           {/* ✅ Updated to match your TopBar subtitle */}

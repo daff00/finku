@@ -1,3 +1,5 @@
+// frontend/src/components/layout/Sidebar.tsx
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -6,32 +8,30 @@ import {
   Upload,
   Settings,
   Plus,
+  PanelLeftClose,
+  PanelLeftOpen,
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/import', label: 'Imports', icon: Upload },
+  { to: '/import', label: 'Import', icon: Upload },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const handleNewTransaction = () => {
-    navigate('/transactions');
-  };
-
-  const handleLogout = () => {
-    logout();
-  };
+  const toggleCollapse = () => setCollapsed((prev) => !prev);
+  const handleNewTransaction = () => navigate('/transactions');
+  const handleLogout = () => logout();
 
   const userInitial =
     user?.display_name?.charAt(0) ||
@@ -40,97 +40,131 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="
-        w-[274px] shrink-0 hidden lg:flex flex-col
-        bg-surface h-dvh sticky top-0
-        border-r border-border/50
-      "
+      className={cn(
+        'shrink-0 hidden lg:flex flex-col bg-surface h-dvh sticky top-0 border-r border-border/50 transition-all duration-300 ease-in-out',
+        collapsed ? 'w-[64px]' : 'w-[220px]'
+      )}
     >
-      {/* ── Logo ─────────────────────────────────────────────── */}
-      <div className="w-full h-25 px-[27px] pt-[35px] flex items-center justify-start">
-        <div className="flex items-center gap-3">
-          <div className="size-[33px] bg-accent rounded-sm flex items-center justify-center shrink-0">
-            <span className="text-white text-sm font-mono">金</span>
+      {/* ── Logo + Collapse Toggle ────────────────────────────── */}
+      {/* Increased height: h-14 → h-20, more padding */}
+      <div
+        className={cn(
+          'flex items-center border-b border-border/50',
+          collapsed ? 'justify-center px-2 h-16' : 'justify-between px-5 h-20'
+        )}
+      >
+        {!collapsed && (
+          <div className="flex items-center gap-3">
+            {/* Bigger kanji box */}
+            <div className="w-7 h-7 bg-accent rounded-sm flex items-center justify-center shrink-0">
+              <span className="text-white text-sm font-mono">金</span>
+            </div>
+            <div className="flex flex-col leading-none">
+              {/* Bigger title */}
+              <span className="text-lg font-light tracking-tight text-text-primary font-playfair">
+                Finku
+              </span>
+              {/* Bigger subtitle */}
+              <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted mt-0.5">
+                FINANCE · 間
+              </span>
+            </div>
           </div>
-
-          <div>
-            <h1 className="text-text-primary text-[22px] font-sans leading-none tracking-wide">
-              Finku
-            </h1>
-
-            <p className="text-text-muted text-[11px] tracking-[0.15em] leading-none mt-1.5">
-              FINANCE · 間
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Add Transaction ─────────────────────────────────── */}
-      <div className="px-[27px] mt-[47px]">
-        <Button
-          onClick={handleNewTransaction}
-          className="
-            btn-accent
-            w-100%
-            h-[55px]
-            px-4
-            flex items-center justify-center
-            gap-2.5
-            rounded-[5px]
-            text-[16px]
-            font-medium
-          "
+        )}
+        <button
+          onClick={toggleCollapse}
+          className={cn(
+            'p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40',
+            collapsed ? '' : '-mr-1'
+          )}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <Plus size={18} strokeWidth={2} />
-          <span>New Transaction</span>
-        </Button>
+          {collapsed ? (
+            <PanelLeftOpen size={18} strokeWidth={1.5} />
+          ) : (
+            <PanelLeftClose size={18} strokeWidth={1.5} />
+          )}
+        </button>
       </div>
 
-      {/* ── Navigation ──────────────────────────────────────── */}
-      <nav className="px-[27px] mt-[32px]">
-        <p className="label-section px-3 mb-[13px]">
-          Menu
-        </p>
+      {/* ── Add Transaction ────────────────────────────────────── */}
+      <div
+        className={cn(
+          'border-b border-border/50',
+          collapsed ? 'flex justify-center px-2 py-3' : 'px-4 py-3'
+        )}
+      >
+        {collapsed ? (
+          <button
+            onClick={handleNewTransaction}
+            className="p-2 rounded-[4px] bg-accent text-white hover:bg-accent-hover transition-colors"
+            aria-label="New Transaction"
+            title="New Transaction"
+          >
+            <Plus size={16} strokeWidth={2} />
+          </button>
+        ) : (
+          <button
+            onClick={handleNewTransaction}
+            className="w-full btn-accent flex items-center justify-center gap-2 py-2.5 text-[13px]"
+          >
+            <Plus size={14} strokeWidth={2} />
+            <span>New Transaction</span>
+          </button>
+        )}
+      </div>
 
+      {/* ── Navigation ─────────────────────────────────────────── */}
+      <nav className="flex-1 py-4 px-3 overflow-y-auto overflow-x-hidden">
+        {!collapsed && (
+          <p className="label-section px-3 mb-4 text-[9px] font-sans uppercase tracking-[0.12em] text-text-secondary">
+            Menu
+          </p>
+        )}
         <ul className="space-y-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}
                 end={to === '/'}
+                title={collapsed ? label : undefined}
                 className={({ isActive }) =>
-                  `
-                    h-[48px]
-                    w-full
-                    flex items-center
-                    gap-4
-                    px-4
-                    rounded-[5px]
-                    text-[16px]
-                    transition-colors
-                    ${
-                      isActive
-                        ? 'text-accent bg-accent/5'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-border/40'
-                    }
-                  `
+                  cn(
+                    'flex items-center rounded-[4px] text-[13px] transition-colors cursor-pointer',
+                    collapsed
+                      ? 'justify-center px-2 !py-0 h-10'
+                      : 'gap-3 !py-2 !px-3',
+                    isActive
+                      ? 'text-accent bg-accent/5'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-border/40'
+                  )
                 }
               >
                 {({ isActive }) => (
                   <>
+                    {!collapsed && (
+                      <span
+                        className={cn(
+                          'shrink-0 w-[3px] h-4 rounded-sm transition-colors',
+                          isActive ? 'bg-accent' : 'bg-transparent'
+                        )}
+                      />
+                    )}
                     <Icon
-                      size={20}
+                      size={18}
                       strokeWidth={isActive ? 2 : 1.5}
                       className="shrink-0"
                     />
-
-                    <span
-                      className={
-                        isActive ? 'font-medium' : 'font-normal'
-                      }
-                    >
-                      {label}
-                    </span>
+                    {!collapsed && (
+                      <span
+                        className={cn(
+                          'whitespace-nowrap transition-opacity duration-200',
+                          isActive ? 'font-medium' : 'font-normal'
+                        )}
+                      >
+                        {label}
+                      </span>
+                    )}
                   </>
                 )}
               </NavLink>
@@ -139,55 +173,44 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
-      <div className="mt-auto border-t border-border/50 px-[27px] py-4">
+      {/* ── User + Logout ────────────────────────────────────── */}
+      <div className="border-t border-border/50 px-3 py-3">
         {user ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="
-                  size-8 shrink-0
-                  rounded-full
-                  bg-accent/10
-                  text-accent
-                  flex items-center justify-center
-                  text-xs font-medium
-                "
-              >
-                {userInitial}
+          <div
+            className={cn(
+              'flex items-center',
+              collapsed ? 'justify-center' : 'justify-between gap-2'
+            )}
+          >
+            {!collapsed && (
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs font-medium flex-shrink-0">
+                  {userInitial}
+                </div>
+                <span className="text-[13px] text-text-primary truncate">
+                  {user.display_name || user.username}
+                </span>
               </div>
-
-              <span className="text-[15px] text-text-primary truncate">
-                {user.display_name || user.username}
-              </span>
-            </div>
-
+            )}
             <button
               onClick={handleLogout}
-              className="
-                shrink-0
-                p-1.5
-                text-text-muted
-                hover:text-accent
-                transition-colors
-                rounded-sm
-                hover:bg-border/30
-              "
+              className="p-1.5 text-text-muted hover:text-accent transition-colors rounded-sm hover:bg-border/30"
               title="Logout"
             >
-              <LogOut size={17} strokeWidth={1.5} />
+              <LogOut size={16} strokeWidth={1.5} />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-text-muted text-sm">
-            <UserIcon size={14} />
-            <span>Loading...</span>
+          <div
+            className={cn(
+              'flex items-center text-text-muted text-sm',
+              collapsed ? 'justify-center' : 'gap-2'
+            )}
+          >
+            {!collapsed && <UserIcon size={16} />}
+            {!collapsed && <span>Loading…</span>}
           </div>
         )}
-
-        <p className="text-[9px] text-text-muted/60 text-center tracking-wide mt-3">
-          間 · Negative space
-        </p>
       </div>
     </aside>
   );

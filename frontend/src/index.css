@@ -8,6 +8,8 @@
 @import "@fontsource/inter/700.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/500.css";
 
 /* ── Custom theme variables (v4) ── */
 @theme {
@@ -59,6 +61,21 @@
   --card-padding-y: 14px;
 }
 
+@layer utilities {
+  .font-playfair {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-inter {
+    font-family: 'Inter', var(--font-sans), sans-serif;
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', var(--font-mono), monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 /* ── Dark Mode overrides (shadcn uses .dark on <html>) ── */
 .dark {
   --color-bg: #0F0D0B;
@@ -77,11 +94,11 @@
 }
 
 /* ── Base styles ──────────────────────────────────────────────── */
-* {
+/* * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
+} */
 
 html {
   font-family: var(--font-sans);
