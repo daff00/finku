@@ -225,10 +225,13 @@ Authorization: Bearer <access_token>
 
 ### Supported
 
-BCA → PDF only (bca_pdf.py) — coordinate-based word extraction <br>
-Mandiri → PDF + CSV/Excel <br>
-Bank Jago → PDF <br>
-Seabank → PDF
+**Currently Production-Ready:**
+- BCA → PDF only (bca_pdf.py) — coordinate-based word extraction
+
+**Coming Later:**
+- Mandiri → PDF (CSV support deferred)
+- Bank Jago → PDF
+- Seabank → PDF
 
 ### Parser Pattern
 ```python
@@ -273,8 +276,10 @@ GET /analytics/monthly
 GET /analytics/categories
 GET /analytics/accounts
 
-**Import:** POST /import/pdf
-POST /import/csv
+**Import:** POST /import
+- Single unified endpoint (see `/api/v1/docs` for schema)
+- Accepts: account_id, bank, file (PDF)
+- Currently supports BCA only; other banks will be added as parsers are implemented
 
 
 ---
@@ -319,20 +324,25 @@ All fixtures defined in tests/conftest.py.
 - Backend: JWT auth + user isolation
 - Backend: loguru logging + custom exception handlers
 - Backend: Alembic migrations (2 versions)
-- Backend: BCA PDF parser
-- Backend: 50 tests passing
-- Frontend: TypeScript types
-- Frontend: Services layer (axios)
-- Frontend: TanStack Query hooks
-- Frontend: lib utilities (formatters, constants, utils)
+- Backend: BCA PDF parser + unified import endpoint (POST /import)
+- Backend: Rate limiting via slowapi (all routes)
+- Backend: 50+ tests passing (including rate limiting tests)
+- Frontend: TypeScript types & enums
+- Frontend: Services layer (axios with interceptors)
+- Frontend: TanStack Query hooks (useAccounts, useTransactions, useBalances, useAnalytics)
+- Frontend: lib utilities (formatters for IDR/dates, bank constants, helper functions)
 
 ### In Progress ⏳
-- Backend: remaining PDF parsers (Mandiri, Jago, Seabank)
-- Backend: import routes
-- Frontend: layout components (Sidebar, BottomNav, AppShell)
-- Frontend: all pages
+- Backend: remaining PDF parsers (Mandiri, Jago, Seabank) — deferred until after PWA
+- Frontend: Dashboard page ✅ working
+- Frontend: Import page ✅ working
+- Frontend: Transactions page 🚧 (stub)
+- Frontend: Analytics page 🚧 (stub)
+- Frontend: Settings page 🚧 (stub)
+- Frontend: Layout components (Sidebar, BottomNav, TopBar, AppShell) — design pending
 
 ### Not Started ❌
-- Rate limiting (slowapi)
-- PWA setup (vite-plugin-pwa)
-- Docker / home server deployment
+- Backend: CSV import support (deferred; PDF-only for now)
+- Backend: Mandiri, Jago, Seabank PDF parsers (deferred until after PWA)
+- Frontend: PWA setup (vite-plugin-pwa)
+- Deployment: Docker / home server setup

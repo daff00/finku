@@ -121,13 +121,36 @@ def test_delete_account(client, sample_account):
     assert len(list_response.json()) == 0
 
 
+def test_delete_account_idempotent(client, sample_account):
+    """Test idempotency: delete same account twice, both return 204."""
+    # ── Arrange ───────────────────────────────
+    account_id = sample_account["id"]
+
+    # ── Act — First delete ───────────────────
+    response1 = client.delete(f"/api/v1/accounts/{account_id}")
+
+    # ── Assert — First delete succeeds ──────
+    assert response1.status_code == 204
+
+    # ── Act — Retry delete ───────────────────
+    response2 = client.delete(f"/api/v1/accounts/{account_id}")
+
+    # ── Assert — Retry also returns 204 ────
+    assert response2.status_code == 204
+
+    # ── Verify — Account no longer in list ──
+    list_response = client.get("/api/v1/accounts")
+    assert len(list_response.json()) == 0
+
+
 def test_delete_account_not_found(client):
+    """Test idempotency: delete non-existent account returns 204."""
     # ── Act ───────────────────────────────────
-    response = client.delete("/api/v1/accounts/999")
+    response = client.delete("/api/v1/accounts/999999")
 
     # ── Assert ────────────────────────────────
-    assert response.status_code == 404
-    assert response.json()["error"] == "Account not found"
+    # Idempotent: return 204 even if not found
+    assert response.status_code == 204
 
 
 def test_delete_account_with_transactions(client, sample_account, sample_transaction):

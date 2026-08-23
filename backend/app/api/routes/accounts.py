@@ -140,13 +140,17 @@ def delete_account(
     current_user: CurrentUser,
     db: DbSession,
 ):
+    # Idempotency: Fetch account if exists
     account = db.query(Account).filter(
         Account.id == account_id,
         Account.user_id == current_user.id,
     ).first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
 
+    # If account doesn't exist or already inactive, return 204 (idempotent)
+    if not account or not account.is_active:
+        return response
+
+    # Check for existing transactions - this is a hard constraint
     has_transactions = db.query(Transaction).filter(
         Transaction.account_id == account_id,
         Transaction.user_id == current_user.id,
@@ -157,5 +161,7 @@ def delete_account(
             detail="Cannot delete account with existing transactions"
         )
 
+    # Mark account as inactive (soft delete)
     account.is_active = False
     db.commit()
+    return response

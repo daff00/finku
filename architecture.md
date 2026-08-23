@@ -137,25 +137,27 @@ expenses Jul = Rp 2jt
 
 ---
 
-## 8. PDF-First Import
+## 8. PDF-Only Import (No CSV)
 
-**Decision:** Parse bank statements as PDF, not CSV.
+**Decision:** Parse bank statements as PDF only; skip CSV import for now.
 
-**Why:**
-- Most Indonesian banks only provide PDF (BCA, Jago, Seabank, OVO, GoPay)
-- Mandiri provides both — we support both
+**Why PDF-only:**
+- Most Indonesian banks provide PDF as primary format (BCA, Jago, Seabank, OVO, GoPay)
+- Mandiri provides both PDF and CSV; we prioritize PDF for consistency
 - pdfplumber handles text-based PDFs well
 - BCA PDFs are text-based (not scanned) — confirmed copyable
+- Single format reduces parser complexity during MVP phase
 
-**Parsing strategy:**
-- `extract_table()` — tried first, fails on BCA's complex layout
-- `extract_words()` with X/Y coordinates — works for BCA
-- Each bank has its own parser class inheriting from `BaseParser`
+**Current implementation:**
+- BCA PDF parser is production-ready (uses pdfplumber + coordinate extraction)
+- Other bank parsers (Mandiri, Jago, Seabank) deferred until after PWA launch
+- Each parser inherits from BaseParser for consistent interface
+- Unified POST /import endpoint dispatches to correct parser via bank enum
 
-**Known limitation:**
-- BCA truncates merchant names (e.g. "INDOMA" = Indomaret)
-- This is BCA's data, not our bug
-- User can re-categorize in import preview UI
+**Known limitations:**
+- BCA truncates merchant names (e.g. "INDOMA" = Indomaret) — bank's limitation, not ours
+- User can re-categorize transactions in import result before confirming
+- CSV import deferred; can be added in future if needed
 
 ---
 
@@ -223,8 +225,11 @@ No `parent_id` relationship — all pockets are top-level accounts.
 - Full control over data
 - Tailscale makes home server accessible anywhere securely
 
+**Current Implementation:**
+- Rate limiting via slowapi ✅ (user-based + IP-based key function)
+
 **Future V2:**
 - Docker Compose for easy deployment
-- PostgreSQL instead of SQLite
+- PostgreSQL instead of SQLite (migration is seamless via Alembic)
 - HTTPS via Caddy or nginx
-- Rate limiting via slowapi
+- PWA capabilities (offline support, home screen install)
