@@ -344,8 +344,6 @@ export default function AnalyticsPage() {
 
       {/* Month Selector with Dropdown */}
 
-        // ── Month Selector with shadcn DropdownMenu (no asChild) ──
-
       <div className="flex items-center justify-center gap-6 py-2 border-b-[0.5px] border-dashed border-[#E8E4DE]">
         <Button
           onClick={goToPreviousMonth}
