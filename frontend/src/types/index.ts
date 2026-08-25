@@ -219,8 +219,8 @@ export interface User {
   created_at: string;            // ISO 8601 date string
 }
 
-export type CategoryTotal = {
+export type SpendingCategory = {
   category: string;
-  amount: number;
+  total: string | number;
   percentage: number;
 };

@@ -3,7 +3,7 @@ import { CATEGORY_COLORS } from "@/lib/constants";
 
 export type SpendingCategory = {
   category: string;
-  amount: number;
+  total: string | number;
   percentage: number;
 };
 
@@ -18,15 +18,13 @@ export default function SpendingByCategory({
 }: Props) {
   if (data.length === 0) {
     return (
-      <p className="text-[12px] text-[#C4B5A0] font-sans">
-        {emptyMessage}
-      </p>
+      <p className="text-[12px] text-[#C4B5A0] font-sans">{emptyMessage}</p>
     );
   }
 
   return (
     <div className="space-y-4">
-      {data.map(({ category, amount, percentage }) => {
+      {data.map(({ category, total, percentage }) => {
         const color = CATEGORY_COLORS[category] || "#8B7355";
 
         return (
@@ -37,7 +35,7 @@ export default function SpendingByCategory({
               </span>
 
               <span className="font-mono text-[#8B7355] flex-shrink-0">
-                {formatIDR(amount)} ({percentage}%)
+                {formatIDR(total)} ({percentage}%)
               </span>
             </div>
 

@@ -3,10 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 import { formatIDR } from "@/lib/formatters";
 
-import type {
-  MonthlySummary,
-  CategoryTotal,
-} from "@/types";
+import type { MonthlySummary, SpendingCategory } from "@/types";
 
 import CashflowSummary from "@/components/CashflowSummary";
 import AccountCard from "@/components/dashboard/AccountCard";
@@ -130,9 +127,9 @@ export default function DashboardPage() {
     (item: MonthlySummary) => item.month.slice(0, 7) === currentMonthStr,
   );
 
-  const totalIncome = currentMonthData?.income ?? 0;
-  const totalExpense = currentMonthData?.expenses ?? 0;
-  const netChange = currentMonthData?.savings ?? 0;
+  const totalIncome = Number(currentMonthData?.income ?? 0);
+  const totalExpense = Number(currentMonthData?.expenses ?? 0);
+  const netChange = Number(currentMonthData?.savings ?? 0);
 
   /*
    * ── Category breakdown ──
@@ -149,14 +146,17 @@ export default function DashboardPage() {
         (categoryTotals[category] || 0) + Number(txn.amount);
     });
 
-  const categoryData: CategoryTotal[] = Object.entries(categoryTotals)
-    .map(([category, amount]) => ({
+  const categoryData: SpendingCategory[] = Object.entries(
+      categoryTotals,
+    ).map(([category, amount]) => ({
       category,
-      amount,
+      total: amount,
       percentage:
-        totalExpense > 0 ? Math.round((amount / totalExpense) * 100) : 0,
+        totalExpense > 0
+          ? Math.round((amount / totalExpense) * 100)
+          : 0,
     }))
-    .sort((a, b) => b.amount - a.amount)
+    .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
   /*
@@ -167,6 +167,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-12">
+      {/* Page Title */}
+
+      <div>
+        <h1 className="font-playfair text-[24px] text-[#1C1410]">Dashboard</h1>
+
+        <p className="font-inter text-[12px] text-[#8B7355] mt-1">
+          Track your current networth
+        </p>
+      </div>
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <div>

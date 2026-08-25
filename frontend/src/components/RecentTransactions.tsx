@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { Transaction } from "@/types";
 import { formatDateShort, formatIDR, toTitleCase } from "@/lib/formatters";
-import WabiSabiFooter from "./WabiSabiFooter";
 
 type Props = {
   transactions: Transaction[];

@@ -502,7 +502,7 @@ export default function AnalyticsPage() {
 
         <div className="mt-4">
           <SpendingByCategory
-            data={categoryData}
+            data={categoryData ?? []}
             emptyMessage="No expenses yet."
           />
         </div>

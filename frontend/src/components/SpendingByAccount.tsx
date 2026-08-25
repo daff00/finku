@@ -5,7 +5,7 @@ type SpendingItem = {
   accountName: string;
   bankLabel: string;
   color: string;
-  total: number;
+  total: string | number;
   percentage: number;
 };
 
@@ -46,7 +46,7 @@ export default function SpendingByAccount({
               </span>
             </span>
 
-            <span className="font-mono-num text-[#1C1410] font-medium ml-4 shrink-0">
+            <span className="font-mono text-[#8B7355] flex-shrink-0">
               {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
             </span>
           </div>
