@@ -1,4 +1,3 @@
-// frontend/src/pages/AnalyticsPage.tsx
 import { useMemo, useState } from "react";
 import {
   useNetworth,
@@ -6,14 +5,9 @@ import {
   useCategories,
   useSpendingByAccount,
 } from "@/hooks";
-import { formatIDR, toTitleCase } from "@/lib/formatters";
+import { formatIDR } from "@/lib/formatters";
 import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -23,9 +17,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+import CashflowStat from "@/components/CashflowStat";
 import SpendingByCategory from "@/components/SpendingByCategory";
+import SpendingByAccount from "@/components/SpendingByAccount";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
-import type { MonthlySummary, CategoryBreakdown } from "@/types";
+import type { MonthlySummary } from "@/types";
 
 // ── shadcn imports ─────────────────────────────────────────────
 import {
@@ -49,24 +46,52 @@ const COLORS = {
   background: "#FFFFFF",
 };
 
-const CATEGORY_COLORS = [
-  "#C0392B",
-  "#E67E22",
-  "#F1C40F",
-  "#2ECC71",
-  "#3498DB",
-  "#9B59B6",
-  "#1ABC9C",
-  "#E74C3C",
-  "#34495E",
-  "#16A085",
-];
-
 // ── Helpers ────────────────────────────────────────────────────
 
 function normalizeMonth(monthStr: string): string {
   return monthStr.slice(0, 7);
 }
+
+type TooltipProps = {
+  active?: boolean;
+  payload?: Array<{
+    name?: string;
+    value?: number;
+    color?: string;
+  }>;
+  label?: string;
+};
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] px-3 py-2 shadow-sm">
+      <p className="font-inter text-[11px] text-[#8B7355] mb-1">{label}</p>
+
+      {payload.map((item: any) => (
+        <p
+          key={item.name}
+          className="font-mono-num text-[12px]"
+          style={{ color: item.color }}
+        >
+          {item.name}: {formatIDR(item.value ?? 0)}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+type AccountSpendingItem = {
+  accountId: number;
+  accountName: string;
+  bankLabel: string;
+  color: string;
+  total: number;
+  percentage: number;
+};
 
 export default function AnalyticsPage() {
   // ── State ────────────────────────────────────────────────────
@@ -74,8 +99,6 @@ export default function AnalyticsPage() {
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7),
   );
-
-  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
 
   const monthOptions = useMemo(() => {
     const months = [];
@@ -122,19 +145,13 @@ export default function AnalyticsPage() {
 
   // ── Selected month data ──────────────────────────────────────
 
-  const selectedMonthData = useMemo(() => {
-    if (!allMonthlyData) return null;
-
-    const normalized = allMonthlyData.map((item: MonthlySummary) => ({
-      ...item,
-      month: normalizeMonth(item.month),
-    }));
-
-    return (
-      normalized.find((item: MonthlySummary) => item.month === selectedMonth) ||
-      null
-    );
-  }, [allMonthlyData, selectedMonth]);
+  const selectedMonthData = useMemo(
+    () =>
+      allMonthlyData?.find(
+        (item: MonthlySummary) => normalizeMonth(item.month) === selectedMonth,
+      ) ?? null,
+    [allMonthlyData, selectedMonth],
+  );
 
   // ── Chart data ───────────────────────────────────────────────
 
@@ -172,49 +189,30 @@ export default function AnalyticsPage() {
       .sort((a, b) => a.month.localeCompare(b.month));
   }, [allMonthlyData, selectedMonth]);
 
-  // ── Categories ──────────────────────────────────────────────
-
-  const categories = useMemo(() => {
-    if (!categoryData) return [];
-
-    return categoryData.map((item: CategoryBreakdown, index: number) => ({
-      name: item.category,
-      value: Number(item.total ?? 0),
-
-      // Keep the API-provided percentage.
-      // This preserves the real filtering/data behavior.
-      percentage: Number(item.percentage ?? 0),
-
-      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-    }));
-  }, [categoryData]);
-
   // ── Spending by Account ──────────────────────────────────────
 
-  const accountSpending = useMemo(() => {
-    if (!spendingByAccount || spendingByAccount.length === 0) {
+  const accountSpending = useMemo<AccountSpendingItem[]>(() => {
+    if (!spendingByAccount?.length) {
       return [];
     }
 
-    const mapped = spendingByAccount.map((item: any) => {
+    const mapped = spendingByAccount.map((item) => {
       const bankKey = item.bank as keyof typeof BANK_COLORS;
 
       return {
         accountId: item.account_id,
         accountName: item.name,
-        bank: item.bank,
         bankLabel: BANK_LABELS[bankKey] || item.bank,
         color: BANK_COLORS[bankKey] || "#8B7355",
         total: Number(item.balance ?? 0),
       };
     });
 
-    const totalSpending = mapped.reduce(
-      (sum, account) => sum + account.total,
-      0,
-    );
+    const totalSpending = mapped.reduce((sum, item) => sum + item.total, 0);
 
-    if (totalSpending === 0) return [];
+    if (totalSpending === 0) {
+      return [];
+    }
 
     return mapped.map((item) => ({
       ...item,
@@ -258,7 +256,6 @@ export default function AnalyticsPage() {
 
   const handleMonthSelect = (value: string) => {
     setSelectedMonth(value);
-    setIsMonthDropdownOpen(false);
   };
 
   // ── Loading ──────────────────────────────────────────────────
@@ -278,30 +275,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
-  // ── Tooltip ──────────────────────────────────────────────────
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || payload.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] px-3 py-2 shadow-sm">
-        <p className="font-inter text-[11px] text-[#8B7355] mb-1">{label}</p>
-
-        {payload.map((item: any) => (
-          <p
-            key={item.name}
-            className="font-mono-num text-[12px]"
-            style={{ color: item.color }}
-          >
-            {item.name}: {formatIDR(item.value ?? 0)}
-          </p>
-        ))}
-      </div>
-    );
-  };
 
   // ── Render ───────────────────────────────────────────────────
 
@@ -496,36 +469,24 @@ export default function AnalyticsPage() {
           Cashflow Summary
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-          <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-3 text-center">
-            <div className="font-inter text-[9px] font-semibold text-[#8B7355] mb-1">
-              Income
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <CashflowStat
+            label="Income"
+            value={formatIDR(totalIncome)}
+            color="#27AE60"
+          />
 
-            <div className="font-mono-num text-[13px] font-medium text-[#27AE60]">
-              {formatIDR(totalIncome)}
-            </div>
-          </div>
+          <CashflowStat
+            label="Expense"
+            value={formatIDR(totalExpense)}
+            color="#C0392B"
+          />
 
-          <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-3 text-center">
-            <div className="font-inter text-[9px] font-semibold text-[#8B7355] mb-1">
-              Expense
-            </div>
-
-            <div className="font-mono-num text-[13px] font-medium text-[#C0392B]">
-              {formatIDR(totalExpense)}
-            </div>
-          </div>
-
-          <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-3 text-center">
-            <div className="font-inter text-[9px] font-semibold text-[#8B7355] mb-1">
-              Saving Rate
-            </div>
-
-            <div className="font-mono-num text-[13px] font-medium text-[#1C1410]">
-              {savingRate}%
-            </div>
-          </div>
+          <CashflowStat
+            label="Saving Rate"
+            value={`${savingRate}%`}
+            color="#1C1410"
+          />
         </div>
       </section>
 
@@ -558,48 +519,7 @@ export default function AnalyticsPage() {
           Spending by Bank Account
         </h2>
 
-        {accountSpending.length === 0 ? (
-          <div className="font-inter text-[12px] text-[#C4B5A0]">
-            No spending by account.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {accountSpending.map((item) => (
-              <div key={item.accountId} className="space-y-1">
-                <div className="flex items-center justify-between text-[13px] font-inter">
-                  <span className="text-[#1C1410] font-normal flex items-center gap-2 min-w-0">
-                    <span
-                      className="w-2 h-2 rounded-full inline-block shrink-0"
-                      style={{
-                        backgroundColor: item.color,
-                      }}
-                    />
-
-                    <span className="truncate">{item.accountName}</span>
-
-                    <span className="text-[#8B7355] text-[11px] shrink-0">
-                      ({item.bankLabel})
-                    </span>
-                  </span>
-
-                  <span className="font-mono-num text-[#1C1410] font-medium ml-4 shrink-0">
-                    {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
-                  </span>
-                </div>
-
-                <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${Math.min(Math.max(item.percentage, 0), 100)}%`,
-                      backgroundColor: item.color,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <SpendingByAccount data={accountSpending} />
       </section>
 
       <WabiSabiFooter />
