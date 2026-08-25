@@ -70,3 +70,22 @@ export const formatAmount = (
     if (type === "EXPENSE") return `−${formatted}`
     return formatted
 }
+
+export function toTitleCase(value: string): string {
+  const lowercaseWords = new Set(["and", "or", "of", "the", "for", "to"]);
+
+  return value
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((word, index) => {
+      if (index > 0 && lowercaseWords.has(word)) {
+        return word;
+      }
+
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+}

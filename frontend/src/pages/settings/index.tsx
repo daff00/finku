@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth, useAccounts } from '@/hooks';
 import { BANK_COLORS, BANK_LABELS } from '@/lib/constants';
 import type { Account } from '@/types';
+import WabiSabiFooter from '@/components/WabiSabiFooter';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -296,15 +297,7 @@ export default function SettingsPage() {
       </section>
 
       {/* ── Wabi-Sabi Footer ──────────────────────────────────── */}
-      <div className="border-t border-dashed border-border/50 pt-6 mt-8">
-        <p className="text-center text-[11px] text-text-muted/60 leading-relaxed max-w-md mx-auto font-serif">
-          WABI-SABI · 伝家
-        </p>
-        <p className="text-center text-[10px] text-text-muted/40 leading-relaxed max-w-md mx-auto mt-1 font-sans">
-          Menghargai proses finansial bertahap. Fokus pada kejelasan angka,<br />
-          kurangi distraksi, dan jaga ruang bernapas (Ma).
-        </p>
-      </div>
+      <WabiSabiFooter />
     </div>
   );
 }

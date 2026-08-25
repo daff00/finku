@@ -1,14 +1,19 @@
 // frontend/src/pages/AnalyticsPage.tsx
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 import {
   useNetworth,
   useMonthly,
   useCategories,
   useSpendingByAccount,
-} from '@/hooks';
-import { formatIDR } from '@/lib/formatters';
-import { BANK_LABELS, BANK_COLORS } from '@/lib/constants';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+} from "@/hooks";
+import { formatIDR, toTitleCase } from "@/lib/formatters";
+import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -17,9 +22,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import WabiSabiFooter from '@/components/WabiSabiFooter';
-import type { MonthlySummary, CategoryBreakdown } from '@/types';
+} from "recharts";
+import SpendingByCategory from "@/components/SpendingByCategory";
+import WabiSabiFooter from "@/components/WabiSabiFooter";
+import type { MonthlySummary, CategoryBreakdown } from "@/types";
 
 // ── shadcn imports ─────────────────────────────────────────────
 import {
@@ -27,42 +33,36 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 // ── Colors ─────────────────────────────────────────────────────
 
 const COLORS = {
-  income: '#27AE60',
-  expense: '#C0392B',
-  accent: '#C0392B',
-  text: '#1C1410',
-  muted: '#8B7355',
-  lightMuted: '#C4B5A0',
-  border: '#E8E4DE',
-  background: '#FFFFFF',
+  income: "#27AE60",
+  expense: "#C0392B",
+  accent: "#C0392B",
+  text: "#1C1410",
+  muted: "#8B7355",
+  lightMuted: "#C4B5A0",
+  border: "#E8E4DE",
+  background: "#FFFFFF",
 };
 
 const CATEGORY_COLORS = [
-  '#C0392B',
-  '#E67E22',
-  '#F1C40F',
-  '#2ECC71',
-  '#3498DB',
-  '#9B59B6',
-  '#1ABC9C',
-  '#E74C3C',
-  '#34495E',
-  '#16A085',
+  "#C0392B",
+  "#E67E22",
+  "#F1C40F",
+  "#2ECC71",
+  "#3498DB",
+  "#9B59B6",
+  "#1ABC9C",
+  "#E74C3C",
+  "#34495E",
+  "#16A085",
 ];
 
 // ── Helpers ────────────────────────────────────────────────────
-
-function toTitleCase(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 function normalizeMonth(monthStr: string): string {
   return monthStr.slice(0, 7);
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
   // ── State ────────────────────────────────────────────────────
 
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    new Date().toISOString().slice(0, 7)
+    new Date().toISOString().slice(0, 7),
   );
 
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
@@ -82,22 +82,19 @@ export default function AnalyticsPage() {
     const now = new Date();
 
     for (let i = 0; i < 12; i++) {
-      const d = new Date(
-        now.getFullYear(),
-        now.getMonth() - i,
-        1
-      );
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
 
       months.push({
         // Used by the API/filter
-        value: `${d.getFullYear()}-${String(
-          d.getMonth() + 1
-        ).padStart(2, '0')}`,
+        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0",
+        )}`,
 
         // Used only for display
-        label: d.toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric',
+        label: d.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
         }),
       });
     }
@@ -117,16 +114,11 @@ export default function AnalyticsPage() {
   const { data: categoryData, isLoading: categoryLoading } =
     useCategories(selectedMonth);
 
-  const {
-    data: spendingByAccount,
-    isLoading: spendingLoading,
-  } = useSpendingByAccount(selectedMonth);
+  const { data: spendingByAccount, isLoading: spendingLoading } =
+    useSpendingByAccount(selectedMonth);
 
   const isLoading =
-    networthLoading ||
-    monthlyLoading ||
-    categoryLoading ||
-    spendingLoading;
+    networthLoading || monthlyLoading || categoryLoading || spendingLoading;
 
   // ── Selected month data ──────────────────────────────────────
 
@@ -139,9 +131,8 @@ export default function AnalyticsPage() {
     }));
 
     return (
-      normalized.find(
-        (item: MonthlySummary) => item.month === selectedMonth
-      ) || null
+      normalized.find((item: MonthlySummary) => item.month === selectedMonth) ||
+      null
     );
   }, [allMonthlyData, selectedMonth]);
 
@@ -153,13 +144,13 @@ export default function AnalyticsPage() {
     const selectedDate = new Date(
       Number(selectedMonth.slice(0, 4)),
       Number(selectedMonth.slice(5, 7)) - 1,
-      1
+      1,
     );
 
     const startDate = new Date(
       selectedDate.getFullYear(),
       selectedDate.getMonth() - 11,
-      1
+      1,
     );
 
     return allMonthlyData
@@ -173,7 +164,7 @@ export default function AnalyticsPage() {
         const itemDate = new Date(
           Number(item.month.slice(0, 4)),
           Number(item.month.slice(5, 7)) - 1,
-          1
+          1,
         );
 
         return itemDate >= startDate && itemDate <= selectedDate;
@@ -186,19 +177,16 @@ export default function AnalyticsPage() {
   const categories = useMemo(() => {
     if (!categoryData) return [];
 
-    return categoryData.map(
-      (item: CategoryBreakdown, index: number) => ({
-        name: item.category,
-        value: Number(item.total ?? 0),
+    return categoryData.map((item: CategoryBreakdown, index: number) => ({
+      name: item.category,
+      value: Number(item.total ?? 0),
 
-        // Keep the API-provided percentage.
-        // This preserves the real filtering/data behavior.
-        percentage: Number(item.percentage ?? 0),
+      // Keep the API-provided percentage.
+      // This preserves the real filtering/data behavior.
+      percentage: Number(item.percentage ?? 0),
 
-        color:
-          CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-      })
-    );
+      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    }));
   }, [categoryData]);
 
   // ── Spending by Account ──────────────────────────────────────
@@ -216,14 +204,14 @@ export default function AnalyticsPage() {
         accountName: item.name,
         bank: item.bank,
         bankLabel: BANK_LABELS[bankKey] || item.bank,
-        color: BANK_COLORS[bankKey] || '#8B7355',
+        color: BANK_COLORS[bankKey] || "#8B7355",
         total: Number(item.balance ?? 0),
       };
     });
 
     const totalSpending = mapped.reduce(
       (sum, account) => sum + account.total,
-      0
+      0,
     );
 
     if (totalSpending === 0) return [];
@@ -248,28 +236,23 @@ export default function AnalyticsPage() {
   // ── Month navigation ────────────────────────────────────────
 
   const currentMonthIndex = monthOptions.findIndex(
-    (month) => month.value === selectedMonth
+    (month) => month.value === selectedMonth,
   );
 
   const currentMonthLabel =
-    monthOptions[currentMonthIndex]?.label ||
-    selectedMonth;
+    monthOptions[currentMonthIndex]?.label || selectedMonth;
 
   const goToPreviousMonth = () => {
     if (currentMonthIndex < monthOptions.length - 1) {
       // Always sets YYYY-MM
-      setSelectedMonth(
-        monthOptions[currentMonthIndex + 1].value
-      );
+      setSelectedMonth(monthOptions[currentMonthIndex + 1].value);
     }
   };
 
   const goToNextMonth = () => {
     if (currentMonthIndex > 0) {
       // Always sets YYYY-MM
-      setSelectedMonth(
-        monthOptions[currentMonthIndex - 1].value
-      );
+      setSelectedMonth(monthOptions[currentMonthIndex - 1].value);
     }
   };
 
@@ -298,20 +281,14 @@ export default function AnalyticsPage() {
 
   // ── Tooltip ──────────────────────────────────────────────────
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: any) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) {
       return null;
     }
 
     return (
       <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] px-3 py-2 shadow-sm">
-        <p className="font-inter text-[11px] text-[#8B7355] mb-1">
-          {label}
-        </p>
+        <p className="font-inter text-[11px] text-[#8B7355] mb-1">{label}</p>
 
         {payload.map((item: any) => (
           <p
@@ -333,9 +310,7 @@ export default function AnalyticsPage() {
       {/* Page Title */}
 
       <div>
-        <h1 className="font-playfair text-[24px] text-[#1C1410]">
-          Analytics
-        </h1>
+        <h1 className="font-playfair text-[24px] text-[#1C1410]">Analytics</h1>
 
         <p className="font-inter text-[12px] text-[#8B7355] mt-1">
           Insights into your financial health
@@ -373,10 +348,11 @@ export default function AnalyticsPage() {
               <DropdownMenuItem
                 key={month.value}
                 onClick={() => handleMonthSelect(month.value)}
-                className={`cursor-pointer font-inter text-[13px] px-3 py-2 rounded-[4px] transition-colors ${month.value === selectedMonth
-                    ? 'bg-[#FAFAF8] text-[#1C1410] font-medium'
-                    : 'text-[#8B7355] hover:bg-[#FAFAF8] hover:text-[#1C1410]'
-                  }`}
+                className={`cursor-pointer font-inter text-[13px] px-3 py-2 rounded-[4px] transition-colors ${
+                  month.value === selectedMonth
+                    ? "bg-[#FAFAF8] text-[#1C1410] font-medium"
+                    : "text-[#8B7355] hover:bg-[#FAFAF8] hover:text-[#1C1410]"
+                }`}
               >
                 {month.label}
               </DropdownMenuItem>
@@ -423,10 +399,7 @@ export default function AnalyticsPage() {
           ) : (
             <>
               <div className="w-full py-2">
-                <ResponsiveContainer
-                  width="100%"
-                  height={150}
-                >
+                <ResponsiveContainer width="100%" height={150}>
                   <LineChart
                     data={chartData}
                     margin={{
@@ -436,47 +409,38 @@ export default function AnalyticsPage() {
                       bottom: 0,
                     }}
                   >
-                    <CartesianGrid
-                      stroke="transparent"
-                      vertical={false}
-                    />
+                    <CartesianGrid stroke="transparent" vertical={false} />
 
                     <XAxis
                       dataKey="month"
                       tick={{
                         fontSize: 10,
                         fill: COLORS.muted,
-                        fontFamily: 'Inter',
+                        fontFamily: "Inter",
                       }}
                       axisLine={false}
                       tickLine={false}
                       tickMargin={8}
                       tickFormatter={(value: string) => {
-                        const [, month] =
-                          value.split('-');
+                        const [, month] = value.split("-");
 
                         const date = new Date(
                           Number(value.slice(0, 4)),
                           Number(month) - 1,
-                          1
+                          1,
                         );
 
                         return date
-                          .toLocaleDateString('id-ID', {
-                            month: 'short',
+                          .toLocaleDateString("id-ID", {
+                            month: "short",
                           })
-                          .replace('.', '');
+                          .replace(".", "");
                       }}
                     />
 
-                    <YAxis
-                      hide
-                      domain={['auto', 'auto']}
-                    />
+                    <YAxis hide domain={["auto", "auto"]} />
 
-                    <Tooltip
-                      content={<CustomTooltip />}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
 
                     <Line
                       type="monotone"
@@ -486,8 +450,8 @@ export default function AnalyticsPage() {
                       strokeWidth={1.5}
                       dot={{
                         r: 2.5,
-                        fill: '#FFFFFF',
-                        stroke: '#27AE60',
+                        fill: "#FFFFFF",
+                        stroke: "#27AE60",
                         strokeWidth: 1.5,
                       }}
                       activeDot={{
@@ -504,8 +468,8 @@ export default function AnalyticsPage() {
                       strokeWidth={1.5}
                       dot={{
                         r: 2.5,
-                        fill: '#FFFFFF',
-                        stroke: '#C0392B',
+                        fill: "#FFFFFF",
+                        stroke: "#C0392B",
                         strokeWidth: 1.5,
                       }}
                       activeDot={{
@@ -532,7 +496,7 @@ export default function AnalyticsPage() {
           Cashflow Summary
         </h2>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
           <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-3 text-center">
             <div className="font-inter text-[9px] font-semibold text-[#8B7355] mb-1">
               Income
@@ -570,49 +534,17 @@ export default function AnalyticsPage() {
       <div className="border-t-[0.5px] border-dashed border-[#E8E4DE]" />
 
       {/* Spending by Category */}
-
       <section>
         <h2 className="font-inter text-[11px] font-medium tracking-wide text-[#8B7355] mb-3">
           Spending by Category
         </h2>
 
-        {categories.length === 0 ? (
-          <div className="font-inter text-[12px] text-[#C4B5A0]">
-            No spending by category.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {categories.map((item) => (
-              <div
-                key={item.name}
-                className="space-y-1"
-              >
-                <div className="flex items-center justify-between text-[13px] font-inter">
-                  <span className="text-[#1C1410] font-normal">
-                    {toTitleCase(item.name)}
-                  </span>
-
-                  <span className="font-mono-num text-[#1C1410] font-medium">
-                    {formatIDR(item.value)}
-                  </span>
-                </div>
-
-                <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${Math.min(
-                        Math.max(item.percentage, 0),
-                        100
-                      )}%`,
-                      backgroundColor: item.color,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="mt-4">
+          <SpendingByCategory
+            data={categoryData}
+            emptyMessage="No expenses yet."
+          />
+        </div>
       </section>
 
       {/* Separator */}
@@ -633,10 +565,7 @@ export default function AnalyticsPage() {
         ) : (
           <div className="space-y-4">
             {accountSpending.map((item) => (
-              <div
-                key={item.accountId}
-                className="space-y-1"
-              >
+              <div key={item.accountId} className="space-y-1">
                 <div className="flex items-center justify-between text-[13px] font-inter">
                   <span className="text-[#1C1410] font-normal flex items-center gap-2 min-w-0">
                     <span
@@ -646,9 +575,7 @@ export default function AnalyticsPage() {
                       }}
                     />
 
-                    <span className="truncate">
-                      {item.accountName}
-                    </span>
+                    <span className="truncate">{item.accountName}</span>
 
                     <span className="text-[#8B7355] text-[11px] shrink-0">
                       ({item.bankLabel})
@@ -656,8 +583,7 @@ export default function AnalyticsPage() {
                   </span>
 
                   <span className="font-mono-num text-[#1C1410] font-medium ml-4 shrink-0">
-                    {formatIDR(item.total)} (
-                    {item.percentage.toFixed(0)}%)
+                    {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
                   </span>
                 </div>
 
@@ -665,10 +591,7 @@ export default function AnalyticsPage() {
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{
-                      width: `${Math.min(
-                        Math.max(item.percentage, 0),
-                        100
-                      )}%`,
+                      width: `${Math.min(Math.max(item.percentage, 0), 100)}%`,
                       backgroundColor: item.color,
                     }}
                   />

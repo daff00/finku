@@ -218,3 +218,9 @@ export interface User {
   is_active: boolean;
   created_at: string;            // ISO 8601 date string
 }
+
+export type CategoryTotal = {
+  category: string;
+  amount: number;
+  percentage: number;
+};
