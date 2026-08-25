@@ -1,168 +1,523 @@
-import { useEffect, useState, type FormEvent } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { useAccounts } from "@/hooks"
-import { importService } from "@/services"
-import { BANK_LABELS } from "@/lib/constants"
-import { Button } from "@/components/ui/button"
-import type { ImportResult } from "@/types"
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  FileUp,
+  X,
+} from "lucide-react";
+
+import { useAccounts } from "@/hooks";
+import { importService } from "@/services";
+import { BANK_LABELS } from "@/lib/constants";
+
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import WabiSabiFooter from "@/components/WabiSabiFooter";
+
+import type { ImportResult } from "@/types";
 
 export default function ImportPage() {
-  const { data: accounts = [], isLoading } = useAccounts()
-  const queryClient = useQueryClient()
-  const [selectedAccountId, setSelectedAccountId] = useState<number | "">("")
-  const [file, setFile] = useState<File | null>(null)
-  const [result, setResult] = useState<ImportResult | null>(null)
-  const [localError, setLocalError] = useState("")
+  const { data: accounts = [], isLoading } = useAccounts();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [selectedAccountId, setSelectedAccountId] = useState<number | "">("");
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [localError, setLocalError] = useState("");
 
   useEffect(() => {
     if (selectedAccountId === "" && accounts.length > 0) {
-      setSelectedAccountId(accounts[0].id)
+      setSelectedAccountId(accounts[0].id);
     }
-  }, [accounts, selectedAccountId])
+  }, [accounts, selectedAccountId]);
 
   const selectedAccount =
     selectedAccountId === ""
       ? null
-      : accounts.find((account) => account.id === selectedAccountId) ?? null
+      : accounts.find((account) => account.id === selectedAccountId) ?? null;
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!selectedAccount) {
-        throw new Error("Please choose an account first")
+        throw new Error("Please choose an account first");
       }
+
       if (!file) {
-        throw new Error("Please choose a PDF file")
+        throw new Error("Please choose a PDF file");
       }
 
       return importService.importStatement({
         accountId: selectedAccount.id,
         bank: selectedAccount.bank,
         file,
-      })
+      });
     },
+
     onSuccess: async (data) => {
-      setResult(data)
-      setLocalError("")
-      setFile(null)
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
+      setResult(data);
+      setLocalError("");
+      setFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["transactions"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["accounts"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["analytics"],
+      });
     },
+
     onError: (error: Error) => {
-      setLocalError(error.message)
+      setLocalError(error.message);
     },
-  })
+  });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    mutation.mutate()
-  }
+    event.preventDefault();
+    mutation.mutate();
+  };
+
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+
+    if (selectedFile && selectedFile.type !== "application/pdf") {
+      setLocalError("Please upload a valid PDF file.");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    setFile(selectedFile);
+    setResult(null);
+    setLocalError("");
+  };
+
+  const handleAccountChange = (value: string) => {
+    setSelectedAccountId(value === "" ? "" : Number(value));
+    setResult(null);
+    setLocalError("");
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    setResult(null);
+    setLocalError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
+    <div className="space-y-8 pb-12">
+      {/* ── Page Header ───────────────────────────────────────── */}
+
+      <div>
+        <h1 className="font-playfair text-[24px] font-normal tracking-tight text-[#1C1410]">
           Import
-        </p>
-        <h1 className="text-3xl font-semibold">Bank statement import</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Upload a supported bank statement, pick the account it belongs to,
-          and let the backend parse and save the transactions.
+        </h1>
+
+        <p className="mt-1 font-inter text-[12px] text-[#8B7355]">
+          Upload your bank statement to import transactions
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 rounded-xl border p-5 shadow-sm"
-      >
-        <label className="grid gap-2">
-          <span className="text-sm font-medium">Target account</span>
-          <select
-            className="rounded-md border bg-background px-3 py-2"
-            value={selectedAccountId}
-            onChange={(event) => {
-              const value = event.target.value
-              setSelectedAccountId(value === "" ? "" : Number(value))
-              setResult(null)
-              setLocalError("")
-            }}
-            disabled={isLoading || accounts.length === 0}
-          >
-            {accounts.length === 0 ? (
-              <option value="">No accounts available</option>
-            ) : (
-              accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} · {BANK_LABELS[account.bank] ?? account.bank}
-                </option>
-              ))
-            )}
-          </select>
-        </label>
+      {/* ── Import Card ───────────────────────────────────────── */}
 
-        <div className="grid gap-2">
-          <span className="text-sm font-medium">Bank</span>
-          <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            {selectedAccount
-              ? BANK_LABELS[selectedAccount.bank] ?? selectedAccount.bank
-              : "Select an account"}
-          </div>
-        </div>
+      <div className="w-full max-w-2xl">
+        <div className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white">
+          <form onSubmit={handleSubmit}>
+            {/* ── Form Header ─────────────────────────────── */}
 
-        <label className="grid gap-2">
-          <span className="text-sm font-medium">Statement file</span>
-          <input
-            type="file"
-            accept=".pdf,application/pdf"
-            className="block w-full rounded-md border border-dashed px-3 py-2 text-sm"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null)
-              setResult(null)
-              setLocalError("")
-            }}
-          />
-        </label>
+            <div className="border-b-[0.5px] border-dashed border-[#E8E4DE] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] bg-[#FAFAF8]">
+                  <FileUp className="h-4 w-4 text-[#8B7355]" />
+                </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            type="submit"
-            disabled={mutation.isPending || !selectedAccount || !file}
-          >
-            {mutation.isPending ? "Importing..." : "Import statement"}
-          </Button>
-          {file ? (
-            <span className="text-sm text-muted-foreground">{file.name}</span>
-          ) : null}
-        </div>
+                <div>
+                  <h2 className="font-inter text-[13px] font-medium text-[#1C1410]">
+                    Bank Statement
+                  </h2>
 
-        {localError ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {localError}
-          </div>
-        ) : null}
-      </form>
-
-      {result ? (
-        <section className="grid gap-3 rounded-xl border p-5">
-          <h2 className="text-lg font-semibold">Import result</h2>
-          <div className="grid gap-2 text-sm md:grid-cols-2">
-            <div>Total parsed: {result.total_parsed}</div>
-            <div>Imported: {result.imported}</div>
-            <div>Duplicates: {result.duplicates}</div>
-            <div>Errors: {result.errors}</div>
-          </div>
-          {result.error_details.length > 0 ? (
-            <div className="grid gap-2">
-              <h3 className="text-sm font-medium">Error details</h3>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                {result.error_details.map((detail, index) => (
-                  <li key={`${detail}-${index}`}>{detail}</li>
-                ))}
-              </ul>
+                  <p className="mt-0.5 font-inter text-[10px] text-[#8B7355]">
+                    Select an account and upload your PDF statement
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : null}
-        </section>
-      ) : null}
+
+            {/* ── Form Body ───────────────────────────────── */}
+
+            <div className="space-y-5 px-5 py-5 sm:px-6">
+              {/* Account */}
+
+              <div className="space-y-1.5">
+                <label className="block font-inter text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+                  Target Account
+                </label>
+
+                <Select
+                  value={selectedAccountId?.toString() ?? ""}
+                  onValueChange={handleAccountChange}
+                  disabled={isLoading || accounts.length === 0}
+                >
+                  <SelectTrigger
+                    className="
+                      h-10 w-full rounded-[4px]
+                      border-[0.5px] border-[#E8E4DE]
+                      bg-white
+                      px-3
+                      font-inter text-[12px] text-[#1C1410]
+                      shadow-none
+                      focus:border-[#1C1410]
+                      focus:ring-0
+                    "
+                  >
+                    <SelectValue
+                      placeholder={
+                        isLoading
+                          ? "Loading accounts..."
+                          : "Select an account"
+                      }
+                    />
+                  </SelectTrigger>
+
+                  <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
+                    {accounts.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No accounts available
+                      </SelectItem>
+                    ) : (
+                      accounts.map((account) => (
+                        <SelectItem
+                          key={account.id}
+                          value={account.id.toString()}
+                          className="font-inter text-[12px] text-[#1C1410]"
+                        >
+                          {account.name} ·{" "}
+                          {BANK_LABELS[account.bank] ?? account.bank}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Bank */}
+
+              <div className="space-y-1.5">
+                <label className="block font-inter text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+                  Bank
+                </label>
+
+                <div className="flex min-h-10 items-center rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-[#FAFAF8] px-3 font-inter text-[12px] text-[#1C1410]">
+                  {selectedAccount
+                    ? BANK_LABELS[selectedAccount.bank] ??
+                      selectedAccount.bank
+                    : "Select an account"}
+                </div>
+              </div>
+
+              {/* ── File Upload ───────────────────────────── */}
+
+              <div className="space-y-1.5">
+                <label className="block font-inter text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+                  Statement File
+                </label>
+
+                {!file ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="
+                      group
+                      flex w-full flex-col items-center justify-center
+                      rounded-[4px]
+                      border-[0.5px] border-dashed border-[#D8D1C8]
+                      bg-[#FAFAF8]
+                      px-5 py-8
+                      text-center
+                      transition-colors
+                      hover:border-[#C4B5A0]
+                      hover:bg-[#F7F5F1]
+                    "
+                  >
+                    <div
+                      className="
+                        mb-3 flex h-9 w-9 items-center justify-center
+                        rounded-[3px]
+                        border-[0.5px] border-[#E8E4DE]
+                        bg-white
+                        transition-colors
+                        group-hover:border-[#C4B5A0]
+                      "
+                    >
+                      <Upload className="h-4 w-4 text-[#8B7355]" />
+                    </div>
+
+                    <span className="font-inter text-[12px] font-medium text-[#1C1410]">
+                      Choose PDF statement
+                    </span>
+
+                    <span className="mt-1 font-inter text-[10px] text-[#A6947E]">
+                      PDF files only
+                    </span>
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-[4px] border-[0.5px] border-[#D8E8DC] bg-[#F6FAF7] px-3.5 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] bg-white">
+                        <FileText className="h-4 w-4 text-[#27AE60]" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate font-inter text-[11px] font-medium text-[#1C1410]">
+                          {file.name}
+                        </p>
+
+                        <p className="mt-0.5 font-inter text-[9px] text-[#8B7355]">
+                          PDF statement · Ready to import
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="shrink-0 rounded-[3px] p-1.5 text-[#A6947E] transition-colors hover:bg-white hover:text-[#C0392B]"
+                      title="Remove file"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+
+              {/* ── Error ────────────────────────────────── */}
+
+              {localError && (
+                <div className="flex items-start gap-2.5 rounded-[4px] border-[0.5px] border-[#C0392B]/20 bg-[#FEF8F7] px-3.5 py-3">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C0392B]" />
+
+                  <p className="font-inter text-[11px] leading-relaxed text-[#C0392B]">
+                    {localError}
+                  </p>
+                </div>
+              )}
+
+              {/* ── Submit ───────────────────────────────── */}
+
+              <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:items-center">
+                <Button
+                  type="submit"
+                  disabled={
+                    mutation.isPending ||
+                    !selectedAccount ||
+                    !file
+                  }
+                  className="
+                    h-10 w-full
+                    rounded-[4px]
+                    bg-[#C0392B]
+                    px-5
+                    font-inter text-[12px] font-medium text-white
+                    shadow-none
+                    transition-colors
+                    hover:bg-[#A83224]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-40
+                    sm:w-auto
+                  "
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <span className="mr-2 inline-block animate-spin">
+                        ⟳
+                      </span>
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-3.5 w-3.5" />
+                      Import Statement
+                    </>
+                  )}
+                </Button>
+
+                {!selectedAccount && !isLoading && (
+                  <span className="font-inter text-[10px] text-[#A6947E]">
+                    Select an account to continue
+                  </span>
+                )}
+
+                {selectedAccount && !file && (
+                  <span className="font-inter text-[10px] text-[#A6947E]">
+                    Choose a PDF statement to continue
+                  </span>
+                )}
+              </div>
+            </div>
+          </form>
+
+          {/* ── Import Result ──────────────────────────────── */}
+
+          {result && (
+            <div className="border-t-[0.5px] border-[#E8E4DE]">
+              <div className="px-5 py-5 sm:px-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F2F9F4]">
+                      <CheckCircle className="h-3.5 w-3.5 text-[#27AE60]" />
+                    </div>
+
+                    <div>
+                      <h2 className="font-inter text-[12px] font-medium text-[#1C1410]">
+                        Import Complete
+                      </h2>
+
+                      <p className="font-inter text-[9px] text-[#8B7355]">
+                        Statement processed successfully
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <StatItem
+                    label="Parsed"
+                    value={result.total_parsed}
+                    color="text-[#1C1410]"
+                  />
+
+                  <StatItem
+                    label="Imported"
+                    value={result.imported}
+                    color="text-[#27AE60]"
+                  />
+
+                  <StatItem
+                    label="Duplicates"
+                    value={result.duplicates}
+                    color="text-[#8B7355]"
+                  />
+
+                  <StatItem
+                    label="Errors"
+                    value={result.errors}
+                    color={
+                      result.errors > 0
+                        ? "text-[#C0392B]"
+                        : "text-[#8B7355]"
+                    }
+                  />
+                </div>
+
+                {result.error_details.length > 0 && (
+                  <div className="mt-4 border-t-[0.5px] border-dashed border-[#E8E4DE] pt-3.5">
+                    <p className="mb-2 font-inter text-[10px] font-semibold uppercase tracking-[0.1em] text-[#C0392B]">
+                      Error Details
+                    </p>
+
+                    <ul className="space-y-1">
+                      {result.error_details.map((detail, index) => (
+                        <li
+                          key={`${detail}-${index}`}
+                          className="font-inter text-[10px] leading-relaxed text-[#8B7355]"
+                        >
+                          <span className="mr-1.5 text-[#C0392B]">
+                            •
+                          </span>
+                          {detail}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <WabiSabiFooter />
     </div>
-  )
+  );
+}
+
+/* ── Stat Item ─────────────────────────────────────────────────── */
+
+function StatItem({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div
+      className="
+        min-w-0
+        rounded-[4px]
+        border-[0.5px] border-[#E8E4DE]
+        bg-[#FAFAF8]
+        px-2 py-3
+        text-center
+      "
+    >
+      <p className="truncate font-inter text-[8px] font-medium uppercase tracking-[0.1em] text-[#8B7355]">
+        {label}
+      </p>
+
+      <p
+        className={`
+          mt-1
+          truncate
+          font-mono
+          text-[16px]
+          font-medium
+          leading-none
+          ${color}
+        `}
+      >
+        {value.toLocaleString("en-US")}
+      </p>
+    </div>
+  );
 }

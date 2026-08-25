@@ -25,7 +25,7 @@ export default function AccountCard({ account, balance }: Props) {
         borderLeftColor: bankColor,
       }}
     >
-      <p className="text-[13px] text-[#1C1410] font-serif">
+      <p className="text-[13px] text-[#1C1410] font-sans">
         {account.name}
       </p>
 

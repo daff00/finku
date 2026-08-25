@@ -47,7 +47,7 @@ function TransactionRow({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
-        <p className="text-[13px] text-[#1C1410] font-serif truncate">
+        <p className="text-[13px] text-[#1C1410] font-sans truncate">
           {txn.note || category || "Untitled"}
         </p>
 
