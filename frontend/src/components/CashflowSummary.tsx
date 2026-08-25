@@ -26,18 +26,18 @@ export default function CashflowSummary({
           {month}
         </p>
 
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3"
-        >
+        <div className="grid grid-cols-2 gap-3 mt-3">
           <CashflowMetric
             label="Income"
-            value={`+${formatIDR(income)}`}
+            value={formatIDR(income)}
+            prefix="+"
             valueClassName="text-[#27AE60]"
           />
 
           <CashflowMetric
             label="Expenses"
-            value={`-${formatIDR(expenses)}`}
+            value={formatIDR(expenses)}
+            prefix="−"
             valueClassName="text-[#C0392B]"
           />
         </div>
@@ -46,11 +46,11 @@ export default function CashflowSummary({
       <Divider />
 
       <section>
-        <p className="text-[12px] font-medium text-[#8B7355] font-sans">
+        <p className="text-[11px] font-medium text-[#8B7355] font-sans">
           Spending by Category
         </p>
 
-        <div className="mt-4">
+        <div className="mt-3">
           <SpendingByCategory
             data={categories}
             emptyMessage="No expenses yet."
@@ -64,19 +64,26 @@ export default function CashflowSummary({
 function CashflowMetric({
   label,
   value,
+  prefix,
   valueClassName,
 }: {
   label: string;
   value: string;
+  prefix: string;
   valueClassName: string;
 }) {
   return (
-    <div className="p-3 bg-[#FAFAF8] rounded-[4px] border-[0.5px] border-[#E8E4DE]">
-      <p className="text-[9px] uppercase tracking-wider text-[#8B7355] font-sans">
+    <div className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-[#FAFAF8] p-3">
+      <div className="text-[9px] uppercase tracking-[0.12em] text-[#8B7355] font-sans">
         {label}
-      </p>
+      </div>
 
-      <p className={`font-mono text-[14px] mt-1 ${valueClassName}`}>{value}</p>
+      <div className={`font-mono text-[13px] font-medium mt-0.5 ${valueClassName}`}>
+        <span className="whitespace-nowrap">
+          {prefix}
+          {value}
+        </span>
+      </div>
     </div>
   );
 }
