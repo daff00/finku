@@ -1,24 +1,37 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { authService } from '@/services';
-import type { User } from '@/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { authService } from '@/services'
+import type { User } from '@/types'
 
 export function useAuth() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
+  const hasToken = authService.isAuthenticated()
 
-  // Fetch current user
-  const { data: user, isLoading, error } = useQuery<User>({
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery<User>({
     queryKey: ['auth', 'me'],
     queryFn: authService.me,
+    enabled: hasToken,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    staleTime: 5 * 60 * 1000,
+  })
 
-  // Logout – clear token and invalidate user query
   const logout = () => {
-    localStorage.removeItem('token');
-    queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-    // Redirect to login will be handled by ProtectedRoute
-  };
+    // Hapus token
+    authService.clearToken()
 
-  return { user, isLoading, error, logout };
+    // Hapus cache user tanpa refetch
+    queryClient.removeQueries({
+      queryKey: ['auth', 'me'],
+    })
+  }
+
+  return {
+    user,
+    isLoading: hasToken ? isLoading : false,
+    error: hasToken ? error : null,
+    logout,
+  }
 }
