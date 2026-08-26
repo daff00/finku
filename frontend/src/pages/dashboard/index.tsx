@@ -5,7 +5,7 @@ import { formatIDR } from "@/lib/formatters";
 
 import type { MonthlySummary, SpendingCategory } from "@/types";
 
-import CashflowSummary from "@/components/CashflowSummary";
+import CashflowSummary from "@/components/analytics/CashflowSummary";
 import AccountCard from "@/components/dashboard/AccountCard";
 import RecentTransactions from "@/components/RecentTransactions";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
