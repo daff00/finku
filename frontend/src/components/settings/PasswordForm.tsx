@@ -27,59 +27,136 @@ export default function PasswordForm({
   onSubmit,
 }: PasswordFormProps) {
   return (
-    <div>
-      <div className="flex items-center gap-1.5">
-        <LockKeyhole className="w-3.5 h-3.5 text-[#8B7355]" />
-        <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
-          Change Password
-        </Label>
+    <div className="space-y-3">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] bg-[#FAFAF8]">
+          <LockKeyhole className="h-3.5 w-3.5 text-[#8B7355]" />
+        </div>
+
+        <div>
+          <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+            Change Password
+          </Label>
+          <p className="mt-0.5 font-sans text-[10px] text-[#A6947E]">
+            At least 8 characters.
+          </p>
+        </div>
       </div>
-      <form onSubmit={onSubmit} className="mt-1.5 space-y-2">
+
+      <form onSubmit={onSubmit} className="space-y-3">
         <Input
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+          className="
+            h-auto w-full
+            !border-0 !border-b !border-[#E8E4DE]
+            !rounded-none
+            !bg-transparent
+            !px-0 !py-1.5
+            !font-sans !text-[13px] !text-[#1C1410]
+            !shadow-none
+            !outline-none !ring-0
+            placeholder:!text-[#C4B5A0]
+            focus:!border-[#1C1410]
+            focus:!outline-none
+            focus:!ring-0
+          "
           placeholder="Current password"
           required
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+            className="
+              h-auto w-full
+              !border-0 !border-b !border-[#E8E4DE]
+              !rounded-none
+              !bg-transparent
+              !px-0 !py-1.5
+              !font-sans !text-[13px] !text-[#1C1410]
+              !shadow-none
+              !outline-none !ring-0
+              placeholder:!text-[#C4B5A0]
+              focus:!border-[#1C1410]
+              focus:!outline-none
+              focus:!ring-0
+            "
             placeholder="New password"
             minLength={8}
             required
           />
+
           <Input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+            className="
+              h-auto w-full
+              !border-0 !border-b !border-[#E8E4DE]
+              !rounded-none
+              !bg-transparent
+              !px-0 !py-1.5
+              !font-sans !text-[13px] !text-[#1C1410]
+              !shadow-none
+              !outline-none !ring-0
+              placeholder:!text-[#C4B5A0]
+              focus:!border-[#1C1410]
+              focus:!outline-none
+              focus:!ring-0
+            "
             placeholder="Confirm password"
             minLength={8}
             required
           />
         </div>
-        <div className="flex items-center justify-between gap-3">
-          {message && (
-            <div className={`text-[10px] font-sans flex items-center gap-1 ${
-              message.type === "success" ? "text-[#27AE60]" : "text-[#C0392B]"
-            }`}>
-              {message.type === "success" ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-              <span>{message.text}</span>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {message ? (
+            <div
+              className={`
+                flex items-center gap-2
+                rounded-[4px] border-[0.5px]
+                px-3 py-2
+                text-[11px]
+                ${message.type === "success"
+                  ? "border-[#D8E8DC] bg-[#F6FAF7] text-[#27AE60]"
+                  : "border-[#E8D2CE] bg-[#FEF8F7] text-[#C0392B]"
+                }
+              `}
+            >
+              {message.type === "success" ? (
+                <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              )}
+              <span className="font-sans leading-relaxed">{message.text}</span>
             </div>
+          ) : (
+            <div />
           )}
+
           <Button
             type="submit"
             disabled={isChanging}
-            variant="ghost"
-            size="sm"
-            className="text-[#8B7355] hover:text-[#1C1410] hover:bg-[#FAFAF8] rounded-[4px] text-[11px] px-3 py-1 h-auto"
+            className="
+              h-9 w-full shrink-0
+              !rounded-[4px]
+              !border-0
+              !bg-[#C0392B]
+              !px-4
+              !font-sans !text-[11px] !font-medium !text-white
+              !shadow-none
+              transition-colors
+              hover:!bg-[#A83224]
+              disabled:!opacity-50 disabled:!cursor-not-allowed
+              sm:w-auto
+            "
           >
-            {isChanging ? "Changing..." : "Save"}
+            {isChanging ? "Changing..." : "Change Password"}
           </Button>
         </div>
       </form>

@@ -59,6 +59,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
       onOpenChange(false);
     },
     onError: (error) => {
@@ -72,6 +73,22 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
   };
 
   const hasParentId = account?.parent_id && account.parent_id > 0;
+
+  // ── Reusable input class ──
+  const inputClass = `
+    h-auto w-full
+    !border-0 !border-b !border-[#E8E4DE]
+    !rounded-none
+    !bg-transparent
+    !px-0 !py-1.5
+    !font-sans !text-[13px] !text-[#1C1410]
+    !shadow-none
+    !outline-none !ring-0 !ring-offset-0
+    placeholder:!text-[#C4B5A0]
+    focus:!border-[#1C1410]
+    focus:!outline-none
+    focus:!ring-0 focus:!ring-offset-0
+  `;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,7 +110,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none"
+                className={inputClass}
                 required
               />
             </div>
@@ -113,7 +130,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
                 <Input
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="flex-1 h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-mono text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none"
+                  className={inputClass}
                   placeholder="#0066AE"
                 />
               </div>
@@ -125,7 +142,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
                 Currency
               </Label>
               <Select value={currency} onValueChange={(value) => setCurrency(value || CurrencyEnum.IDR)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
@@ -148,7 +165,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
                   type="number"
                   value={parentId}
                   onChange={(e) => setParentId(e.target.value)}
-                  className="h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none"
+                  className={inputClass}
                 />
               </div>
             )}
@@ -162,7 +179,7 @@ export default function EditAccountDialog({ open, onOpenChange, account }: EditA
                 value={isActive ? "active" : "inactive"}
                 onValueChange={(val) => setIsActive(val === "active")}
               >
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">

@@ -49,6 +49,9 @@ export default function AccountList({
       {accounts.map((account) => {
         const bankColor = BANK_COLORS[account.bank] || "#6B7280";
         const bankLabel = BANK_LABELS[account.bank] || account.bank;
+        const lastFour = account.account_number
+          ? account.account_number.slice(-4)
+          : "••••";
 
         return (
           <div
@@ -60,9 +63,10 @@ export default function AccountList({
               <div className="font-sans text-sm font-medium text-[#1C1410] truncate">
                 {account.name}
               </div>
-              {/* <div className="font-sans text-[10px] text-[#8B7355] mt-0.5">
+              <div className="font-sans text-[10px] text-[#8B7355] mt-0.5">
                 {bankLabel}
-              </div> */}
+                <span className="ml-1">• {lastFour}</span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

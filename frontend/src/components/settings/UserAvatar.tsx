@@ -6,7 +6,7 @@ export default function UserAvatar({ user }: { user: User | null }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-[0.5px] border-dashed border-[#E8E4DE]">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 shrink-0 rounded-[2px] bg-[#1C1410] text-white flex items-center justify-center font-serif text-[15px] uppercase">
+        <div className="w-10 h-10 shrink-0 rounded-[2px] bg-accent/10 text-accent flex items-center justify-center font-sans text-[15px]">
           {initial}
         </div>
         <div className="min-w-0">
