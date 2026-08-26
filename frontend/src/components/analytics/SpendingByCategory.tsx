@@ -8,7 +8,7 @@ const CATEGORY_COLORS = [
 
 interface CategoryItem {
   category: string;
-  total: number;
+  total: string | number; // ✅ accept both string and number
   percentage: number;
 }
 
@@ -22,7 +22,12 @@ export default function SpendingByCategory({ data, emptyMessage = "No data avail
     return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
   }
 
+  // Convert total to number and sort
   const sorted = [...data]
+    .map(item => ({
+      ...item,
+      total: Number(item.total) || 0,
+    }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 

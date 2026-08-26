@@ -1,7 +1,6 @@
 // frontend/src/pages/AnalyticsPage.tsx
 import { useMemo, useState } from "react";
 import { useNetworth, useMonthly, useCategories, useSpendingByAccount } from "@/hooks";
-import { formatIDR } from "@/lib/formatters";
 import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
 import type { MonthlySummary } from "@/types";
 
