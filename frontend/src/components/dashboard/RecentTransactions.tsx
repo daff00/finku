@@ -1,3 +1,4 @@
+// frontend/src/components/RecentTransactions.tsx
 import { NavLink } from "react-router-dom";
 import type { Transaction } from "@/types";
 import { formatDateShort, formatIDR, toTitleCase } from "@/lib/formatters";
@@ -8,23 +9,23 @@ type Props = {
 
 export default function RecentTransactions({ transactions }: Props) {
   return (
-    <section className="w-full bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-5 lg:p-6">
+    <section className="w-full bg-surface border-[0.5px] border-border rounded-[4px] p-5 lg:p-6">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-[0.12em] text-[#8B7355] font-sans">
+        <p className="text-[10px] uppercase tracking-[0.12em] text-text-secondary font-sans">
           Latest Transactions
         </p>
 
         <NavLink
           to="/transactions"
-          className="text-[11px] text-[#C0392B] font-sans hover:underline"
+          className="text-[11px] text-accent font-sans hover:underline"
         >
           See all →
         </NavLink>
       </div>
 
-      <div className="mt-2 divide-y divide-[#E8E4DE]/60">
+      <div className="mt-2 divide-y divide-border/60">
         {transactions.length === 0 ? (
-          <div className="py-6 text-[12px] text-[#C4B5A0] font-sans">
+          <div className="py-6 text-[12px] text-text-muted font-sans">
             No transactions yet.
           </div>
         ) : (
@@ -47,19 +48,19 @@ function TransactionRow({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
-        <p className="text-[13px] text-[#1C1410] font-sans truncate">
+        <p className="text-[13px] text-text-primary font-sans truncate">
           {txn.note || category || "Untitled"}
         </p>
 
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#C4B5A0] font-sans">
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-text-muted font-sans">
           <span>{formatDateShort(txn.date)}</span>
 
-          <span className="w-1 h-1 rounded-full bg-[#E8E4DE]" />
+          <span className="w-1 h-1 rounded-full bg-border" />
 
           <span>{category}</span>
 
           {txn.source === "PDF" && (
-            <span className="text-[8px] bg-[#F3F0EB] px-1.5 py-0.5 rounded text-[#8B7355]">
+            <span className="text-[8px] bg-border/30 px-1.5 py-0.5 rounded text-text-secondary">
               PDF
             </span>
           )}
@@ -69,10 +70,10 @@ function TransactionRow({
       <span
         className={`font-mono text-[13px] flex-shrink-0 ${
           txn.type === "INCOME"
-            ? "text-[#27AE60]"
+            ? "text-income"
             : txn.type === "EXPENSE"
-              ? "text-[#C0392B]"
-              : "text-[#8B7355]"
+              ? "text-expense"
+              : "text-text-secondary"
         }`}
       >
         {txn.type === "EXPENSE"

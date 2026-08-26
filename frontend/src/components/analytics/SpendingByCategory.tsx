@@ -1,5 +1,5 @@
 // frontend/src/components/analytics/SpendingByCategory.tsx
-import { formatIDR } from "@/lib/formatters";
+import { formatIDR, toTitleCase } from "@/lib/formatters";
 
 const CATEGORY_COLORS = [
   "#C0392B", "#E67E22", "#F1C40F", "#2ECC71", "#3498DB",
@@ -38,8 +38,8 @@ export default function SpendingByCategory({ data, emptyMessage = "No data avail
         return (
           <div key={item.category} className="space-y-1">
             <div className="flex items-center justify-between text-[13px] font-sans">
-              <span className="text-[#1C1410] font-normal">{item.category}</span>
-              <span className="font-mono text-[#1C1410] font-medium">
+              <span className="text-[#1C1410] font-normal">{toTitleCase(item.category)}</span>
+              <span className="font-mono text-[#1C1410]">
                 {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
               </span>
             </div>

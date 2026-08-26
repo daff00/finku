@@ -11,6 +11,7 @@ import CashflowSummary from "@/components/analytics/CashflowSummary";
 import SpendingByCategory from "@/components/analytics/SpendingByCategory";
 import SpendingByAccount from "@/components/analytics/SpendingByAccount";
 import AnalyticsSkeleton from "@/components/analytics/AnalyticsSkeleton";
+import QuickInsights from "@/components/analytics/QuickInsights";
 
 type AccountSpendingItem = {
   accountId: number;
@@ -142,6 +143,18 @@ export default function AnalyticsPage() {
         expense={totalExpense}
         savingRate={savingRate}
       />
+
+      <section>
+        <QuickInsights
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          savingRate={savingRate}
+          categoryData={categoryData ?? []}
+          accountSpending={accountSpending ?? []}
+          chartData={chartData}
+          currentNetWorth={currentNetWorth}
+        />
+      </section>
 
       <Divider />
 

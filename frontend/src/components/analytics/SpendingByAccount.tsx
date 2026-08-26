@@ -33,7 +33,7 @@ export default function SpendingByAccount({ data, emptyMessage = "No spending by
               <span className="truncate">{item.accountName}</span>
               <span className="text-[#8B7355] text-[11px] shrink-0">({item.bankLabel})</span>
             </span>
-            <span className="font-mono text-[#1C1410] font-medium ml-4 shrink-0">
+            <span className="font-mono text-[#1C1410] ml-4 shrink-0">
               {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
             </span>
           </div>
