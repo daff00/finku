@@ -1,14 +1,15 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from slowapi.middleware import SlowAPIASGIMiddleware
 
+from app.api.routes import accounts, analytics, auth, balances, imports, transactions
 from app.core.config import settings
-from app.core.logging import setup_logging, LoggingMiddleware
 from app.core.exceptions import register_exception_handlers
+from app.core.logging import LoggingMiddleware, setup_logging
 from app.core.rate_limit import limiter
-from app.api.routes import accounts, transactions, balances, analytics, imports, auth
 
 # setup logging first
 setup_logging()

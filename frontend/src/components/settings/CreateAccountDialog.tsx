@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
-import { AccountTypeEnum, BankEnum, CurrencyEnum } from "@/types";
+import { BANK_LABELS } from "@/lib/constants";
+import { AccountTypeEnum, CurrencyEnum } from "@/types";
 import { accountService } from "@/services";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
   const [color, setColor] = useState("#0066AE");
   const [currency, setCurrency] = useState<string>(CurrencyEnum.IDR);
   const [parentId, setParentId] = useState<string>("");
+  const [accountNumber, setAccountNumber] = useState<string>("");
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -47,9 +48,11 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
         color,
         currency: currency as any,
         parent_id: parentId ? Number(parentId) : undefined,
+        account_number: accountNumber,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
       resetForm();
       onOpenChange(false);
     },
@@ -65,6 +68,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
     setColor("#0066AE");
     setCurrency(CurrencyEnum.IDR);
     setParentId("");
+    setAccountNumber("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -78,6 +82,22 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
   }));
 
   const typeOptions = Object.values(AccountTypeEnum);
+
+  // ── Reusable input class ──
+  const inputClass = `
+    h-auto w-full
+    !border-0 !border-b !border-[#E8E4DE]
+    !rounded-none
+    !bg-transparent
+    !px-0 !py-1.5
+    !font-sans !text-[13px] !text-[#1C1410]
+    !shadow-none
+    !outline-none !ring-0 !ring-offset-0
+    placeholder:!text-[#C4B5A0]
+    focus:!border-[#1C1410]
+    focus:!outline-none
+    focus:!ring-0 focus:!ring-offset-0
+  `;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,7 +119,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+                className={inputClass}
                 placeholder="e.g., BCA Main"
                 required
               />
@@ -110,8 +130,8 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
               <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
                 Bank
               </Label>
-              <Select value={bank} onValueChange={(value) => setBank(value || BankEnum.BCA)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0">
+              <Select value={bank} onValueChange={(value) => setBank(value || "BCA")}>
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
@@ -130,7 +150,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                 Account Type
               </Label>
               <Select value={type} onValueChange={(value) => setType(value || AccountTypeEnum.SAVINGS)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
@@ -141,6 +161,19 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Account Number */}
+            <div className="space-y-1.5">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+                Account Number <span className="font-sans text-[#C4B5A0] text-[9px] ml-1">(Last 4 digits)</span>
+              </Label>
+              <Input
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className={inputClass}
+                placeholder="e.g., 5678"
+              />
             </div>
 
             {/* Color */}
@@ -158,7 +191,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                 <Input
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="flex-1 h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-mono text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none"
+                  className={inputClass}
                   placeholder="#0066AE"
                 />
               </div>
@@ -170,7 +203,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                 Currency
               </Label>
               <Select value={currency} onValueChange={(value) => setCurrency(value || CurrencyEnum.IDR)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
@@ -193,7 +226,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                 type="number"
                 value={parentId}
                 onChange={(e) => setParentId(e.target.value)}
-                className="h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+                className={inputClass}
                 placeholder="e.g., 5 (for Jago pockets)"
               />
             </div>

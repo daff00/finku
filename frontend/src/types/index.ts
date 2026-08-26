@@ -78,6 +78,7 @@ type CurrencyEnum = (typeof CurrencyEnum)[keyof typeof CurrencyEnum]
 export type Account = {
     id: number
     parent_id: number | null
+    account_number: string | null
     name: string
     bank: BankEnum
     type: AccountTypeEnum
@@ -153,6 +154,7 @@ export type AccountCreate = {
     color: string
     currency?: CurrencyEnum
     parent_id?: number | null
+    account_number?: string
 }
 
 export type AccountUpdate = {

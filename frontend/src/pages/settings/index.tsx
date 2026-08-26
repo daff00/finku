@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
-  const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts( { include_inactive: true } );
 
   // ── Profile state ─────────────────────────────────────────────
   const [displayName, setDisplayName] = useState(user?.display_name || "");

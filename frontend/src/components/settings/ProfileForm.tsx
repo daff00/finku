@@ -19,34 +19,77 @@ export default function ProfileForm({
   onSubmit,
 }: ProfileFormProps) {
   return (
-    <div>
-      <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
-        Display Name
-      </Label>
-      <form onSubmit={onSubmit} className="mt-1.5 space-y-2">
-        <div className="flex items-center gap-2">
+    <div className="space-y-3">
+      <div>
+        <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+          Display Name
+        </Label>
+        <p className="mt-0.5 font-sans text-[10px] text-[#A6947E]">
+          Shown throughout your account.
+        </p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="flex-1 h-auto rounded-none border-0 border-b border-[#E8E4DE] px-0 py-1 shadow-none bg-transparent text-[#1C1410] font-sans text-sm focus:border-[#1C1410] focus:ring-0 focus:outline-none placeholder:text-[#C4B5A0]"
+            className="
+              h-auto flex-1
+              !border-0 !border-b !border-[#E8E4DE]
+              !rounded-none
+              !bg-transparent
+              !px-0 !py-1.5
+              !font-sans !text-[13px] !text-[#1C1410]
+              !shadow-none
+              !outline-none !ring-0
+              placeholder:!text-[#C4B5A0]
+              focus:!border-[#1C1410]
+              focus:!outline-none
+              focus:!ring-0
+            "
             placeholder="Your display name"
           />
+
           <Button
             type="submit"
             disabled={isUpdating}
-            variant="ghost"
-            size="sm"
-            className="text-[#8B7355] hover:text-[#1C1410] hover:bg-[#FAFAF8] rounded-[4px] text-[11px] px-3 py-1 h-auto"
+            className="
+              h-9 shrink-0
+              !rounded-[4px]
+              !border-0
+              !bg-[#C0392B]
+              !px-4
+              !font-sans !text-[11px] !font-medium !text-white
+              !shadow-none
+              transition-colors
+              hover:!bg-[#A83224]
+              disabled:!opacity-50 disabled:!cursor-not-allowed
+            "
           >
-            {isUpdating ? "Saving..." : "Save"}
+            {isUpdating ? "Saving..." : "Save Changes"}
           </Button>
         </div>
+
         {message && (
-          <div className={`text-[10px] font-sans flex items-center gap-1 ${
-            message.type === "success" ? "text-[#27AE60]" : "text-[#C0392B]"
-          }`}>
-            {message.type === "success" ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-            <span>{message.text}</span>
+          <div
+            className={`
+              flex items-center gap-2
+              rounded-[4px] border-[0.5px]
+              px-3 py-2
+              text-[11px]
+              ${message.type === "success"
+                ? "border-[#D8E8DC] bg-[#F6FAF7] text-[#27AE60]"
+                : "border-[#E8D2CE] bg-[#FEF8F7] text-[#C0392B]"
+              }
+            `}
+          >
+            {message.type === "success" ? (
+              <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span className="font-sans leading-relaxed">{message.text}</span>
           </div>
         )}
       </form>

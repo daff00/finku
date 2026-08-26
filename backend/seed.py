@@ -371,6 +371,7 @@ def seed():
         type=AccountTypeEnum.SAVINGS,
         color="#0066AE",
         currency=CurrencyEnum.IDR,
+        account_number="1234",
     )
 
     mandiri = Account(
@@ -380,6 +381,7 @@ def seed():
         type=AccountTypeEnum.SAVINGS,
         color="#F5A623",
         currency=CurrencyEnum.IDR,
+        account_number="2345",
     )
 
     jago_main = Account(
@@ -389,6 +391,7 @@ def seed():
         type=AccountTypeEnum.POCKET,
         color="#00B14F",
         currency=CurrencyEnum.IDR,
+        account_number="3456",
     )
 
     jago_liburan = Account(
@@ -398,6 +401,7 @@ def seed():
         type=AccountTypeEnum.POCKET,
         color="#00B14F",
         currency=CurrencyEnum.IDR,
+        account_number="4567",
     )
 
     jago_darurat = Account(
@@ -407,6 +411,7 @@ def seed():
         type=AccountTypeEnum.POCKET,
         color="#00B14F",
         currency=CurrencyEnum.IDR,
+        account_number="5678",
     )
 
     seabank = Account(
@@ -416,6 +421,7 @@ def seed():
         type=AccountTypeEnum.SAVINGS,
         color="#FF5C00",
         currency=CurrencyEnum.IDR,
+        account_number="7891",
     )
 
     ovo = Account(
@@ -425,6 +431,7 @@ def seed():
         type=AccountTypeEnum.EWALLET,
         color="#4C3494",
         currency=CurrencyEnum.IDR,
+        account_number="8910",
     )
 
     gopay = Account(
@@ -434,6 +441,7 @@ def seed():
         type=AccountTypeEnum.EWALLET,
         color="#00AED6",
         currency=CurrencyEnum.IDR,
+        account_number="9101",
     )
 
     rdn = Account(
@@ -443,6 +451,7 @@ def seed():
         type=AccountTypeEnum.INVESTMENT,
         color="#E8750A",
         currency=CurrencyEnum.IDR,
+        account_number="1013",
     )
 
     accounts = [
