@@ -19,11 +19,11 @@ export const authService = {
         formData.append('password', payload.password)
 
         const response = await api.post('auth/login', formData, {
-            headers: { 'Content-Type' : 'multipart/form-data' }
-    })
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
         return response.data
     },
-    
+
     logout: async (): Promise<void> => {
         await api.post('/auth/logout')
         localStorage.removeItem('token')
@@ -48,5 +48,9 @@ export const authService = {
 
     clearToken: (): void => {
         localStorage.removeItem('token')
+    },
+    register: async (payload: { username: string; password: string; display_name: string }) => {
+        const response = await api.post("/auth/register", payload);
+        return response.data;
     },
 }

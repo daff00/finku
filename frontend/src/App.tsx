@@ -9,11 +9,13 @@ import Analytics from "@/pages/analytics";
 import Import from "@/pages/import";
 import Settings from "@/pages/settings";
 import NotFoundPage from "@/pages/NotFoundPage";
+import RegisterPage from "@/pages/RegisterPage"
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
