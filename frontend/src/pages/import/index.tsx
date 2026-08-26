@@ -9,6 +9,7 @@ import {
   AlertCircle,
   FileUp,
   X,
+  ChevronDown,
 } from "lucide-react";
 
 import { useAccounts } from "@/hooks";
@@ -17,12 +18,11 @@ import { BANK_LABELS } from "@/lib/constants";
 
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 
@@ -118,8 +118,8 @@ export default function ImportPage() {
     setLocalError("");
   };
 
-  const handleAccountChange = (value: string) => {
-    setSelectedAccountId(value === "" ? "" : Number(value));
+  const handleAccountChange = (value: string | null) => {
+    setSelectedAccountId(value === null || value === "" ? "" : Number(value));
     setResult(null);
     setLocalError("");
   };
@@ -150,8 +150,8 @@ export default function ImportPage() {
 
       {/* ── Import Card ───────────────────────────────────────── */}
 
-      <div className="w-full max-w-2xl">
-        <div className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white">
+      <div className="w-full">
+        <div className="w-full rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white">
           <form onSubmit={handleSubmit}>
             {/* ── Form Header ─────────────────────────────── */}
 
@@ -183,51 +183,73 @@ export default function ImportPage() {
                   Target Account
                 </label>
 
-                <Select
-                  value={selectedAccountId?.toString() ?? ""}
-                  onValueChange={handleAccountChange}
-                  disabled={isLoading || accounts.length === 0}
-                >
-                  <SelectTrigger
-                    className="
-                      h-10 w-full rounded-[4px]
-                      border-[0.5px] border-[#E8E4DE]
-                      bg-white
-                      px-3
-                      font-inter text-[12px] text-[#1C1410]
-                      shadow-none
-                      focus:border-[#1C1410]
-                      focus:ring-0
-                    "
-                  >
-                    <SelectValue
-                      placeholder={
-                        isLoading
-                          ? "Loading accounts..."
-                          : "Select an account"
-                      }
-                    />
-                  </SelectTrigger>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="
+          w-full justify-between
+          h-10 rounded-[4px]
+          border-[0.5px] border-[#E8E4DE]
+          bg-white
+          px-3
+          font-inter text-[12px] text-[#1C1410]
+          hover:bg-[#FAFAF8]
+          focus:border-[#1C1410]
+          focus:ring-0
+        "
+                      disabled={isLoading || accounts.length === 0}
+                    >
+                      <span className="truncate">
+                        {selectedAccount
+                          ? `${selectedAccount.name} · ${BANK_LABELS[selectedAccount.bank] ?? selectedAccount.bank}`
+                          : isLoading
+                            ? "Loading accounts..."
+                            : "Select an account"}
+                      </span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
 
-                  <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
+                  <DropdownMenuContent
+                    align="start"
+                    sideOffset={4}
+                    className="
+        w-[var(--radix-dropdown-menu-trigger-width)]
+        rounded-[4px] border-[0.5px] border-[#E8E4DE]
+        bg-white
+        shadow-[0_8px_24px_rgba(28,20,16,0.08)]
+        p-1
+      "
+                  >
                     {accounts.length === 0 ? (
-                      <SelectItem value="none" disabled>
+                      <div className="px-2 py-1.5 text-[12px] text-[#8B7355] font-inter">
                         No accounts available
-                      </SelectItem>
+                      </div>
                     ) : (
                       accounts.map((account) => (
-                        <SelectItem
+                        <DropdownMenuItem
                           key={account.id}
-                          value={account.id.toString()}
-                          className="font-inter text-[12px] text-[#1C1410]"
+                          onClick={() => {
+                            setSelectedAccountId(account.id);
+                            setResult(null);
+                            setLocalError("");
+                          }}
+                          className="
+                            cursor-pointer
+                            rounded-[4px]
+                            px-2 py-1.5
+                            font-inter text-[12px] text-[#1C1410]
+                            hover:bg-[#FAFAF8]
+                            focus:bg-[#FAFAF8]
+                          "
                         >
-                          {account.name} ·{" "}
-                          {BANK_LABELS[account.bank] ?? account.bank}
-                        </SelectItem>
+                          {account.name} · {BANK_LABELS[account.bank] ?? account.bank}
+                        </DropdownMenuItem>
                       ))
                     )}
-                  </SelectContent>
-                </Select>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Bank */}
@@ -240,7 +262,7 @@ export default function ImportPage() {
                 <div className="flex min-h-10 items-center rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-[#FAFAF8] px-3 font-inter text-[12px] text-[#1C1410]">
                   {selectedAccount
                     ? BANK_LABELS[selectedAccount.bank] ??
-                      selectedAccount.bank
+                    selectedAccount.bank
                     : "Select an account"}
                 </div>
               </div>
