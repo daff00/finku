@@ -118,12 +118,6 @@ export default function ImportPage() {
     setLocalError("");
   };
 
-  const handleAccountChange = (value: string | null) => {
-    setSelectedAccountId(value === null || value === "" ? "" : Number(value));
-    setResult(null);
-    setLocalError("");
-  };
-
   const removeFile = () => {
     setFile(null);
     setResult(null);
@@ -184,7 +178,7 @@ export default function ImportPage() {
                 </label>
 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger>
                     <Button
                       variant="outline"
                       className="

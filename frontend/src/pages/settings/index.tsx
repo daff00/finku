@@ -1,10 +1,8 @@
 // frontend/src/pages/SettingsPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth, useAccounts } from "@/hooks";
-import { accountService } from "@/services";
 import type { Account } from "@/types";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 
@@ -24,8 +22,7 @@ import DeleteAccountDialog from "@/components/settings/DeleteAccountDialog";
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const queryClient = useQueryClient();
-  const { data: accounts, isLoading: accountsLoading } = useAccounts( { include_inactive: true } );
+  const { data: accounts, isLoading: accountsLoading } = useAccounts({ include_inactive: true });
 
   // ── Profile state ─────────────────────────────────────────────
   const [displayName, setDisplayName] = useState(user?.display_name || "");
@@ -125,7 +122,7 @@ export default function SettingsPage() {
 
         <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-5 space-y-5">
           {/* User Avatar & Name */}
-          <UserAvatar user={user} />
+          <UserAvatar user={user ?? null} />
 
           {/* Display Name & Password */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -250,15 +247,6 @@ export default function SettingsPage() {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         account={deletingAccount}
-        onConfirm={() => {
-          if (deletingAccount) {
-            accountService.deleteAccount(deletingAccount.id).then(() => {
-              queryClient.invalidateQueries({ queryKey: ["accounts"] });
-              setIsDeleteDialogOpen(false);
-              setDeletingAccount(null);
-            });
-          }
-        }}
       />
     </div>
   );
