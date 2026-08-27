@@ -212,7 +212,7 @@ export default function AddTransactionSheet({
                             value={amount}
                             onChange={handleAmountChange}
                             placeholder="0"
-                            className="h-auto !border-0 !shadow-none bg-transparent px-0 py-2 text-center font-mono text-3xl font-normal !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                            className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
                             autoFocus
                         />
                     </div>
@@ -226,7 +226,7 @@ export default function AddTransactionSheet({
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="e.g., Lunch, Salary, etc."
-                            className="h-auto !border-0 !shadow-none bg-transparent px-0 py-2 font-mono text-3xl font-normal !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                            className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
                             autoFocus
                         />
                     </div>
@@ -312,7 +312,7 @@ export default function AddTransactionSheet({
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="h-auto !border-0 !shadow-none bg-transparent px-0 py-2 font-mono text-3xl font-normal !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                            className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
                             autoFocus
                         />
                     </div>
@@ -326,7 +326,7 @@ export default function AddTransactionSheet({
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             placeholder="e.g., QRIS / Reference"
-                            className="h-auto !border-0 !shadow-none bg-transparent px-0 py-2 font-mono text-3xl font-normal !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                            className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
                             autoFocus
                         />
                     </div>
@@ -350,7 +350,7 @@ export default function AddTransactionSheet({
                                     setFee(new Intl.NumberFormat("id-ID").format(Number(raw)));
                                 }}
                                 placeholder="0"
-                                className="h-auto !border-0 !shadow-none bg-transparent px-0 py-2 font-mono text-3xl font-normal !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                                className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
                                 autoFocus
                             />
                         </div>

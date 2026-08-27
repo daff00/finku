@@ -51,7 +51,7 @@ export default function AccountList({
         const bankLabel = BANK_LABELS[account.bank] || account.bank;
         const lastFour = account.account_number
           ? account.account_number.slice(-4)
-          : "••••";
+          : "None";
 
         return (
           <div
@@ -76,7 +76,7 @@ export default function AccountList({
                 </span>
               )}
 
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                 <button
                   onClick={() => onEdit(account)}
                   className="p-1.5 text-[#8B7355] hover:text-[#1C1410] hover:bg-[#FAFAF8] rounded-[2px] transition-colors"
