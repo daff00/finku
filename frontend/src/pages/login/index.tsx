@@ -8,8 +8,10 @@ import { authService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function LoginPage() {
+  usePageTitle('Login')
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

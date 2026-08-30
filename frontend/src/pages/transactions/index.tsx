@@ -13,6 +13,7 @@ import TransactionList from "@/components/transactions/TransactionList";
 import TransactionPagination from "@/components/transactions/TransactionPagination";
 import TransactionEmptyState from "@/components/transactions/TransactionEmptyState";
 import TransactionSkeleton from "@/components/transactions/TransactionSkeleton";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const PAGE_SIZE = 10;
 
@@ -35,6 +36,8 @@ function groupByDate(transactions: Transaction[]): Record<string, Transaction[]>
 }
 
 export default function TransactionsPage() {
+  usePageTitle('Transactions')
+  
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [type, setType] = useState<Transaction["type"] | undefined>();
   const [selectedBank, setSelectedBank] = useState<string | null>(null);

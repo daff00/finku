@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { usePageTitle } from '@/hooks'
+
 export default function RegisterPage() {
+  usePageTitle('Register')
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");

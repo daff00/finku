@@ -10,6 +10,7 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import CashflowSummary from "@/components/analytics/CashflowSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 function getCurrentMonth(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -24,6 +25,7 @@ function getCurrentMonthStr(): string {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard')
   const { user } = useAuth();
 
   const { data: accounts, isLoading: accountsLoading } = useAccounts();

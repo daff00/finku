@@ -15,10 +15,12 @@ import FileUploadArea from "@/components/import/FileUploadArea";
 import ImportResultStats from "@/components/import/ImportResultStats";
 import ImportSkeleton from "@/components/import/ImportSkeleton";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 import type { ImportResult } from "@/types";
 
 export default function ImportPage() {
+  usePageTitle('Import')
   const { data: accounts = [], isLoading } = useAccounts();
   const queryClient = useQueryClient();
 

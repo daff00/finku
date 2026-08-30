@@ -12,6 +12,7 @@ import SpendingByCategory from "@/components/analytics/SpendingByCategory";
 import SpendingByAccount from "@/components/analytics/SpendingByAccount";
 import AnalyticsSkeleton from "@/components/analytics/AnalyticsSkeleton";
 import QuickInsights from "@/components/analytics/QuickInsights";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 type AccountSpendingItem = {
   accountId: number;
@@ -23,6 +24,7 @@ type AccountSpendingItem = {
 };
 
 export default function AnalyticsPage() {
+  usePageTitle('Analytics')
   // ── State ────────────────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)

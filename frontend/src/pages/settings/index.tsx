@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth, useAccounts } from "@/hooks";
 import type { Account } from "@/types";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 // ── ShadCN Components ──────────────────────────────────────────
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import EditAccountDialog from "@/components/settings/EditAccountDialog";
 import DeleteAccountDialog from "@/components/settings/DeleteAccountDialog";
 
 export default function SettingsPage() {
+  usePageTitle('Settings')
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = useAccounts({ include_inactive: true });
