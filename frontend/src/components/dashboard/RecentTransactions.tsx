@@ -1,7 +1,8 @@
 // frontend/src/components/RecentTransactions.tsx
 import { NavLink } from "react-router-dom";
 import type { Transaction } from "@/types";
-import { formatDateShort, formatIDR, toTitleCase } from "@/lib/formatters";
+import { formatDateShort, toTitleCase } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 type Props = {
   transactions: Transaction[];
@@ -43,6 +44,7 @@ function TransactionRow({
 }: {
   transaction: Transaction;
 }) {
+  const { formatAmount } = useCurrency();
   const category = toTitleCase(txn.category || "Other");
 
   return (
@@ -81,7 +83,7 @@ function TransactionRow({
           : txn.type === "INCOME"
             ? "+"
             : ""}
-        {formatIDR(txn.amount)}
+        {formatAmount(Number(txn.amount))}
       </span>
     </div>
   );

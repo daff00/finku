@@ -11,29 +11,32 @@ import Settings from "@/pages/settings";
 import NotFoundPage from "@/pages/NotFoundPage";
 import RegisterPage from "@/pages/RegisterPage";
 import { Toaster } from "sonner";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 function App() {
   return (
     <>
-      {/* Toaster is now outside Routes — always available */}
-      <Toaster position="top-right" richColors closeButton />
+      <CurrencyProvider>
+        {/* Toaster is now outside Routes — always available */}
+        <Toaster position="top-right" richColors closeButton />
 
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppShell />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/import" element={<Import />} />
-            <Route path="/settings" element={<Settings />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/import" element={<Import />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </CurrencyProvider>
     </>
   );
 }

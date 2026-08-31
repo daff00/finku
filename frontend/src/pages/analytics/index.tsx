@@ -1,6 +1,7 @@
 // frontend/src/pages/AnalyticsPage.tsx
 import { useMemo, useState } from "react";
-import { useNetworth, useMonthly, useCategories, useSpendingByAccount } from "@/hooks";
+import { useNetworth, useMonthly, useCategories, useSpendingByAccount, useAmountVisibility } from "@/hooks";
+import { Eye, EyeOff } from "lucide-react";
 import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
 import type { MonthlySummary } from "@/types";
 
@@ -12,7 +13,7 @@ import SpendingByCategory from "@/components/analytics/SpendingByCategory";
 import SpendingByAccount from "@/components/analytics/SpendingByAccount";
 import AnalyticsSkeleton from "@/components/analytics/AnalyticsSkeleton";
 import QuickInsights from "@/components/analytics/QuickInsights";
-import { usePageTitle } from '@/hooks/usePageTitle'
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 type AccountSpendingItem = {
   accountId: number;
@@ -24,7 +25,11 @@ type AccountSpendingItem = {
 };
 
 export default function AnalyticsPage() {
-  usePageTitle('Analytics')
+  usePageTitle("Analytics");
+
+  // ── Amount visibility ──
+  const { globalVisible, toggleGlobal } = useAmountVisibility();
+
   // ── State ────────────────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)
@@ -119,10 +124,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Page Header */}
-      <div>
-        <h1 className="font-serif text-2xl font-light tracking-tight text-[#1C1410]">Analytics</h1>
-        <p className="mt-1 font-sans text-sm text-[#8B7355]">Insights into your financial health</p>
+      {/* ── Page Header with Global Toggle ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-2xl font-light tracking-tight text-[#1C1410]">Analytics</h1>
+          <p className="mt-1 font-sans text-sm text-[#8B7355]">Insights into your financial health</p>
+        </div>
+        <button
+          onClick={toggleGlobal}
+          className="p-2 text-text-muted hover:text-text-primary transition-colors rounded-[4px] hover:bg-border/30"
+          aria-label={globalVisible ? "Hide all amounts" : "Show all amounts"}
+        >
+          {globalVisible ? (
+            <Eye className="w-5 h-5" />
+          ) : (
+            <EyeOff className="w-5 h-5" />
+          )}
+        </button>
       </div>
 
       {/* Month Selector */}
@@ -135,6 +153,7 @@ export default function AnalyticsPage() {
       <NetWorthTrend
         netWorth={currentNetWorth}
         chartData={chartData}
+        showAmount={globalVisible}
       />
 
       <Divider />
@@ -144,8 +163,10 @@ export default function AnalyticsPage() {
         income={totalIncome}
         expense={totalExpense}
         savingRate={savingRate}
+        showAmount={globalVisible}
       />
 
+      {/* Quick Insights */}
       <section>
         <QuickInsights
           totalIncome={totalIncome}
@@ -155,6 +176,7 @@ export default function AnalyticsPage() {
           accountSpending={accountSpending ?? []}
           chartData={chartData}
           currentNetWorth={currentNetWorth}
+          showAmount={globalVisible}
         />
       </section>
 
@@ -168,6 +190,7 @@ export default function AnalyticsPage() {
         <SpendingByCategory
           data={categoryData ?? []}
           emptyMessage="No expenses yet."
+          showAmount={globalVisible}
         />
       </section>
 
@@ -178,7 +201,10 @@ export default function AnalyticsPage() {
         <h2 className="font-sans text-[11px] font-medium tracking-wide text-[#8B7355] mb-3">
           Spending by Bank Account
         </h2>
-        <SpendingByAccount data={accountSpending} />
+        <SpendingByAccount
+          data={accountSpending}
+          showAmount={globalVisible}
+        />
       </section>
 
       <WabiSabiFooter />

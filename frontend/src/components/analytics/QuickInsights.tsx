@@ -13,10 +13,11 @@ type QuickInsightsProps = {
   totalIncome: number;
   totalExpense: number;
   savingRate: number;
-  categoryData: CategoryBreakdown[];  // ✅ use the actual type
+  categoryData: CategoryBreakdown[];
   accountSpending: { accountName: string; total: number; percentage: number }[];
   chartData: { month: string; income: number; expense: number }[];
   currentNetWorth: number;
+  showAmount?: boolean;
 };
 
 function getStatusColor(type: Insight["type"]) {
@@ -32,6 +33,16 @@ function getStatusColor(type: Insight["type"]) {
   }
 }
 
+function maskAmount(text: string): string {
+  // Replace formatted currency with masked version
+  return text.replace(/Rp\s?[\d.,]+/g, "•••••••••");
+}
+
+function maskPercentage(text: string): string {
+  // Replace percentage with masked version
+  return text.replace(/\d+%/g, "••%");
+}
+
 export default function QuickInsights({
   totalIncome,
   totalExpense,
@@ -40,17 +51,19 @@ export default function QuickInsights({
   accountSpending,
   chartData,
   currentNetWorth,
+  showAmount = true,
 }: QuickInsightsProps) {
   const insights: Insight[] = [];
 
-  // ── Convert categoryData to usable format ──
-  const categories = categoryData.map((item) => ({
-    category: item.category,
-    total: Number(item.total ?? 0),
-    percentage: Number(item.percentage ?? 0),
-  }));
+  const formatWithMask = (amount: number): string => {
+    return showAmount ? formatIDR(amount) : "•••••••••";
+  };
 
-  // ── 1. Saving Rate ──────────────────────────────────────────────────
+  const formatPercent = (value: number): string => {
+    return showAmount ? `${value}%` : "••%";
+  };
+
+  // ── 1. Saving Rate ──
   if (savingRate <= 0) {
     insights.push({
       icon: <AlertCircle className="h-4 w-4 shrink-0" />,
@@ -60,24 +73,24 @@ export default function QuickInsights({
   } else if (savingRate < 10) {
     insights.push({
       icon: <AlertCircle className="h-4 w-4 shrink-0" />,
-      text: `Your saving rate is ${savingRate}% — try to aim for at least 10%.`,
+      text: `Your saving rate is ${formatPercent(savingRate)} — try to aim for at least 10%.`,
       type: "warning",
     });
   } else if (savingRate >= 20 && savingRate <= 40) {
     insights.push({
       icon: <CheckCircle className="h-4 w-4 shrink-0" />,
-      text: `You're saving ${savingRate}% of your income — that's a healthy rate!`,
+      text: `You're saving ${formatPercent(savingRate)} of your income — that's a healthy rate!`,
       type: "success",
     });
   } else if (savingRate > 40) {
     insights.push({
       icon: <PiggyBank className="h-4 w-4 shrink-0" />,
-      text: `You're saving ${savingRate}% of your income — impressive discipline!`,
+      text: `You're saving ${formatPercent(savingRate)} of your income — impressive discipline!`,
       type: "success",
     });
   }
 
-  // ── 2. Income vs Expense ───────────────────────────────────────────
+  // ── 2. Income vs Expense ──
   if (totalExpense > totalIncome) {
     insights.push({
       icon: <AlertCircle className="h-4 w-4 shrink-0" />,
@@ -92,7 +105,13 @@ export default function QuickInsights({
     });
   }
 
-  // ── 3. Top Spending Category ──────────────────────────────────────
+  // ── 3. Top Spending Category ──
+  const categories = categoryData.map((item) => ({
+    category: item.category,
+    total: Number(item.total ?? 0),
+    percentage: Number(item.percentage ?? 0),
+  }));
+
   if (categories.length > 0) {
     const top = categories[0];
     insights.push({
@@ -110,7 +129,7 @@ export default function QuickInsights({
     }
   }
 
-  // ── 4. Spending Trend ──────────────────────────────────────────────
+  // ── 4. Spending Trend ──
   if (chartData.length >= 2) {
     const current = chartData[chartData.length - 1];
     const previous = chartData[chartData.length - 2];
@@ -133,11 +152,11 @@ export default function QuickInsights({
     }
   }
 
-  // ── 5. Net Worth ──────────────────────────────────────────────────
+  // ── 5. Net Worth ──
   if (currentNetWorth > 0) {
     insights.push({
       icon: <CheckCircle className="h-4 w-4 shrink-0" />,
-      text: `Your net worth is ${formatIDR(currentNetWorth)} — you're building wealth!`,
+      text: `Your net worth is ${formatWithMask(currentNetWorth)} — you're building wealth!`,
       type: "success",
     });
   } else if (currentNetWorth < 0) {
@@ -148,7 +167,7 @@ export default function QuickInsights({
     });
   }
 
-  // ── 6. Top Spending Account ──────────────────────────────────────
+  // ── 6. Top Spending Account ──
   if (accountSpending.length > 0) {
     const topAccount = accountSpending[0];
     if (topAccount.total > 0) {
@@ -160,7 +179,6 @@ export default function QuickInsights({
     }
   }
 
-  // Limit to 7 insights max
   const displayInsights = insights.slice(0, 7);
 
   if (displayInsights.length === 0) {

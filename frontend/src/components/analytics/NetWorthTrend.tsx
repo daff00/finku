@@ -17,9 +17,14 @@ const COLORS = {
 interface NetWorthTrendProps {
   netWorth: number;
   chartData: Array<{ month: string; income: number; expense: number }>;
+  showAmount?: boolean;
 }
 
-export default function NetWorthTrend({ netWorth, chartData }: NetWorthTrendProps) {
+export default function NetWorthTrend({
+  netWorth,
+  chartData,
+  showAmount = true,
+}: NetWorthTrendProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
 
@@ -28,7 +33,7 @@ export default function NetWorthTrend({ netWorth, chartData }: NetWorthTrendProp
         <p className="font-sans text-[11px] text-[#8B7355] mb-1">{label}</p>
         {payload.map((item: any) => (
           <p key={item.name} className="font-mono text-[12px]" style={{ color: item.color }}>
-            {item.name}: {formatIDR(item.value ?? 0)}
+            {item.name}: {showAmount ? formatIDR(item.value ?? 0) : "•••••••••"}
           </p>
         ))}
       </div>
@@ -43,7 +48,9 @@ export default function NetWorthTrend({ netWorth, chartData }: NetWorthTrendProp
 
       <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-5">
         <div className="flex items-center justify-between mb-4">
-          <span className="font-serif text-2xl text-[#1C1410]">{formatIDR(netWorth)}</span>
+          <span className="font-serif text-2xl text-[#1C1410]">
+            {showAmount ? formatIDR(netWorth) : "•••••••••"}
+          </span>
           {chartData.length >= 2 && (
             <span className="font-sans text-[11px] text-[#8B7355]">{chartData.length} months</span>
           )}
