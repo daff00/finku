@@ -13,9 +13,14 @@ interface AccountSpendingItem {
 interface SpendingByAccountProps {
   data: AccountSpendingItem[];
   emptyMessage?: string;
+  showAmount?: boolean;
 }
 
-export default function SpendingByAccount({ data, emptyMessage = "No spending by account." }: SpendingByAccountProps) {
+export default function SpendingByAccount({
+  data,
+  emptyMessage = "No spending by account.",
+  showAmount = true,
+}: SpendingByAccountProps) {
   if (!data || data.length === 0) {
     return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
   }
@@ -33,8 +38,8 @@ export default function SpendingByAccount({ data, emptyMessage = "No spending by
               <span className="truncate">{item.accountName}</span>
               <span className="text-[#8B7355] text-[11px] shrink-0">({item.bankLabel})</span>
             </span>
-            <span className="font-mono text-[#1C1410] ml-4 shrink-0">
-              {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
+            <span className="font-mono text-[#1C1410] font-medium ml-4 shrink-0">
+              {showAmount ? formatIDR(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
             </span>
           </div>
           <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
