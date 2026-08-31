@@ -10,6 +10,7 @@ interface CashflowSummaryProps {
   expense: number;
   savingRate: number;
   categories?: SpendingCategory[];
+  showAmount: boolean;
 }
 
 export default function CashflowSummary({
@@ -18,24 +19,34 @@ export default function CashflowSummary({
   expense,
   savingRate,
   categories = [],
+  showAmount,
 }: CashflowSummaryProps) {
   return (
     <section className="space-y-4">
-      {/* Month label */}
       {month && (
         <p className="text-[9px] uppercase tracking-wider text-text-muted font-sans">
           {month}
         </p>
       )}
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <CashflowStat label="Income" value={formatIDR(income)} color="#27AE60" />
-        <CashflowStat label="Expense" value={formatIDR(expense)} color="#C0392B" />
-        <CashflowStat label="Saving Rate" value={`${savingRate}%`} color="#1C1410" />
+        <CashflowStat
+          label="Income"
+          value={showAmount ? formatIDR(income) : "•••••••••"}
+          color="#27AE60"
+        />
+        <CashflowStat
+          label="Expense"
+          value={showAmount ? formatIDR(expense) : "•••••••••"}
+          color="#C0392B"
+        />
+        <CashflowStat
+          label="Saving Rate"
+          value={showAmount ? `${savingRate}%` : "••%"}
+          color="#1C1410"
+        />
       </div>
 
-      {/* Spending by Category */}
       {categories && categories.length > 0 && (
         <>
           <div className="border-t-[0.5px] border-dashed border-border pt-4" />
@@ -43,7 +54,11 @@ export default function CashflowSummary({
             <p className="font-sans text-[11px] font-medium text-text-secondary mb-3">
               Spending by Category
             </p>
-            <SpendingByCategory data={categories} emptyMessage="No expenses yet." />
+            <SpendingByCategory
+              data={categories}
+              emptyMessage="No expenses yet."
+              showAmount={showAmount}
+            />
           </div>
         </>
       )}

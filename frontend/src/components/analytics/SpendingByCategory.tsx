@@ -8,26 +8,27 @@ const CATEGORY_COLORS = [
 
 interface CategoryItem {
   category: string;
-  total: string | number; // ✅ accept both string and number
+  total: string | number;
   percentage: number;
 }
 
 interface SpendingByCategoryProps {
   data: CategoryItem[];
   emptyMessage?: string;
+  showAmount?: boolean; // ✅ added
 }
 
-export default function SpendingByCategory({ data, emptyMessage = "No data available." }: SpendingByCategoryProps) {
+export default function SpendingByCategory({
+  data,
+  emptyMessage = "No data available.",
+  showAmount = true, // default: show amounts
+}: SpendingByCategoryProps) {
   if (!data || data.length === 0) {
     return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
   }
 
-  // Convert total to number and sort
   const sorted = [...data]
-    .map(item => ({
-      ...item,
-      total: Number(item.total) || 0,
-    }))
+    .map(item => ({ ...item, total: Number(item.total) || 0 }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
@@ -39,8 +40,8 @@ export default function SpendingByCategory({ data, emptyMessage = "No data avail
           <div key={item.category} className="space-y-1">
             <div className="flex items-center justify-between text-[13px] font-sans">
               <span className="text-[#1C1410] font-normal">{toTitleCase(item.category)}</span>
-              <span className="font-mono text-[#1C1410]">
-                {formatIDR(item.total)} ({item.percentage.toFixed(0)}%)
+              <span className="font-mono text-[#1C1410] font-medium">
+                {showAmount ? formatIDR(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
               </span>
             </div>
             <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
