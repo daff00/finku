@@ -1,5 +1,6 @@
 // frontend/src/components/analytics/SpendingByCategory.tsx
-import { formatIDR, toTitleCase } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { toTitleCase } from "@/lib/formatters"
 
 const CATEGORY_COLORS = [
   "#C0392B", "#E67E22", "#F1C40F", "#2ECC71", "#3498DB",
@@ -15,14 +16,16 @@ interface CategoryItem {
 interface SpendingByCategoryProps {
   data: CategoryItem[];
   emptyMessage?: string;
-  showAmount?: boolean; // ✅ added
+  showAmount?: boolean;
 }
 
 export default function SpendingByCategory({
   data,
   emptyMessage = "No data available.",
-  showAmount = true, // default: show amounts
+  showAmount = true,
 }: SpendingByCategoryProps) {
+  const { formatAmount } = useCurrency();
+
   if (!data || data.length === 0) {
     return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
   }
@@ -41,7 +44,7 @@ export default function SpendingByCategory({
             <div className="flex items-center justify-between text-[13px] font-sans">
               <span className="text-[#1C1410] font-normal">{toTitleCase(item.category)}</span>
               <span className="font-mono text-[#1C1410] font-medium">
-                {showAmount ? formatIDR(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
+                {showAmount ? formatAmount(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
               </span>
             </div>
             <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">

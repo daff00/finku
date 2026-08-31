@@ -5,7 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from slowapi.middleware import SlowAPIASGIMiddleware
 
-from app.api.routes import accounts, analytics, auth, balances, imports, transactions
+from app.api.routes import (
+    accounts,
+    analytics,
+    auth,
+    balances,
+    exchange_rate,
+    imports,
+    transactions,
+)
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import LoggingMiddleware, setup_logging
@@ -58,6 +66,7 @@ app.include_router(balances.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(imports.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(exchange_rate.router, prefix="/api/v1")
 
 
 @app.get("/")

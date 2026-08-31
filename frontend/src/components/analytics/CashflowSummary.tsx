@@ -1,7 +1,7 @@
 // frontend/src/components/analytics/CashflowSummary.tsx
 import CashflowStat from "@/components/dashboard/CashflowStat";
 import SpendingByCategory from "@/components/analytics/SpendingByCategory";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import type { SpendingCategory } from "@/types";
 
 interface CashflowSummaryProps {
@@ -21,6 +21,8 @@ export default function CashflowSummary({
   categories = [],
   showAmount,
 }: CashflowSummaryProps) {
+  const { formatAmount, currency } = useCurrency();
+
   return (
     <section className="space-y-4">
       {month && (
@@ -32,12 +34,12 @@ export default function CashflowSummary({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <CashflowStat
           label="Income"
-          value={showAmount ? formatIDR(income) : "•••••••••"}
+          value={showAmount ? formatAmount(income) : "•••••••••"}
           color="#27AE60"
         />
         <CashflowStat
           label="Expense"
-          value={showAmount ? formatIDR(expense) : "•••••••••"}
+          value={showAmount ? formatAmount(expense) : "•••••••••"}
           color="#C0392B"
         />
         <CashflowStat

@@ -12,6 +12,7 @@ import CashflowSummary from "@/components/analytics/CashflowSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import CurrencyToggle from "@/components/CurrencyToggle";
 
 function getCurrentMonth(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -98,20 +99,24 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* ── Header: Greeting + Global Eye Toggle ── */}
+      {/* ── Header: Greeting + Controls ── */}
       <div className="flex items-center justify-between">
         <GreetingSection user={user ?? null} />
-        <button
-          onClick={toggleGlobal}
-          className="p-2 text-text-muted hover:text-text-primary transition-colors rounded-[4px] hover:bg-border/30"
-          aria-label={globalVisible ? "Hide all amounts" : "Show all amounts"}
-        >
-          {globalVisible ? (
-            <Eye className="w-5 h-5" />
-          ) : (
-            <EyeOff className="w-5 h-5" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <CurrencyToggle />
+          <div className="w-px h-6 bg-border/50" aria-hidden="true" />
+          <button
+            onClick={toggleGlobal}
+            className="p-2 text-text-muted hover:text-text-primary transition-colors rounded-[4px] hover:bg-border/30"
+            aria-label={globalVisible ? "Hide all amounts" : "Show all amounts"}
+          >
+            {globalVisible ? (
+              <Eye className="w-5 h-5" />
+            ) : (
+              <EyeOff className="w-5 h-5" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── Main 2‑column area ── */}

@@ -1,7 +1,7 @@
 // frontend/src/components/dashboard/AccountGrid.tsx
 import type { Account } from "@/types";
 import { BANK_COLORS, BANK_LABELS } from "@/lib/constants";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface AccountGridProps {
   accounts: Account[];
@@ -10,12 +10,10 @@ interface AccountGridProps {
 }
 
 export default function AccountGrid({ accounts, balanceMap, showAmount }: AccountGridProps) {
+  const { formatAmount } = useCurrency();
+
   if (accounts.length === 0) {
-    return (
-      <div className="mt-3 text-[12px] text-[#8B7355] font-sans">
-        No accounts yet.
-      </div>
-    );
+    return <div className="mt-3 text-[12px] text-[#8B7355] font-sans">No accounts yet.</div>;
   }
 
   return (
@@ -31,12 +29,12 @@ export default function AccountGrid({ accounts, balanceMap, showAmount }: Accoun
             className="bg-surface border-[0.5px] border-border rounded-[4px] p-4 hover:bg-border/10 transition-colors"
             style={{ borderLeftWidth: "3px", borderLeftColor: bankColor }}
           >
-            <p className="text-[13px] text-text-primary font-sans">{account.name}</p>
+            <p className="text-[13px] text-text-primary font-serif">{account.name}</p>
             <p className="text-[10px] text-[#8B7355] font-sans mt-0.5">
               {bankLabel} · {account.type}
             </p>
             <p className="font-mono text-[15px] text-text-primary mt-3">
-              {showAmount ? formatIDR(balance) : "•••••••••"}
+              {showAmount ? formatAmount(Number(balance)) : "•••••••••"}
             </p>
           </div>
         );
