@@ -39,6 +39,23 @@ def test_create_account_missing_required_fields(client):
     assert response.json()["error"] == "Validation error"
 
 
+def test_create_account_duplicate_name(client):
+    payload = {
+        "name": "BCA Main",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "IDR",
+    }
+
+    first = client.post("/api/v1/accounts", json=payload)
+    assert first.status_code == 201
+
+    second = client.post("/api/v1/accounts", json=payload)
+    assert second.status_code == 409
+    assert "Duplicate account" in second.json()["error"]
+
+
 def test_list_accounts(client, sample_account):
     # ── Act ───────────────────────────────────
     response = client.get("/api/v1/accounts")

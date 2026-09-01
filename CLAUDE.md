@@ -167,6 +167,13 @@ NEVER import from @/services/accountService → import from @/services
 ALL currency display → use formatIDR() or formatIDRShort()
 ALL date display → use formatDate() or formatDateShort()
 
+### Idempotency Rules
+- POST /transactions and POST /transactions/transfer reject duplicate business events with HTTP 409 Conflict using deterministic ref_id hashing.
+- POST /import silently skips duplicates and returns import counts plus error_details for parse problems.
+- DELETE /accounts/{id} and DELETE /transactions/{id} are idempotent; retrying the same delete returns HTTP 204 instead of 404.
+- Balance snapshots intentionally allow duplicate timestamps for historical audit records; latest-balance logic remains stable by ordering the snapshot list deterministically.
+- All retry-safe behavior must preserve user isolation: every write must still be scoped to the authenticated user_id.
+
 ---
 
 ## Data Models
@@ -317,32 +324,49 @@ All fixtures defined in tests/conftest.py.
 
 ---
 
-## Current Status (August 2026)
+## Current Status (September 2026)
 
 ### Done ✅
-- Backend: all CRUD routes (accounts, transactions, balances, analytics)
-- Backend: JWT auth + user isolation
-- Backend: loguru logging + custom exception handlers
-- Backend: Alembic migrations (2 versions)
-- Backend: BCA PDF parser + unified import endpoint (POST /import)
-- Backend: Rate limiting via slowapi (all routes)
-- Backend: 50+ tests passing (including rate limiting tests)
-- Frontend: TypeScript types & enums
-- Frontend: Services layer (axios with interceptors)
-- Frontend: TanStack Query hooks (useAccounts, useTransactions, useBalances, useAnalytics)
-- Frontend: lib utilities (formatters for IDR/dates, bank constants, helper functions)
+- Backend: complete CRUD for accounts, transactions, balances, and analytics
+- Backend: JWT auth, user isolation, and rate limiting are in place
+- Backend: loguru logging and custom exception handling are active
+- Backend: Alembic migrations are present and SQLite batch mode is used correctly
+- Backend: BCA PDF import flow and unified import endpoint are working
+- Backend: idempotency fixes for duplicate transaction, transfer, and import retries are implemented and tested
+- Backend: targeted regression suite for accounts, transactions, and import flows is passing
+- Frontend: app shell, routing, providers, and shared UI foundations are in place
+- Frontend: services layer, TanStack Query hooks, and currency helpers exist
+- Frontend: dashboard and import flows are functional
+- Frontend: theme variables and dark-mode CSS block exist, but not fully wired as a complete feature yet
 
 ### In Progress ⏳
-- Backend: remaining PDF parsers (Mandiri, Jago, Seabank) — deferred until after PWA
-- Frontend: Dashboard page ✅ working
-- Frontend: Import page ✅ working
-- Frontend: Transactions page 🚧 (stub)
-- Frontend: Analytics page 🚧 (stub)
-- Frontend: Settings page 🚧 (stub)
-- Frontend: Layout components (Sidebar, BottomNav, TopBar, AppShell) — design pending
+- Frontend: transactions page still needs final polish and full business flow cleanup
+- Frontend: analytics page remains partial and not fully production-ready
+- Frontend: settings page still incomplete
+- Backend: remaining bank statement parsers (Mandiri, Jago, Seabank) are deferred
+- Backend: CSV import support is still deferred
+- Frontend: PWA setup and deployment work are still not started
 
-### Not Started ❌
-- Backend: CSV import support (deferred; PDF-only for now)
-- Backend: Mandiri, Jago, Seabank PDF parsers (deferred until after PWA)
-- Frontend: PWA setup (vite-plugin-pwa)
-- Deployment: Docker / home server setup
+### Known Bugs / Gaps ⚠️
+- USD transaction support is not fully implemented: the app has a currency toggle and exchange-rate hook, but the transaction model and most flows are still effectively IDR-first; no enforced multi-currency transaction schema is in place yet.
+- Dark mode is only partially implemented: CSS variables exist for a dark theme, but the app does not yet have a complete user-facing theme toggle, persisted preference handling, and full UI verification across all pages.
+- Transactions page is still a partial feature; table/detail UX and edge-case polish are unfinished.
+- Analytics page is not complete enough to be considered production-ready.
+- Settings page is still a stub and not connected to real configuration/UX flows.
+- Import support is still BCA-only for production use; other banks remain intentionally deferred.
+- Some frontend state and formatting assumptions still assume IDR as the default display path, which will need cleanup when multi-currency features are implemented.
+
+### Next Backlog 🎯
+1. USD transaction support
+   - add explicit currency support to transaction/account data model and API contracts
+   - normalize IDR/USD conversions and display formatting across the app
+   - decide whether conversion happens at the backend, frontend, or both
+
+2. Dark mode
+   - add a real theme toggle and persisted preference
+   - audit all pages/components for contrast and color-token consistency
+   - ensure the app behaves correctly in both light and dark modes with no hardcoded colors left behind
+
+### Project Health
+- Core backend reliability is in a good state for the current scope.
+- The main remaining work is product-level completeness and UX polish, not critical API correctness for the implemented change set.

@@ -37,15 +37,15 @@
 
 ## 6. Account Creation Deduplication
 
-- [ ] 6.1 Generate ref_id for POST /accounts (account name should be unique per user, use: sha256(user_id, name, bank))
-- [ ] 6.2 Add duplicate check before account creation
-- [ ] 6.3 Return 409 Conflict if duplicate account (same name + bank) already exists
-- [ ] 6.4 Add test: test_create_account_duplicate_name() — create BCA account twice with same name, expect 409
+- [x] 6.1 Generate ref_id for POST /accounts (account name should be unique per user, use: sha256(user_id, name, bank))
+- [x] 6.2 Add duplicate check before account creation
+- [x] 6.3 Return 409 Conflict if duplicate account (same name + bank) already exists
+- [x] 6.4 Add test: test_create_account_duplicate_name() — create BCA account twice with same name, expect 409
 
 ## 7. Documentation and Code Review
 
-- [ ] 7.1 Add inline comments explaining ref_id generation and dedup logic in each route
-- [ ] 7.2 Update CLAUDE.md or backend README with idempotency rules and error semantics
-- [ ] 7.3 Review all changes for consistency (error messages, status codes, response formats)
-- [ ] 7.4 Verify all new tests pass and existing tests still pass (run full test suite)
-- [ ] 7.5 Code review: Check rollback exception handling in transfer route
+- [x] 7.1 Add inline comments explaining ref_id generation and dedup logic in each route
+- [x] 7.2 Update CLAUDE.md or backend README with idempotency rules and error semantics
+- [x] 7.3 Review all changes for consistency (error messages, status codes, response formats)
+- [x] 7.4 Verify all new tests pass and existing tests still pass (run full test suite)
+- [x] 7.5 Code review: Check rollback exception handling in transfer route

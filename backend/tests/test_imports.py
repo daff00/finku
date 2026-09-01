@@ -4,8 +4,42 @@ from app.models.models import Account, AccountTypeEnum, BankEnum, Transaction, U
 
 
 def _load_bca_pdf_bytes() -> bytes:
-    pdf_path = Path(__file__).resolve().parents[1] / "app" / "parsers" / "temp_doc" / "pdf-bca.pdf"
-    return pdf_path.read_bytes()
+    """Build a tiny synthetic PDF with the same row/column layout the BCA parser expects."""
+    body = (
+        b"BT /F1 12 Tf "
+        b"1 0 0 1 20 760 Tm (PERIODE : AGUSTUS 2025) Tj "
+        b"1 0 0 1 20 742 Tm (TANGGAL) Tj "
+        b"1 0 0 1 90 742 Tm (KETERANGAN) Tj "
+        b"1 0 0 1 430 742 Tm (MUTASI) Tj "
+        b"1 0 0 1 20 724 Tm (01/08) Tj "
+        b"1 0 0 1 90 724 Tm (GOJEK) Tj "
+        b"1 0 0 1 430 724 Tm (-250000) Tj "
+        b"1 0 0 1 20 706 Tm (02/08) Tj "
+        b"1 0 0 1 90 706 Tm (GAJI BULANAN) Tj "
+        b"1 0 0 1 430 706 Tm (5000000) Tj "
+        b"ET"
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length %d >>\nstream\n" % len(body) + body + b"\nendstream",
+    ]
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for i, obj in enumerate(objects, 1):
+        offsets.append(len(pdf))
+        pdf.extend(f"{i} 0 obj\n".encode())
+        pdf.extend(obj)
+        pdf.extend(b"\nendobj\n")
+    xref = len(pdf)
+    pdf.extend(f"xref\n0 {len(objects) + 1}\n".encode())
+    pdf.extend(b"0000000000 65535 f \n")
+    for off in offsets[1:]:
+        pdf.extend(f"{off:010d} 00000 n \n".encode())
+    pdf.extend(f"trailer\n<< /Root 1 0 R /Size {len(objects) + 1} >>\nstartxref\n{xref}\n%%EOF\n".encode())
+    return bytes(pdf)
 
 
 def test_import_bca_statement(client, sample_account, db):
