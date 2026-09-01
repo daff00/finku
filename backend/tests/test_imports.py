@@ -66,6 +66,40 @@ def test_import_bca_statement(client, sample_account, db):
     assert saved_count == data["imported"]
 
 
+def test_import_bca_statement_creates_balance_snapshot(client, sample_account, db):
+    response = client.post(
+        "/api/v1/import/",
+        data={
+            "account_id": str(sample_account["id"]),
+            "bank": "BCA",
+        },
+        files={
+            "file": ("pdf-bca.pdf", _load_bca_pdf_bytes(), "application/pdf"),
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["imported"] > 0
+
+    latest_balance = (
+        db.query(Account)
+        .filter(Account.id == sample_account["id"])
+        .first()
+    )
+    assert latest_balance is not None
+
+    from app.models.models import Balance
+    balance_rows = (
+        db.query(Balance)
+        .filter(Balance.account_id == sample_account["id"])
+        .order_by(Balance.recorded_at.desc())
+        .all()
+    )
+    assert len(balance_rows) >= 2
+    assert str(balance_rows[0].amount) == "4750000.00"
+
+
 def test_import_bca_statement_idempotent(client, sample_account, db):
     """Test idempotency: upload same PDF twice, second time skips duplicates."""
     pdf_bytes = _load_bca_pdf_bytes()

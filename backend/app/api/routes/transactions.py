@@ -55,7 +55,7 @@ def get_latest_account_balance(db, user_id: int, account_id: int):
             Transaction.account_id == account_id,
             Transaction.user_id == user_id,
             Transaction.type == TransactionTypeEnum.INCOME,
-            Transaction.created_at >= latest.recorded_at,
+            Transaction.created_at > latest.recorded_at,
         )
         .with_entities(func.sum(Transaction.amount))
         .scalar() or Decimal("0")
@@ -66,7 +66,7 @@ def get_latest_account_balance(db, user_id: int, account_id: int):
             Transaction.account_id == account_id,
             Transaction.user_id == user_id,
             Transaction.type == TransactionTypeEnum.EXPENSE,
-            Transaction.created_at >= latest.recorded_at,
+            Transaction.created_at > latest.recorded_at,
         )
         .with_entities(func.sum(Transaction.amount))
         .scalar() or Decimal("0")

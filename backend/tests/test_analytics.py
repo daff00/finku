@@ -49,8 +49,65 @@ def test_networth_no_snapshot_account(client, sample_account):
     # ── Assert ────────────────────────────────
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == "0"
-    assert data["per_account"][0]["balance"] == "0"
+    assert data["total"] == "0.00"
+    assert data["per_account"][0]["balance"] == "0.00"
+
+
+def test_networth_manual_expense_same_day_as_latest_snapshot_does_not_double_count(
+    client,
+):
+    response = client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "BCA Manual",
+            "bank": "BCA",
+            "type": "SAVINGS",
+            "color": "#0066AE",
+            "currency": "IDR",
+        },
+    )
+    account = response.json()
+
+    response = client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": account["id"],
+            "amount": "10000",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": account["id"],
+            "date": "2026-09-01",
+            "amount": "5000",
+            "type": "INCOME",
+            "category": "SALARY",
+            "note": "Monthly salary",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": account["id"],
+            "date": "2026-09-01",
+            "amount": "2000",
+            "type": "EXPENSE",
+            "category": "FOOD",
+            "note": "Lunch",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.get("/api/v1/analytics/networth")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == "13000.00"
+    assert data["per_account"][0]["balance"] == "13000.00"
 
 
 def test_networth_counts_transactions_when_no_snapshot_exists(client, sample_account):

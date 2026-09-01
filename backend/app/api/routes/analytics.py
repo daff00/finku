@@ -109,13 +109,13 @@ def get_net_worth(
                 Transaction.account_id == acc.id,
                 Transaction.user_id == current_user.id,
                 Transaction.type == TransactionTypeEnum.INCOME,
-                Transaction.date >= latest.recorded_at.date(),
+                Transaction.created_at > latest.recorded_at,
             ).all()
             expense_transactions = db.query(Transaction).filter(
                 Transaction.account_id == acc.id,
                 Transaction.user_id == current_user.id,
                 Transaction.type == TransactionTypeEnum.EXPENSE,
-                Transaction.date >= latest.recorded_at.date(),
+                Transaction.created_at > latest.recorded_at,
             ).all()
 
             income_after = sum_transactions_in_base_currency(income_transactions)
