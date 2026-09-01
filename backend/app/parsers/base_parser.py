@@ -15,9 +15,11 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.models import (
+    Balance,
     CategoryEnum,
     CurrencyEnum,
     SourceEnum,
@@ -144,6 +146,50 @@ class BaseParser:
                 )
 
         db.commit()
+
+        if imported > 0:
+            latest_balance = (
+                db.query(Balance)
+                .filter(
+                    Balance.account_id == account_id,
+                    Balance.user_id == user_id,
+                )
+                .order_by(Balance.recorded_at.desc())
+                .first()
+            )
+            if latest_balance is not None:
+                latest_running_balance = latest_balance.amount
+                imported_income = (
+                    db.query(Transaction)
+                    .filter(
+                        Transaction.account_id == account_id,
+                        Transaction.user_id == user_id,
+                        Transaction.type == TransactionTypeEnum.INCOME,
+                        Transaction.created_at > latest_balance.recorded_at,
+                    )
+                    .with_entities(func.sum(Transaction.amount))
+                    .scalar() or Decimal("0")
+                )
+                imported_expense = (
+                    db.query(Transaction)
+                    .filter(
+                        Transaction.account_id == account_id,
+                        Transaction.user_id == user_id,
+                        Transaction.type == TransactionTypeEnum.EXPENSE,
+                        Transaction.created_at > latest_balance.recorded_at,
+                    )
+                    .with_entities(func.sum(Transaction.amount))
+                    .scalar() or Decimal("0")
+                )
+                next_balance = latest_running_balance + imported_income - imported_expense
+                db.add(
+                    Balance(
+                        user_id=user_id,
+                        account_id=account_id,
+                        amount=next_balance,
+                    )
+                )
+                db.commit()
 
         return ImportResult(
             total_parsed=len(parsed),
