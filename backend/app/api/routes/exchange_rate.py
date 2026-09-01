@@ -1,9 +1,10 @@
 import httpx
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from loguru import logger
 
-from app.core.rate_limit import rate_limit
+from app.core.rate_limit import limiter
 from app.core.dependencies import CurrentUser
 
 router = APIRouter(prefix="/exchange-rate", tags=["exchange-rate"])
@@ -23,7 +24,6 @@ async def _fetch_exchange_rate(
     from_currency: str = "USD",
     to_currency: str = "IDR"
 ) -> float:
-    """Fetch exchange rate from exchangerate-api.com."""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
@@ -38,49 +38,25 @@ async def _fetch_exchange_rate(
             logger.info(f"Fetched {from_currency}→{to_currency}: {rate}")
             return rate
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error from exchange rate API: {e.response.status_code}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Exchange rate API returned {e.response.status_code}"
-        )
+        logger.error(f"HTTP error: {e.response.status_code}")
+        raise HTTPException(status_code=503, detail=f"API returned {e.response.status_code}")
     except httpx.RequestError as e:
-        logger.error(f"Network error fetching exchange rate: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Exchange rate service unavailable (network error)"
-        )
+        logger.error(f"Network error: {e}")
+        raise HTTPException(status_code=503, detail="Exchange rate service unavailable")
     except (KeyError, ValueError, TypeError) as e:
-        logger.error(f"Unexpected response format: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Invalid response from exchange rate service"
-        )
+        logger.error(f"Response format error: {e}")
+        raise HTTPException(status_code=503, detail="Invalid response from exchange rate service")
     except Exception as e:
-        logger.error(f"Unexpected error fetching exchange rate: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Internal error fetching exchange rate"
-        )
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal error fetching exchange rate")
 
 
-@router.get("/{from_currency}")
-@rate_limit(limit=60, per=60)
-async def get_exchange_rate(
-    request: Request,  # ✅ required by slowapi
-    current_user: CurrentUser,
-    from_currency: str,
-    to_currency: str = Query("IDR", description="Target currency (default: IDR)"),
-    force_refresh: bool = Query(False, description="Force fresh fetch"),
-):
-    """
-    Get exchange rate from one currency to another.
-    Requires authentication. Cached for 24 hours.
-    """
+async def _get_rate_response(from_currency: str, to_currency: str, force_refresh: bool):
+    """Shared logic for fetching/caching an exchange rate. Not a route itself."""
     now = datetime.now(timezone.utc)
     from_currency = from_currency.upper()
     to_currency = to_currency.upper()
 
-    # Check if cached rate is fresh
     is_fresh = (
         _cache["rate"] is not None
         and _cache["fetched_at"] is not None
@@ -90,13 +66,13 @@ async def get_exchange_rate(
     )
 
     if is_fresh and not force_refresh:
-        return {
+        return JSONResponse({
             "from": from_currency,
             "to": to_currency,
             "rate": _cache["rate"],
             "fetched_at": _cache["fetched_at"].isoformat(),
             "cached": True,
-        }
+        })
 
     try:
         rate = await _fetch_exchange_rate(from_currency, to_currency)
@@ -106,54 +82,65 @@ async def get_exchange_rate(
             "from_currency": from_currency,
             "to_currency": to_currency,
         })
-        return {
+        return JSONResponse({
             "from": from_currency,
             "to": to_currency,
             "rate": rate,
             "fetched_at": now.isoformat(),
             "cached": False,
-        }
+        })
     except HTTPException:
         if _cache["rate"] is not None:
             logger.warning(f"Returning stale cached rate: {_cache['rate']}")
-            return {
+            return JSONResponse({
                 "from": from_currency,
                 "to": to_currency,
                 "rate": _cache["rate"],
                 "fetched_at": _cache["fetched_at"].isoformat(),
                 "cached": True,
                 "stale": True,
-            }
+            })
         logger.warning(f"Using fallback rate: {FALLBACK_RATE}")
-        return {
+        return JSONResponse({
             "from": from_currency,
             "to": to_currency,
             "rate": FALLBACK_RATE,
             "cached": False,
             "fallback": True,
-        }
+        })
 
 
+# NOTE: /USD must be declared BEFORE /{from_currency}, or it will never match.
 @router.get("/USD")
-@rate_limit(limit=60, per=60)
+@limiter.limit("10/minute")
 async def get_usd_to_idr(
-    request: Request,  # ✅ required by slowapi
+    request: Request,
     current_user: CurrentUser,
     force_refresh: bool = Query(False),
 ):
-    """Get USD→IDR exchange rate (cached for 24 hours)."""
-    return await get_exchange_rate("USD", "IDR", force_refresh)
+    return await _get_rate_response("USD", "IDR", force_refresh)
+
+
+@router.get("/{from_currency}")
+@limiter.limit("10/minute")
+async def get_exchange_rate(
+    request: Request,
+    current_user: CurrentUser,
+    from_currency: str,
+    to_currency: str = Query("IDR", description="Target currency (default: IDR)"),
+    force_refresh: bool = Query(False, description="Force fresh fetch"),
+):
+    return await _get_rate_response(from_currency, to_currency, force_refresh)
 
 
 @router.post("/clear-cache")
-@rate_limit(limit=5, per=60)
+@limiter.limit("5/minute")
 async def clear_exchange_cache(
-    request: Request,  # ✅ required by slowapi
+    request: Request,
     current_user: CurrentUser,
 ):
-    """Admin-only: clear the exchange rate cache."""
     if current_user.username != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     _cache["rate"] = None
     _cache["fetched_at"] = None
-    return {"message": "Cache cleared"}
+    return JSONResponse({"message": "Cache cleared"})
