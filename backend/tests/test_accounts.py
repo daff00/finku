@@ -39,6 +39,24 @@ def test_create_account_missing_required_fields(client):
     assert response.json()["error"] == "Validation error"
 
 
+def test_create_account_auto_creates_zero_balance_snapshot(client):
+    payload = {
+        "name": "BCA Zero",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "IDR",
+    }
+
+    create_response = client.post("/api/v1/accounts", json=payload)
+    assert create_response.status_code == 201
+    account_id = create_response.json()["id"]
+
+    latest_balance = client.get(f"/api/v1/balances/{account_id}/latest")
+    assert latest_balance.status_code == 200
+    assert latest_balance.json()["amount"] == "0.00"
+
+
 def test_create_account_duplicate_name(client):
     payload = {
         "name": "BCA Main",

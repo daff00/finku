@@ -1,10 +1,11 @@
 import hashlib
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import accounts_limit
-from app.models.models import Account, Transaction
+from app.models.models import Account, Balance, Transaction
 from app.schemas.schemas import AccountCreate, AccountOut, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
@@ -84,6 +85,15 @@ def create_account(
     db.add(account)
     db.commit()
     db.refresh(account)
+
+    zero_balance = Balance(
+        user_id=current_user.id,
+        account_id=account.id,
+        amount=Decimal("0"),
+    )
+    db.add(zero_balance)
+    db.commit()
+
     return account
 
 

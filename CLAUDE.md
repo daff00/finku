@@ -333,15 +333,17 @@ All fixtures defined in tests/conftest.py.
 - Backend: Alembic migrations are present and SQLite batch mode is used correctly
 - Backend: multi-currency transaction/account support is implemented for IDR and USD, including validation and transfer semantics
 - Backend: account duplicate detection now respects currency, so IDR/USD accounts with the same identity are not collapsed
-- Backend: mixed-currency reporting uses a single base-currency view (IDR) and converts USD values before aggregation
+- Backend: mixed-currency reporting uses a single base-currency view and converts USD values before aggregation
+- Backend: negative-balance rejection and insufficient-funds validation for outgoing money events are implemented and tested
 - Backend: BCA PDF import flow and unified import endpoint are working
 - Backend: idempotency fixes for duplicate transaction, transfer, and import retries are implemented and tested
-- Backend: targeted regression suites for accounts, transactions, analytics, and import flows are passing
+- Backend: targeted regression suites for accounts, transactions, analytics, balances, and import flows are passing
 - Frontend: app shell, routing, providers, and shared UI foundations are in place
 - Frontend: services layer, TanStack Query hooks, and shared currency formatting helpers exist
 - Frontend: dashboard, transaction creation, transfer flow, and import flows are functional
 - Frontend: app-level display-currency state is shared across views and no longer assumes hardcoded IDR-only rendering
 - Frontend: dark-mode theme tokens exist, but the feature is still not a complete user-facing end-to-end product experience yet
+- OpenSpec: the money-integrity validation change is complete and archived after successful validation
 
 ### In Progress ⏳
 - Frontend: transactions page still needs final polish and some UX cleanup
@@ -371,5 +373,6 @@ All fixtures defined in tests/conftest.py.
 
 ### Project Health
 - Core backend reliability is strong for the current scope.
-- USD transaction support is now implemented and validated in the backend and reporting layer.
+- USD transaction support and the money-integrity validation guardrails are now implemented and validated in the backend and reporting layer.
 - The main remaining work is product-level completeness and UX polish, not critical API correctness.
+- The OpenSpec change for money-integrity validation is closed and archived after verification.
