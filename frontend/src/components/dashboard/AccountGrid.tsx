@@ -34,7 +34,9 @@ export default function AccountGrid({ accounts, balanceMap, showAmount }: Accoun
               {bankLabel} · {account.type}
             </p>
             <p className="font-mono text-[15px] text-text-primary mt-3">
-              {showAmount ? formatAmount(Number(balance)) : "•••••••••"}
+              {showAmount
+                ? formatAmount(Number(balance), account.currency ?? "IDR")
+                : "•••••••••"}
             </p>
           </div>
         );

@@ -1,12 +1,10 @@
 // frontend/src/pages/TransactionsPage.tsx
 import { useState, useMemo } from "react";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { useTransactions } from "@/hooks/useTransactions";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/types";
-
-import { Button } from "@/components/ui/button";
 import MonthSelector from "@/components/analytics/MonthSelector";
 import TransactionFilters from "@/components/transactions/TransactionFilters";
 import TransactionList from "@/components/transactions/TransactionList";

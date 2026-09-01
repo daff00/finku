@@ -35,7 +35,7 @@ accounts_limit = limiter.shared_limit(
 )
 
 transactions_limit = limiter.shared_limit(
-    settings.API_RATE_LIMIT,
+    settings.TRANSACTIONS_RATE_LIMIT,
     scope="transactions",
 )
 

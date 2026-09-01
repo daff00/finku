@@ -12,7 +12,6 @@ import CashflowSummary from "@/components/analytics/CashflowSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import CurrencyToggle from "@/components/CurrencyToggle";
 
 function getCurrentMonth(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -88,8 +87,6 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <GreetingSection user={user ?? null} />
         <div className="flex items-center gap-2">
-          <CurrencyToggle />
-          <div className="w-px h-6 bg-border/50" aria-hidden="true" />
           <button
             onClick={toggleGlobal}
             className="p-2 text-text-muted hover:text-text-primary transition-colors rounded-[4px] hover:bg-border/30"

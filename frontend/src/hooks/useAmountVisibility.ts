@@ -9,13 +9,14 @@ interface VisibilityState {
 }
 
 const STORAGE_KEY = "dashboard_amount_visibility";
+const LAST_USER_KEY = "dashboard_amount_visibility_user";
 
 const HIDDEN_STATE: VisibilityState = { global: false, overrides: {} };
 
 function getInitialState(): VisibilityState {
   if (typeof window === "undefined") return HIDDEN_STATE;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       return { global: parsed.global ?? false, overrides: parsed.overrides ?? {} };
@@ -26,24 +27,49 @@ function getInitialState(): VisibilityState {
   return HIDDEN_STATE;
 }
 
-// Pass the current logged-in user's id (or null when logged out).
-// Whenever it changes to a new non-null value, visibility resets to hidden.
-export function useAmountVisibility(userId?: string | number | null) {
-  const [state, setState] = useState<VisibilityState>(getInitialState);
-  const lastUserId = useRef<string | number | null | undefined>(null);
+function getStoredUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(LAST_USER_KEY);
+}
 
-  // Persist on every change
+export function useAmountVisibility(userId?: string | number | null) {
+  const normalizedUserId = userId != null ? String(userId) : null;
+
+  // On first mount, decide synchronously whether this counts as a "new login"
+  // by comparing against the persisted last-known user id (not a ref, which
+  // wouldn't survive a page-switch remount).
+  const [state, setState] = useState<VisibilityState>(() => {
+    if (normalizedUserId != null && normalizedUserId !== getStoredUserId()) {
+      return HIDDEN_STATE;
+    }
+    return getInitialState();
+  });
+
+  const didInit = useRef(false);
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  // Force-hide on every new login session
   useEffect(() => {
-    if (userId != null && userId !== lastUserId.current) {
-      setState(HIDDEN_STATE);
+    if (normalizedUserId == null) return;
+
+    const storedUserId = getStoredUserId();
+
+    if (!didInit.current) {
+      // Already handled synchronously in useState initializer above —
+      // just record the user id so future remounts on the same session
+      // don't re-trigger a reset.
+      sessionStorage.setItem(LAST_USER_KEY, normalizedUserId);
+      didInit.current = true;
+      return;
     }
-    lastUserId.current = userId;
-  }, [userId]);
+
+    if (normalizedUserId !== storedUserId) {
+      setState(HIDDEN_STATE);
+      sessionStorage.setItem(LAST_USER_KEY, normalizedUserId);
+    }
+  }, [normalizedUserId]);
 
   const toggleGlobal = useCallback(() => {
     setState((prev) => ({
@@ -62,21 +88,18 @@ export function useAmountVisibility(userId?: string | number | null) {
     [state.global, state.overrides]
   );
 
-  const toggleSection = useCallback(
-    (section: SectionName) => {
-      setState((prev) => {
-        const currentOverride = prev.overrides[section];
-        const newOverrides = { ...prev.overrides };
-        if (currentOverride === undefined) {
-          newOverrides[section] = !prev.global;
-        } else {
-          delete newOverrides[section];
-        }
-        return { ...prev, overrides: newOverrides };
-      });
-    },
-    []
-  );
+  const toggleSection = useCallback((section: SectionName) => {
+    setState((prev) => {
+      const currentOverride = prev.overrides[section];
+      const newOverrides = { ...prev.overrides };
+      if (currentOverride === undefined) {
+        newOverrides[section] = !prev.global;
+      } else {
+        delete newOverrides[section];
+      }
+      return { ...prev, overrides: newOverrides };
+    });
+  }, []);
 
   const resetAll = useCallback(() => {
     setState(HIDDEN_STATE);

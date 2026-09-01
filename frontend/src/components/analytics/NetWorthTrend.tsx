@@ -1,5 +1,5 @@
 // frontend/src/components/analytics/NetWorthTrend.tsx
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   LineChart,
   Line,
@@ -25,6 +25,8 @@ export default function NetWorthTrend({
   chartData,
   showAmount = true,
 }: NetWorthTrendProps) {
+  const { formatAmount } = useCurrency();
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
 
@@ -33,7 +35,7 @@ export default function NetWorthTrend({
         <p className="font-sans text-[11px] text-[#8B7355] mb-1">{label}</p>
         {payload.map((item: any) => (
           <p key={item.name} className="font-mono text-[12px]" style={{ color: item.color }}>
-            {item.name}: {showAmount ? formatIDR(item.value ?? 0) : "•••••••••"}
+            {item.name}: {showAmount ? formatAmount(Number(item.value ?? 0)) : "•••••••••"}
           </p>
         ))}
       </div>
@@ -49,7 +51,7 @@ export default function NetWorthTrend({
       <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-5">
         <div className="flex items-center justify-between mb-4">
           <span className="font-serif text-2xl text-[#1C1410]">
-            {showAmount ? formatIDR(netWorth) : "•••••••••"}
+            {showAmount ? formatAmount(netWorth) : "•••••••••"}
           </span>
           {chartData.length >= 2 && (
             <span className="font-sans text-[11px] text-[#8B7355]">{chartData.length} months</span>
