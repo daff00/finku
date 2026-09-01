@@ -1,8 +1,8 @@
 // frontend/src/pages/DashboardPage.tsx
-import { useAccounts, useNetworth, useTransactions, useMonthly, useAmountVisibility } from "@/hooks";
+import { useAccounts, useNetworth, useTransactions, useMonthly, useCategories, useAmountVisibility } from "@/hooks";
 import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff } from "lucide-react";
-import type { MonthlySummary, SpendingCategory } from "@/types";
+import type { MonthlySummary } from "@/types";
 
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
@@ -36,16 +36,20 @@ export default function DashboardPage() {
     toggleGlobal,
     getSectionVisible,
     toggleSection,
-  } = useAmountVisibility();
+  } = useAmountVisibility(user?.id);
+
+  const currentMonthStr = getCurrentMonthStr();
 
   // ── Data fetching ──
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: networth, isLoading: networthLoading } = useNetworth();
-  const { data: transactions, isLoading: transactionsLoading } = useTransactions({ limit: 50 });
+  const { data: transactions, isLoading: transactionsLoading } = useTransactions({ limit: 5 });
   const { data: allMonthlyData, isLoading: monthlyLoading } = useMonthly();
+  // Same backend-scoped hook AnalyticsPage uses — correctly returns empty for a month with no txns
+  const { data: categoryData, isLoading: categoryLoading } = useCategories(currentMonthStr);
 
   const isLoading =
-    accountsLoading || networthLoading || transactionsLoading || monthlyLoading;
+    accountsLoading || networthLoading || transactionsLoading || monthlyLoading || categoryLoading;
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -59,7 +63,6 @@ export default function DashboardPage() {
     balanceMap[acc.account_id] = acc.balance;
   });
 
-  const currentMonthStr = getCurrentMonthStr();
   const currentMonthData = allMonthlyData?.find(
     (item: MonthlySummary) => item.month.slice(0, 7) === currentMonthStr
   );
@@ -70,24 +73,6 @@ export default function DashboardPage() {
   const savingRate = totalIncome > 0
     ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100)
     : 0;
-
-  // Category breakdown
-  const categoryTotals: Record<string, number> = {};
-  transactionList
-    .filter((txn) => txn.type === "EXPENSE")
-    .forEach((txn) => {
-      const category = txn.category || "Other";
-      categoryTotals[category] = (categoryTotals[category] || 0) + Number(txn.amount);
-    });
-
-  const categoryData: SpendingCategory[] = Object.entries(categoryTotals)
-    .map(([category, amount]) => ({
-      category,
-      total: amount,
-      percentage: totalExpense > 0 ? Math.round((amount / totalExpense) * 100) : 0,
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
 
   // ── Visibility states per section ──
   const showNetWorth = getSectionVisible("netWorth");
@@ -201,7 +186,7 @@ export default function DashboardPage() {
               income={totalIncome}
               expense={totalExpense}
               savingRate={savingRate}
-              categories={categoryData}
+              categories={categoryData ?? []}
               showAmount={showCashflow}
             />
           </div>
