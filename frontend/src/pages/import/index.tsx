@@ -1,168 +1,158 @@
-import { useEffect, useState, type FormEvent } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+// frontend/src/pages/ImportPage.tsx
+import { useState, type FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Upload, AlertCircle } from "lucide-react";
 
-import { useAccounts } from "@/hooks"
-import { importService } from "@/services"
-import { BANK_LABELS } from "@/lib/constants"
-import { Button } from "@/components/ui/button"
-import type { ImportResult } from "@/types"
+import { useAccounts } from "@/hooks";
+import { importService } from "@/services";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+import AccountSelector from "@/components/import/AccountSelector";
+import BankDisplay from "@/components/import/BankDisplay";
+import FileUploadArea from "@/components/import/FileUploadArea";
+import ImportResultStats from "@/components/import/ImportResultStats";
+import ImportSkeleton from "@/components/import/ImportSkeleton";
+import WabiSabiFooter from "@/components/WabiSabiFooter";
+import { usePageTitle } from '@/hooks/usePageTitle'
+
+import type { ImportResult } from "@/types";
 
 export default function ImportPage() {
-  const { data: accounts = [], isLoading } = useAccounts()
-  const queryClient = useQueryClient()
-  const [selectedAccountId, setSelectedAccountId] = useState<number | "">("")
-  const [file, setFile] = useState<File | null>(null)
-  const [result, setResult] = useState<ImportResult | null>(null)
-  const [localError, setLocalError] = useState("")
+  usePageTitle('Import')
+  const { data: accounts = [], isLoading } = useAccounts();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (selectedAccountId === "" && accounts.length > 0) {
-      setSelectedAccountId(accounts[0].id)
-    }
-  }, [accounts, selectedAccountId])
+  const [selectedAccountId, setSelectedAccountId] = useState<number | "">("");
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [localError, setLocalError] = useState("");
 
-  const selectedAccount =
-    selectedAccountId === ""
-      ? null
-      : accounts.find((account) => account.id === selectedAccountId) ?? null
+  const selectedAccount = selectedAccountId === ""
+    ? null
+    : accounts.find((a) => a.id === selectedAccountId) ?? null;
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!selectedAccount) {
-        throw new Error("Please choose an account first")
-      }
-      if (!file) {
-        throw new Error("Please choose a PDF file")
-      }
-
+      if (!selectedAccount) throw new Error("Please choose an account first");
+      if (!file) throw new Error("Please choose a PDF file");
       return importService.importStatement({
         accountId: selectedAccount.id,
         bank: selectedAccount.bank,
         file,
-      })
+      });
     },
     onSuccess: async (data) => {
-      setResult(data)
-      setLocalError("")
-      setFile(null)
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      await queryClient.invalidateQueries({ queryKey: ["accounts"] })
+      setResult(data);
+      setLocalError("");
+      setFile(null);
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      await queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
-    onError: (error: Error) => {
-      setLocalError(error.message)
-    },
-  })
+    onError: (error: Error) => setLocalError(error.message),
+  });
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    mutation.mutate()
+  const handleFileSelect = (selectedFile: File | null) => {
+    setFile(selectedFile);
+    setResult(null);
+    setLocalError("");
+  };
+
+  const handleFileRemove = () => {
+    setFile(null);
+    setResult(null);
+    setLocalError("");
+  };
+
+  const handleAccountSelect = (id: number) => {
+    setSelectedAccountId(id);
+    setResult(null);
+    setLocalError("");
+  };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+
+  if (isLoading) {
+    return <ImportSkeleton />;
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
-          Import
-        </p>
-        <h1 className="text-3xl font-semibold">Bank statement import</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Upload a supported bank statement, pick the account it belongs to,
-          and let the backend parse and save the transactions.
+    <div className="space-y-8 pb-12">
+      {/* Page Header */}
+      <div>
+        <h1 className="font-serif text-2xl font-light tracking-tight text-[#1C1410]">Import</h1>
+        <p className="mt-1 font-sans text-sm text-[#8B7355]">
+          Upload your bank statement to import transactions
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 rounded-xl border p-5 shadow-sm"
-      >
-        <label className="grid gap-2">
-          <span className="text-sm font-medium">Target account</span>
-          <select
-            className="rounded-md border bg-background px-3 py-2"
-            value={selectedAccountId}
-            onChange={(event) => {
-              const value = event.target.value
-              setSelectedAccountId(value === "" ? "" : Number(value))
-              setResult(null)
-              setLocalError("")
-            }}
-            disabled={isLoading || accounts.length === 0}
-          >
-            {accounts.length === 0 ? (
-              <option value="">No accounts available</option>
-            ) : (
-              accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} · {BANK_LABELS[account.bank] ?? account.bank}
-                </option>
-              ))
+      {/* Import Card — no border */}
+      <Card className="rounded-[4px] !ring-0  shadow-none">
+        {/* CardHeader without border — removed */}
+        <CardContent className="px-5 py-5 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <AccountSelector
+              accounts={accounts}
+              selectedAccount={selectedAccount}
+              onSelect={handleAccountSelect}
+              isLoading={isLoading}
+            />
+
+            <BankDisplay bank={selectedAccount?.bank ?? null} />
+
+            <FileUploadArea
+              file={file}
+              onFileSelect={handleFileSelect}
+              onRemove={handleFileRemove}
+              error={localError}
+              setError={setLocalError}
+            />
+
+            {localError && (
+              <div className="flex items-start gap-2.5 rounded-[4px] border-[0.5px] border-[#C0392B]/20 bg-[#FEF8F7] px-3.5 py-3">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C0392B]" />
+                <p className="font-sans text-[11px] leading-relaxed text-[#C0392B]">{localError}</p>
+              </div>
             )}
-          </select>
-        </label>
 
-        <div className="grid gap-2">
-          <span className="text-sm font-medium">Bank</span>
-          <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            {selectedAccount
-              ? BANK_LABELS[selectedAccount.bank] ?? selectedAccount.bank
-              : "Select an account"}
-          </div>
-        </div>
+            <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:items-center">
+              <Button
+                type="submit"
+                disabled={mutation.isPending || !selectedAccount || !file}
+                className="h-10 w-full rounded-[4px] bg-[#C0392B] px-5 font-sans text-[12px] font-medium text-white shadow-none transition-colors hover:bg-[#A83224] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+              >
+                {mutation.isPending ? (
+                  <>
+                    <span className="mr-2 inline-block animate-spin">⟳</span>
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-3.5 w-3.5" />
+                    Import Statement
+                  </>
+                )}
+              </Button>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-medium">Statement file</span>
-          <input
-            type="file"
-            accept=".pdf,application/pdf"
-            className="block w-full rounded-md border border-dashed px-3 py-2 text-sm"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null)
-              setResult(null)
-              setLocalError("")
-            }}
-          />
-        </label>
-
-        <div className="flex items-center gap-3">
-          <Button
-            type="submit"
-            disabled={mutation.isPending || !selectedAccount || !file}
-          >
-            {mutation.isPending ? "Importing..." : "Import statement"}
-          </Button>
-          {file ? (
-            <span className="text-sm text-muted-foreground">{file.name}</span>
-          ) : null}
-        </div>
-
-        {localError ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {localError}
-          </div>
-        ) : null}
-      </form>
-
-      {result ? (
-        <section className="grid gap-3 rounded-xl border p-5">
-          <h2 className="text-lg font-semibold">Import result</h2>
-          <div className="grid gap-2 text-sm md:grid-cols-2">
-            <div>Total parsed: {result.total_parsed}</div>
-            <div>Imported: {result.imported}</div>
-            <div>Duplicates: {result.duplicates}</div>
-            <div>Errors: {result.errors}</div>
-          </div>
-          {result.error_details.length > 0 ? (
-            <div className="grid gap-2">
-              <h3 className="text-sm font-medium">Error details</h3>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                {result.error_details.map((detail, index) => (
-                  <li key={`${detail}-${index}`}>{detail}</li>
-                ))}
-              </ul>
+              {!selectedAccount && !isLoading && (
+                <span className="font-sans text-[10px] text-[#A6947E]">Select an account to continue</span>
+              )}
+              {selectedAccount && !file && (
+                <span className="font-sans text-[10px] text-[#A6947E]">Choose a PDF statement to continue</span>
+              )}
             </div>
-          ) : null}
-        </section>
-      ) : null}
+          </form>
+        </CardContent>
+      </Card>
+
+      {result && <ImportResultStats result={result} />}
+
+      <WabiSabiFooter />
     </div>
-  )
+  );
 }

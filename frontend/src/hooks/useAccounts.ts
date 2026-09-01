@@ -10,11 +10,11 @@ export const accountKeys = {
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────
-export const useAccounts = () => {
-    return useQuery({
-        queryKey: accountKeys.all,
-        queryFn: accountService.getAll,
-    })
+export function useAccounts(params?: { include_inactive?: boolean }) {
+  return useQuery({
+    queryKey: ["accounts", params],
+    queryFn: () => accountService.getAll(params),
+  });
 }
 
 export const useAccount = (id: number) => {

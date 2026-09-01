@@ -1,130 +1,250 @@
+/* ── Only import Tailwind ONCE in your entire project ── */
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
 
-@custom-variant dark (&:is(.dark *));
+/* Font imports – ensure these packages are installed */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/500.css";
 
-@theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Inter Variable', sans-serif;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+/* ── Custom theme variables (v4) ── */
+@theme {
+  /* Fonts */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Border Radius */
+  --radius: 4px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* Light Mode Colors */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-border: #E8E4DE;
+  --color-border-strong: #C4B5A0;
+
+  --color-text-primary: #1C1410;
+  --color-text-secondary: #8B7355;
+  --color-text-muted: #C4B5A0;
+
+  --color-accent: #C0392B;
+  --color-accent-hover: #96281B;
+  --color-accent-subtle: #F9ECEB;
+
+  --color-income: #27AE60;
+  --color-income-subtle: #E8F8F0;
+  --color-expense: #C0392B;
+  --color-expense-subtle: #FEE8E8;
+
+  /* Bank Colors */
+  --color-bank-bca: #0066AE;
+  --color-bank-mandiri: #F5A623;
+  --color-bank-mandiri-rdn: #E8750A;
+  --color-bank-jago: #00B14F;
+  --color-bank-seabank: #FF5C00;
+  --color-bank-ovo: #4C3494;
+  --color-bank-gopay: #00AED6;
+  --color-bank-mt4: #2962FF;
+  --color-bank-crypto: #F7931A;
+  --color-bank-cash: #607D8B;
+  --color-bank-other: #9E9E9E;
+
+  /* Spacing */
+  --section-gap: 32px;
+  --card-padding-x: 16px;
+  --card-padding-y: 14px;
 }
 
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+@layer utilities {
+  .font-playfair {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-inter {
+    font-family: 'Inter', var(--font-sans), sans-serif;
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', var(--font-mono), monospace;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
+/* ── Dark Mode overrides (shadcn uses .dark on <html>) ── */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+  --color-bg: #0F0D0B;
+  --color-surface: #1A1714;
+  --color-border: #2C2820;
+  --color-border-strong: #3D3530;
+
+  --color-text-primary: #F0EBE3;
+  --color-text-secondary: #8B7B6B;
+  --color-text-muted: #5C4F44;
+
+  --color-accent: #E0453A;
+  --color-accent-hover: #C0392B;
+
+  /* Bank colors stay the same, but you can override if needed */
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-    }
-  body {
-    @apply bg-background text-foreground;
-    }
-  html {
-    @apply font-sans;
-    }
+/* ── Base styles ──────────────────────────────────────────────── */
+/* * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+} */
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+}
+
+/* ── Utilities (unchanged) ───────────────────────────────────── */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.label-section {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-secondary);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Japanese Minimalism Utilities ───────────────────────────── */
+
+/* hairline border */
+.border-hairline {
+  border: 0.5px solid var(--color-border);
+}
+
+/* dashed divider */
+.divider-dashed {
+  border: none;
+  border-top: 0.5px dashed var(--color-border);
+  margin: var(--section-gap) 0;
+}
+
+/* card base */
+.card {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--card-padding-y) var(--card-padding-x);
+}
+
+/* bank color left border accent */
+.bank-accent-bca         { border-left: 3px solid var(--color-bank-bca); }
+.bank-accent-mandiri     { border-left: 3px solid var(--color-bank-mandiri); }
+.bank-accent-mandiri-rdn { border-left: 3px solid var(--color-bank-mandiri-rdn); }
+.bank-accent-jago        { border-left: 3px solid var(--color-bank-jago); }
+.bank-accent-seabank     { border-left: 3px solid var(--color-bank-seabank); }
+.bank-accent-ovo         { border-left: 3px solid var(--color-bank-ovo); }
+.bank-accent-gopay       { border-left: 3px solid var(--color-bank-gopay); }
+
+/* amount colors */
+.amount-income  { color: var(--color-income); }
+.amount-expense { color: var(--color-expense); }
+.amount-neutral { color: var(--color-text-primary); }
+
+/* accent button */
+.btn-accent {
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius);
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-accent:hover {
+  background: var(--color-accent-hover);
+}
+
+/* ghost button */
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-text-muted);
+}
+
+/* ── Custom Utilities untuk Login Page ── */
+
+@utility bg-bg {
+  background-color: var(--color-bg);
+}
+
+@utility text-expense {
+  color: var(--color-expense);
+}
+
+@utility input-underline {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  width: 100%;
+  color: var(--color-text-primary);
+
+  /* Biar placeholder-nya sesuai tema */
+  &::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 300;
+  }
+
+  /* Fokus garis bawah berubah warna aksen */
+  &:focus {
+    border-bottom-color: var(--color-accent);
+  }
 }

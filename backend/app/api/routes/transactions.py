@@ -90,7 +90,12 @@ def create_transfer(
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer to {to_account.name}",
-            ref_id=from_ref_id,
+            ref_id=make_ref_id(
+                payload.from_account_id,
+                payload.date,
+                payload.amount,
+                f"OUT-TO-{payload.to_account_id}",  # ← fixed
+            ),
         )
         to_tx = Transaction(
             user_id=current_user.id,
@@ -100,7 +105,12 @@ def create_transfer(
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer from {from_account.name}",
-            ref_id=to_ref_id,
+           ref_id=make_ref_id(
+                payload.to_account_id,
+                payload.date,
+                payload.amount,
+                f"IN-FROM-{payload.from_account_id}",  # ← fixed
+            ),
         )
 
         db.add_all([from_tx, to_tx])
@@ -116,9 +126,6 @@ def create_transfer(
         # ── BI-FAST fee transaction ───────────────────────────────────
         # Fee transactions also need deduplication
         if payload.fee and payload.fee > 0:
-            fee_ref_id = make_ref_id(
-                payload.from_account_id, payload.date, payload.fee, "FEE"
-            )
             fee_tx = Transaction(
                 user_id=current_user.id,
                 account_id=payload.from_account_id,
@@ -127,7 +134,12 @@ def create_transfer(
                 type=TransactionTypeEnum.EXPENSE,
                 category=CategoryEnum.BILLS,
                 note="BI-FAST transfer fee",
-                ref_id=fee_ref_id,
+                ref_id=make_ref_id(
+                    payload.from_account_id,
+                    payload.date,
+                    payload.fee,
+                    f"FEE-TO-{payload.to_account_id}",  # ← fixed
+                ),
             )
             db.add(fee_tx)
 

@@ -23,11 +23,13 @@ class AccountCreate(BaseModel):
     color: str
     currency: CurrencyEnum = CurrencyEnum.IDR
     parent_id: int | None = None
+    account_number: str | None = None
     
 class AccountOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     parent_id: int | None
+    account_number: str | None
     name: str
     bank: BankEnum
     type: AccountTypeEnum
