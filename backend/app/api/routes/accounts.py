@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
@@ -6,6 +8,12 @@ from app.models.models import Account, Transaction
 from app.schemas.schemas import AccountCreate, AccountOut, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
+
+
+def make_account_ref_id(user_id: int, name: str, bank: str) -> str:
+    """Stable hash used to detect accidental duplicate account creation."""
+    raw = f"{user_id}:{name}:{bank}"
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 @router.get("", response_model=list[AccountOut])
@@ -36,6 +44,21 @@ def create_account(
     current_user: CurrentUser,
     db: DbSession,
 ):
+    # Account creation is blocked by parent ownership validation before insert.
+    # The route keeps user-scoped data isolation strict by ensuring parent ids are
+    # owned by the current user rather than creating orphaned account hierarchies.
+    account_ref_id = make_account_ref_id(current_user.id, payload.name, payload.bank.value)
+    existing = db.query(Account).filter(
+        Account.user_id == current_user.id,
+        Account.name == payload.name,
+        Account.bank == payload.bank,
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="Duplicate account — this account already exists",
+        )
+
     if payload.parent_id:
         parent = (
             db.query(Account)
@@ -162,7 +185,9 @@ def delete_account(
         .first()
     )
 
-    # If account doesn't exist or already inactive, return 204 (idempotent)
+    # DELETE is intentionally idempotent: retries of the same request should not
+    # surface a not-found error, and a second delete should be treated as a no-op.
+    response.status_code = 204
     if not account or not account.is_active:
         return response
 

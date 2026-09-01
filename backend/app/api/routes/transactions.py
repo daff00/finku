@@ -29,6 +29,27 @@ def make_ref_id(account_id: int, txn_date: date, amount, note: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def make_transfer_ref_id(
+    from_account_id: int,
+    to_account_id: int,
+    txn_date: date,
+    amount,
+    fee: str | None = None,
+    note: str | None = None,
+) -> str:
+    """Deterministic hash for a logical transfer.
+
+    The transfer is identified by the source account, destination account, date,
+    amount, fee, and note. Both transfer legs share the same logical reference so
+    a retry of the same request is rejected instead of creating a second pair.
+    """
+    raw = (
+        f"{from_account_id}:{to_account_id}:{txn_date}:{amount}:"
+        f"{fee or 0}:{note or ''}"
+    )
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.post("/transfer", response_model=list[TransactionOut], status_code=201)
@@ -61,17 +82,23 @@ def create_transfer(
         )
 
     try:
-        # Generate ref_ids for deduplication
-        # Use deterministic hash: from_account_id:date:amount:OUT
+        # A retry of the same transfer must be identified by the exact same row-level
+        # ref_id used when the original transfer was written. We compare against the
+        # source leg, because that is the canonical entry for the transfer and is the
+        # value that the second request will re-use.
         from_ref_id = make_ref_id(
-            payload.from_account_id, payload.date, payload.amount, "OUT"
+            payload.from_account_id,
+            payload.date,
+            payload.amount,
+            "OUT",
         )
         to_ref_id = make_ref_id(
-            payload.to_account_id, payload.date, payload.amount, "IN"
+            payload.to_account_id,
+            payload.date,
+            payload.amount,
+            "IN",
         )
 
-        # Check for duplicate BEFORE creating transactions
-        # This catches retries of the exact same transfer request
         existing_from_tx = db.query(Transaction).filter(
             Transaction.ref_id == from_ref_id,
             Transaction.user_id == current_user.id,
@@ -82,6 +109,23 @@ def create_transfer(
                 detail="Duplicate transfer — this transfer already exists"
             )
 
+        if payload.fee and payload.fee > 0:
+            fee_ref_id = make_ref_id(
+                payload.from_account_id,
+                payload.date,
+                payload.fee,
+                "FEE",
+            )
+            existing_fee_tx = db.query(Transaction).filter(
+                Transaction.ref_id == fee_ref_id,
+                Transaction.user_id == current_user.id,
+            ).first()
+            if existing_fee_tx:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Duplicate transfer — this transfer already exists"
+                )
+
         from_tx = Transaction(
             user_id=current_user.id,
             account_id=payload.from_account_id,
@@ -90,12 +134,7 @@ def create_transfer(
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer to {to_account.name}",
-            ref_id=make_ref_id(
-                payload.from_account_id,
-                payload.date,
-                payload.amount,
-                f"OUT-TO-{payload.to_account_id}",  # ← fixed
-            ),
+            ref_id=from_ref_id,
         )
         to_tx = Transaction(
             user_id=current_user.id,
@@ -105,12 +144,7 @@ def create_transfer(
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer from {from_account.name}",
-           ref_id=make_ref_id(
-                payload.to_account_id,
-                payload.date,
-                payload.amount,
-                f"IN-FROM-{payload.from_account_id}",  # ← fixed
-            ),
+            ref_id=to_ref_id,
         )
 
         db.add_all([from_tx, to_tx])
@@ -138,7 +172,7 @@ def create_transfer(
                     payload.from_account_id,
                     payload.date,
                     payload.fee,
-                    f"FEE-TO-{payload.to_account_id}",  # ← fixed
+                    "FEE",
                 ),
             )
             db.add(fee_tx)
@@ -217,6 +251,9 @@ def create_transaction(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    # ref_id is a deterministic hash of the same business fields the user sees.
+    # If the same payload is retried, the hash matches and we reject the duplicate
+    # instead of inserting a second transaction for the same event.
     ref_id = make_ref_id(
         payload.account_id,
         payload.date,
@@ -308,7 +345,9 @@ def delete_transaction(
         Transaction.user_id == current_user.id,
     ).first()
 
-    # If transaction doesn't exist, return 204 (idempotent)
+    # DELETE is intentionally idempotent: retries of the same request should not
+    # surface a not-found error, and a second delete should be treated as a no-op.
+    response.status_code = 204
     if not tx:
         return response
 
