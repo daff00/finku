@@ -43,6 +43,61 @@ def test_create_transaction_account_not_found(client):
     assert response.json()["error"] == "Account not found"
 
 
+def test_create_transaction_uses_account_currency(client):
+    account_payload = {
+        "name": "USD Account",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "USD",
+    }
+    account_response = client.post("/api/v1/accounts", json=account_payload)
+    assert account_response.status_code == 201
+    account_id = account_response.json()["id"]
+
+    payload = {
+        "account_id": account_id,
+        "date": "2026-07-25",
+        "amount": "20.00",
+        "type": "INCOME",
+        "category": "SALARY",
+        "note": "USD salary",
+    }
+
+    response = client.post("/api/v1/transactions", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["currency"] == "USD"
+    assert data["amount"] == "20.00"
+
+
+def test_create_transaction_rejects_currency_mismatch(client):
+    account_payload = {
+        "name": "USD Account",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "USD",
+    }
+    account_response = client.post("/api/v1/accounts", json=account_payload)
+    assert account_response.status_code == 201
+    account_id = account_response.json()["id"]
+
+    payload = {
+        "account_id": account_id,
+        "date": "2026-07-25",
+        "amount": "12500000",
+        "type": "INCOME",
+        "category": "SALARY",
+        "note": "Wrong currency",
+        "currency": "IDR",
+    }
+
+    response = client.post("/api/v1/transactions", json=payload)
+    assert response.status_code == 400
+    assert "currency" in response.json()["error"].lower()
+
+
 def test_create_duplicate_transaction(client, sample_account, sample_transaction):
     from datetime import datetime
     now = datetime.now()
@@ -301,6 +356,51 @@ def test_create_transfer(client, sample_account, sample_jago_account):
     assert to_tx["account_id"] == sample_jago_account["id"]
     assert to_tx["type"] == "TRANSFER"
     assert from_tx["amount"] == to_tx["amount"]
+
+
+def test_create_cross_currency_transfer(client):
+    from_account = client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "USD Wallet",
+            "bank": "BCA",
+            "type": "SAVINGS",
+            "color": "#0066AE",
+            "currency": "USD",
+        },
+    ).json()
+    to_account = client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "IDR Wallet",
+            "bank": "JAGO",
+            "type": "POCKET",
+            "color": "#00B14F",
+            "currency": "IDR",
+        },
+    ).json()
+
+    payload = {
+        "from_account_id": from_account["id"],
+        "to_account_id": to_account["id"],
+        "date": "2026-07-01",
+        "amount": "20",
+        "from_currency": "USD",
+        "to_currency": "IDR",
+        "from_amount": "20",
+        "to_amount": "320000",
+        "rate_applied": "16000",
+        "note": "USD to IDR transfer",
+    }
+
+    response = client.post("/api/v1/transactions/transfer", json=payload)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data[0]["currency"] == "USD"
+    assert data[1]["currency"] == "IDR"
+    assert data[0]["amount"] == "20.00"
+    assert data[1]["amount"] == "320000.00"
 
 
 def test_create_transfer_same_account(client, sample_account):

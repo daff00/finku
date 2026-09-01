@@ -164,7 +164,7 @@ NEVER use useState + useEffect for server data → always TanStack Query
 NEVER store money as number → always string
 NEVER use raw hex colors → always use BANK_COLORS from constants.ts
 NEVER import from @/services/accountService → import from @/services
-ALL currency display → use formatIDR() or formatIDRShort()
+ALL currency display → use the shared amount formatter / active app currency context, not hardcoded IDR assumptions
 ALL date display → use formatDate() or formatDateShort()
 
 ### Idempotency Rules
@@ -331,42 +331,45 @@ All fixtures defined in tests/conftest.py.
 - Backend: JWT auth, user isolation, and rate limiting are in place
 - Backend: loguru logging and custom exception handling are active
 - Backend: Alembic migrations are present and SQLite batch mode is used correctly
+- Backend: multi-currency transaction/account support is implemented for IDR and USD, including validation and transfer semantics
+- Backend: account duplicate detection now respects currency, so IDR/USD accounts with the same identity are not collapsed
+- Backend: mixed-currency reporting uses a single base-currency view (IDR) and converts USD values before aggregation
 - Backend: BCA PDF import flow and unified import endpoint are working
 - Backend: idempotency fixes for duplicate transaction, transfer, and import retries are implemented and tested
-- Backend: targeted regression suite for accounts, transactions, and import flows is passing
+- Backend: targeted regression suites for accounts, transactions, analytics, and import flows are passing
 - Frontend: app shell, routing, providers, and shared UI foundations are in place
-- Frontend: services layer, TanStack Query hooks, and currency helpers exist
-- Frontend: dashboard and import flows are functional
-- Frontend: theme variables and dark-mode CSS block exist, but not fully wired as a complete feature yet
+- Frontend: services layer, TanStack Query hooks, and shared currency formatting helpers exist
+- Frontend: dashboard, transaction creation, transfer flow, and import flows are functional
+- Frontend: app-level display-currency state is shared across views and no longer assumes hardcoded IDR-only rendering
+- Frontend: dark-mode theme tokens exist, but the feature is still not a complete user-facing end-to-end product experience yet
 
 ### In Progress ⏳
-- Frontend: transactions page still needs final polish and full business flow cleanup
-- Frontend: analytics page remains partial and not fully production-ready
+- Frontend: transactions page still needs final polish and some UX cleanup
+- Frontend: analytics page remains partially production-polished but the underlying reporting logic is functional
 - Frontend: settings page still incomplete
 - Backend: remaining bank statement parsers (Mandiri, Jago, Seabank) are deferred
 - Backend: CSV import support is still deferred
 - Frontend: PWA setup and deployment work are still not started
 
 ### Known Bugs / Gaps ⚠️
-- USD transaction support is not fully implemented: the app has a currency toggle and exchange-rate hook, but the transaction model and most flows are still effectively IDR-first; no enforced multi-currency transaction schema is in place yet.
-- Dark mode is only partially implemented: CSS variables exist for a dark theme, but the app does not yet have a complete user-facing theme toggle, persisted preference handling, and full UI verification across all pages.
-- Transactions page is still a partial feature; table/detail UX and edge-case polish are unfinished.
-- Analytics page is not complete enough to be considered production-ready.
+- Dark mode is still only partially implemented: CSS variables exist for a dark theme, but the app does not yet have a complete user-facing theme toggle, persisted preference handling, and full UI verification across all pages.
+- Transactions page still needs UX refinement and edge-case polish.
 - Settings page is still a stub and not connected to real configuration/UX flows.
 - Import support is still BCA-only for production use; other banks remain intentionally deferred.
-- Some frontend state and formatting assumptions still assume IDR as the default display path, which will need cleanup when multi-currency features are implemented.
+- Some remaining frontend polish still assumes a simplified display flow rather than full product-level reporting polish.
 
 ### Next Backlog 🎯
-1. USD transaction support
-   - add explicit currency support to transaction/account data model and API contracts
-   - normalize IDR/USD conversions and display formatting across the app
-   - decide whether conversion happens at the backend, frontend, or both
-
-2. Dark mode
+1. Dark mode
    - add a real theme toggle and persisted preference
    - audit all pages/components for contrast and color-token consistency
    - ensure the app behaves correctly in both light and dark modes with no hardcoded colors left behind
 
+2. Product polish
+   - complete transactions page cleanup and edge-case UX handling
+   - finish settings page integration and broader product completeness
+   - expand import coverage beyond BCA when needed
+
 ### Project Health
-- Core backend reliability is in a good state for the current scope.
-- The main remaining work is product-level completeness and UX polish, not critical API correctness for the implemented change set.
+- Core backend reliability is strong for the current scope.
+- USD transaction support is now implemented and validated in the backend and reporting layer.
+- The main remaining work is product-level completeness and UX polish, not critical API correctness.

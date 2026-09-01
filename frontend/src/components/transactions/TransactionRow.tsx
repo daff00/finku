@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { CATEGORY_LABELS } from "@/lib/constants";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { TransactionTypeEnum } from "@/types";
 import type { Transaction } from "@/types";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
@@ -33,6 +33,7 @@ interface TransactionRowProps {
 
 export default function TransactionRow({ tx, account }: TransactionRowProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { formatAmount } = useCurrency();
 
   const bankColor = account?.color ?? "#8B7355";
   const categoryLabel = CATEGORY_LABELS[tx.category] ?? tx.category;
@@ -70,7 +71,7 @@ export default function TransactionRow({ tx, account }: TransactionRowProps) {
           <div className="text-right">
             <div className={`font-mono text-[14px] font-medium ${amountColor}`}>
               {amountPrefix}
-              {formatIDR(tx.amount)}
+              {formatAmount(Number(tx.amount), tx.currency ?? "IDR")}
             </div>
           </div>
 

@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { transactionService } from "@/services";
 import { useAccounts } from "@/hooks";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useExchangeRate } from "@/hooks/useExchangeRate";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { TransactionTypeEnum, CurrencyEnum, CategoryEnum } from "@/types";
 import type { Transaction } from "@/types";
@@ -51,16 +53,24 @@ export default function AddTransactionSheet({
     open,
     onOpenChange,
 }: AddTransactionSheetProps) {
+    
+    const [accountId, setAccountId] = useState<string>("");
+
     const queryClient = useQueryClient();
     const { data: accounts = [] } = useAccounts();
+    const { currency: activeCurrency, rate } = useCurrency();
+    const { data: exchangeRateData } = useExchangeRate();
+    const selectedAccount = accounts.find((acc) => String(acc.id) === accountId);
 
     // ── Form state ─────────────────────────────────────────────────
     const [type, setType] = useState<TransactionType>(
         TransactionTypeEnum.EXPENSE
     );
+    const [currency, setCurrency] = useState<"IDR" | "USD">(
+        activeCurrency === "USD" ? "USD" : "IDR"
+    );
     const [amount, setAmount] = useState("");
     const [title, setTitle] = useState("");
-    const [accountId, setAccountId] = useState<string>("");
     const [targetAccountId, setTargetAccountId] = useState<string>("");
     const [category, setCategory] = useState<string>("");
     const [date, setDate] = useState(TODAY);
@@ -73,6 +83,15 @@ export default function AddTransactionSheet({
             setAccountId(String(accounts[0].id));
         }
     }, [accounts]);
+
+    useEffect(() => {
+        if (selectedAccount) {
+            setCurrency(selectedAccount.currency === "USD" ? "USD" : "IDR");
+            return;
+        }
+
+        setCurrency(activeCurrency === "USD" ? "USD" : "IDR");
+    }, [selectedAccount, activeCurrency]);
 
     // ── Mutations ──────────────────────────────────────────────────
     const createTx = useMutation({
@@ -120,18 +139,25 @@ export default function AddTransactionSheet({
         setFee("");
     };
 
+    const sanitizeDecimalInput = (val: string) => {
+        const cleaned = val.replace(/[^\d.]/g, "");
+        if (!cleaned) return "";
+        const parts = cleaned.split(".");
+        if (parts.length > 2) {
+            return `${parts[0]}.${parts.slice(1).join("")}`;
+        }
+        return cleaned;
+    };
+
     const parseAmount = (val: string) => {
-        const cleaned = val.replace(/[^0-9]/g, "");
-        return cleaned ? Number(cleaned) : 0;
+        const cleaned = sanitizeDecimalInput(val);
+        if (!cleaned) return 0;
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
     };
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value.replace(/[^0-9]/g, "");
-        if (!raw) {
-            setAmount("");
-            return;
-        }
-        setAmount(new Intl.NumberFormat("id-ID").format(Number(raw)));
+        setAmount(sanitizeDecimalInput(e.target.value));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -143,13 +169,35 @@ export default function AddTransactionSheet({
 
         if (type === TransactionTypeEnum.TRANSFER) {
             if (!targetAccountId) return;
+
+            const fromAccount = accounts.find((acc) => String(acc.id) === accountId);
+            const toAccount = accounts.find((acc) => String(acc.id) === targetAccountId);
+            const sourceCurrency = fromAccount?.currency ?? (currency === "USD" ? CurrencyEnum.USD : CurrencyEnum.IDR);
+            const destinationCurrency = toAccount?.currency ?? sourceCurrency;
+            const transferRate = exchangeRateData?.rate ?? rate ?? 1;
+
+            const fromAmount = String(parsedAmount);
+            const toAmount =
+                sourceCurrency === destinationCurrency
+                    ? fromAmount
+                    : sourceCurrency === CurrencyEnum.USD && destinationCurrency === CurrencyEnum.IDR
+                        ? String(parsedAmount * transferRate)
+                        : sourceCurrency === CurrencyEnum.IDR && destinationCurrency === CurrencyEnum.USD
+                            ? String(parsedAmount / transferRate)
+                            : fromAmount;
+
             createTransfer.mutate({
                 from_account_id: Number(accountId),
                 to_account_id: Number(targetAccountId),
                 date,
-                amount: String(parsedAmount),
+                amount: fromAmount,
                 note: note || title || undefined,
                 fee: String(parseAmount(fee)),
+                from_currency: sourceCurrency,
+                to_currency: destinationCurrency,
+                from_amount: fromAmount,
+                to_amount: toAmount,
+                rate_applied: String(transferRate),
             });
         } else {
             createTx.mutate({
@@ -160,7 +208,7 @@ export default function AddTransactionSheet({
                 category: (category || "OTHER") as typeof CategoryEnum[keyof typeof CategoryEnum],
                 note: note || title || undefined,
                 source: "MANUAL",
-                currency: CurrencyEnum.IDR,
+                currency: currency === "USD" ? CurrencyEnum.USD : CurrencyEnum.IDR,
                 original_amount: null,
                 original_currency: null,
             });
@@ -201,10 +249,26 @@ export default function AddTransactionSheet({
                         ))}
                     </div>
 
+                    {/* ── Currency ── */}
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
+                            Currency
+                        </Label>
+                        <Select value={currency} onValueChange={(value) => setCurrency(value === "USD" ? "USD" : "IDR")}>
+                            <SelectTrigger className="h-auto border-0 border-b border-border rounded-none bg-transparent px-0 py-2 shadow-none focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none">
+                                <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                            <SelectContent className="border-border bg-surface">
+                                <SelectItem value="IDR">IDR</SelectItem>
+                                <SelectItem value="USD">USD</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {/* ── Amount ── */}
                     <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
-                            Amount (IDR)
+                            Amount ({currency})
                         </Label>
                         <Input
                             type="text"
@@ -342,12 +406,7 @@ export default function AddTransactionSheet({
                                 inputMode="numeric"
                                 value={fee}
                                 onChange={(e) => {
-                                    const raw = e.target.value.replace(/[^0-9]/g, "");
-                                    if (!raw) {
-                                        setFee("");
-                                        return;
-                                    }
-                                    setFee(new Intl.NumberFormat("id-ID").format(Number(raw)));
+                                    setFee(sanitizeDecimalInput(e.target.value));
                                 }}
                                 placeholder="0"
                                 className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"

@@ -81,6 +81,29 @@ def create_transfer(
             detail="Cannot transfer to the same account"
         )
 
+    source_currency = payload.from_currency or from_account.currency
+    destination_currency = payload.to_currency or to_account.currency
+
+    if source_currency != from_account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transfer source currency must match the source account currency",
+        )
+    if destination_currency != to_account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transfer destination currency must match the destination account currency",
+        )
+
+    source_amount = payload.from_amount or payload.amount
+    destination_amount = payload.to_amount or payload.amount
+
+    if from_account.currency == to_account.currency and source_amount != destination_amount:
+        raise HTTPException(
+            status_code=400,
+            detail="Same-currency transfers require matching source and destination amounts",
+        )
+
     try:
         # A retry of the same transfer must be identified by the exact same row-level
         # ref_id used when the original transfer was written. We compare against the
@@ -89,13 +112,13 @@ def create_transfer(
         from_ref_id = make_ref_id(
             payload.from_account_id,
             payload.date,
-            payload.amount,
+            source_amount,
             "OUT",
         )
         to_ref_id = make_ref_id(
             payload.to_account_id,
             payload.date,
-            payload.amount,
+            destination_amount,
             "IN",
         )
 
@@ -130,21 +153,23 @@ def create_transfer(
             user_id=current_user.id,
             account_id=payload.from_account_id,
             date=payload.date,
-            amount=payload.amount,
+            amount=source_amount,
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer to {to_account.name}",
             ref_id=from_ref_id,
+            currency=source_currency,
         )
         to_tx = Transaction(
             user_id=current_user.id,
             account_id=payload.to_account_id,
             date=payload.date,
-            amount=payload.amount,
+            amount=destination_amount,
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer from {from_account.name}",
             ref_id=to_ref_id,
+            currency=destination_currency,
         )
 
         db.add_all([from_tx, to_tx])
@@ -251,6 +276,16 @@ def create_transaction(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    submitted_currency = payload.currency
+    if submitted_currency and submitted_currency != account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transaction currency must match the account currency",
+        )
+
+    payload_data = payload.model_dump()
+    payload_data["currency"] = submitted_currency or account.currency
+
     # ref_id is a deterministic hash of the same business fields the user sees.
     # If the same payload is retried, the hash matches and we reject the duplicate
     # instead of inserting a second transaction for the same event.
@@ -274,7 +309,7 @@ def create_transaction(
     tx = Transaction(
         user_id=current_user.id,
         ref_id=ref_id,
-        **payload.model_dump()
+        **payload_data,
     )
     db.add(tx)
     db.commit()

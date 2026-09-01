@@ -56,6 +56,30 @@ def test_create_account_duplicate_name(client):
     assert "Duplicate account" in second.json()["error"]
 
 
+def test_create_account_duplicate_name_with_different_currency(client):
+    payload_idr = {
+        "name": "BCA Main",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "IDR",
+    }
+    payload_usd = {
+        "name": "BCA Main",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "USD",
+    }
+
+    first = client.post("/api/v1/accounts", json=payload_idr)
+    assert first.status_code == 201
+
+    second = client.post("/api/v1/accounts", json=payload_usd)
+    assert second.status_code == 201
+    assert second.json()["currency"] == "USD"
+
+
 def test_list_accounts(client, sample_account):
     # ── Act ───────────────────────────────────
     response = client.get("/api/v1/accounts")

@@ -197,6 +197,11 @@ export type TransferCreate = {
     amount: string
     note?: string
     fee?: string
+    from_currency?: CurrencyEnum
+    to_currency?: CurrencyEnum
+    from_amount?: string
+    to_amount?: string
+    rate_applied?: string
 }
 
 export type BalanceCreate = {

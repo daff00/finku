@@ -37,6 +37,21 @@ The system SHALL allow users to create transactions in either IDR or USD and per
 - **WHEN** a user creates an IDR transaction
 - **THEN** the transaction retains IDR formatting and does not unnecessarily convert or re-label the value
 
+### Requirement: Correct currency conversion semantics
+The system SHALL preserve the original transaction currency in the stored value and convert only at display time when the app is showing a different display currency.
+
+#### Scenario: USD transaction remains USD in storage
+- **WHEN** a user creates a transaction with a USD amount of 20
+- **THEN** the stored transaction keeps its original currency metadata and is not silently reinterpreted as IDR or converted twice
+
+#### Scenario: Display converts only once
+- **WHEN** the app is in USD display mode
+- **THEN** the transaction remains shown as 20.00 USD without dividing by the exchange rate again
+
+#### Scenario: Switching to IDR display converts from source currency
+- **WHEN** the app currency toggles to IDR while a USD transaction is displayed
+- **THEN** the value is converted from the transaction's source currency into IDR for display and the underlying source value remains unchanged
+
 ### Requirement: Shared formatting logic
 The system SHALL centralize amount conversion and formatting in one shared formatter so repeated page-level logic does not drift across screens.
 

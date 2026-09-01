@@ -21,7 +21,7 @@ export default function CashflowSummary({
   categories = [],
   showAmount,
 }: CashflowSummaryProps) {
-  const { formatAmount, currency } = useCurrency();
+  const { formatAmount } = useCurrency();
 
   return (
     <section className="space-y-4">

@@ -1,7 +1,7 @@
 // frontend/src/components/analytics/QuickInsights.tsx
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Target, PiggyBank } from "lucide-react";
 import type { CategoryBreakdown } from "@/types";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 type Insight = {
   icon: React.ReactNode;
@@ -33,16 +33,6 @@ function getStatusColor(type: Insight["type"]) {
   }
 }
 
-function maskAmount(text: string): string {
-  // Replace formatted currency with masked version
-  return text.replace(/Rp\s?[\d.,]+/g, "•••••••••");
-}
-
-function maskPercentage(text: string): string {
-  // Replace percentage with masked version
-  return text.replace(/\d+%/g, "••%");
-}
-
 export default function QuickInsights({
   totalIncome,
   totalExpense,
@@ -53,10 +43,11 @@ export default function QuickInsights({
   currentNetWorth,
   showAmount = true,
 }: QuickInsightsProps) {
+  const { formatAmount } = useCurrency();
   const insights: Insight[] = [];
 
   const formatWithMask = (amount: number): string => {
-    return showAmount ? formatIDR(amount) : "•••••••••";
+    return showAmount ? formatAmount(amount) : "•••••••••";
   };
 
   const formatPercent = (value: number): string => {
