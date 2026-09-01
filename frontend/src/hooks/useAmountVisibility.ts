@@ -1,5 +1,5 @@
 // frontend/src/hooks/useAmountVisibility.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type SectionName = "netWorth" | "accounts" | "cashflow";
 
@@ -9,27 +9,67 @@ interface VisibilityState {
 }
 
 const STORAGE_KEY = "dashboard_amount_visibility";
+const LAST_USER_KEY = "dashboard_amount_visibility_user";
+
+const HIDDEN_STATE: VisibilityState = { global: false, overrides: {} };
 
 function getInitialState(): VisibilityState {
-  if (typeof window === "undefined") return { global: true, overrides: {} };
+  if (typeof window === "undefined") return HIDDEN_STATE;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { global: parsed.global ?? true, overrides: parsed.overrides ?? {} };
+      return { global: parsed.global ?? false, overrides: parsed.overrides ?? {} };
     }
   } catch (_) {
     // ignore
   }
-  return { global: false, overrides: {} };
+  return HIDDEN_STATE;
 }
 
-export function useAmountVisibility() {
-  const [state, setState] = useState<VisibilityState>(getInitialState);
+function getStoredUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(LAST_USER_KEY);
+}
+
+export function useAmountVisibility(userId?: string | number | null) {
+  const normalizedUserId = userId != null ? String(userId) : null;
+
+  // On first mount, decide synchronously whether this counts as a "new login"
+  // by comparing against the persisted last-known user id (not a ref, which
+  // wouldn't survive a page-switch remount).
+  const [state, setState] = useState<VisibilityState>(() => {
+    if (normalizedUserId != null && normalizedUserId !== getStoredUserId()) {
+      return HIDDEN_STATE;
+    }
+    return getInitialState();
+  });
+
+  const didInit = useRef(false);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
+
+  useEffect(() => {
+    if (normalizedUserId == null) return;
+
+    const storedUserId = getStoredUserId();
+
+    if (!didInit.current) {
+      // Already handled synchronously in useState initializer above —
+      // just record the user id so future remounts on the same session
+      // don't re-trigger a reset.
+      sessionStorage.setItem(LAST_USER_KEY, normalizedUserId);
+      didInit.current = true;
+      return;
+    }
+
+    if (normalizedUserId !== storedUserId) {
+      setState(HIDDEN_STATE);
+      sessionStorage.setItem(LAST_USER_KEY, normalizedUserId);
+    }
+  }, [normalizedUserId]);
 
   const toggleGlobal = useCallback(() => {
     setState((prev) => ({
@@ -40,7 +80,6 @@ export function useAmountVisibility() {
 
   const getSectionVisible = useCallback(
     (section: SectionName): boolean => {
-      // If override exists, use it; otherwise fallback to global
       if (section in state.overrides) {
         return state.overrides[section]!;
       }
@@ -49,26 +88,21 @@ export function useAmountVisibility() {
     [state.global, state.overrides]
   );
 
-  const toggleSection = useCallback(
-    (section: SectionName) => {
-      setState((prev) => {
-        const currentOverride = prev.overrides[section];
-        const newOverrides = { ...prev.overrides };
-        if (currentOverride === undefined) {
-          // If no override, set it to the opposite of the global
-          newOverrides[section] = !prev.global;
-        } else {
-          // If override exists, remove it (fall back to global)
-          delete newOverrides[section];
-        }
-        return { ...prev, overrides: newOverrides };
-      });
-    },
-    [state.global]
-  );
+  const toggleSection = useCallback((section: SectionName) => {
+    setState((prev) => {
+      const currentOverride = prev.overrides[section];
+      const newOverrides = { ...prev.overrides };
+      if (currentOverride === undefined) {
+        newOverrides[section] = !prev.global;
+      } else {
+        delete newOverrides[section];
+      }
+      return { ...prev, overrides: newOverrides };
+    });
+  }, []);
 
   const resetAll = useCallback(() => {
-    setState({ global: true, overrides: {} });
+    setState(HIDDEN_STATE);
   }, []);
 
   return {

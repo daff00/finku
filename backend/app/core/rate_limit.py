@@ -1,3 +1,4 @@
+# app/core/rate_limit.py
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
@@ -34,7 +35,7 @@ accounts_limit = limiter.shared_limit(
 )
 
 transactions_limit = limiter.shared_limit(
-    settings.API_RATE_LIMIT,
+    settings.TRANSACTIONS_RATE_LIMIT,
     scope="transactions",
 )
 
@@ -52,6 +53,15 @@ imports_limit = limiter.shared_limit(
     settings.API_RATE_LIMIT,
     scope="imports",
 )
+
+
+def rate_limit(limit: int, per: int):
+    """
+    Generic rate limit decorator.
+    Usage: @rate_limit(limit=60, per=60)  # 60 requests per minute
+    """
+    rate_string = f"{limit}/{per}s"
+    return limiter.shared_limit(rate_string, scope="exchange_rate")
 
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):

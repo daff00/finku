@@ -1,13 +1,16 @@
 import calendar
 import hashlib
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
+from sqlalchemy import func
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import transactions_limit
 from app.models.models import (
     Account,
+    Balance,
     CategoryEnum,
     Transaction,
     TransactionTypeEnum,
@@ -29,6 +32,49 @@ def make_ref_id(account_id: int, txn_date: date, amount, note: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def get_latest_account_balance(db, user_id: int, account_id: int):
+    from app.models.models import Balance, Transaction, TransactionTypeEnum
+
+    latest = (
+        db.query(Balance)
+        .filter(
+            Balance.account_id == account_id,
+            Balance.user_id == user_id,
+        )
+        .order_by(Balance.recorded_at.desc())
+        .first()
+    )
+
+    if latest is None:
+        return None
+
+    current = latest.amount
+    income_total = (
+        db.query(Transaction)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.INCOME,
+            Transaction.created_at >= latest.recorded_at,
+        )
+        .with_entities(func.sum(Transaction.amount))
+        .scalar() or Decimal("0")
+    )
+    expense_total = (
+        db.query(Transaction)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.EXPENSE,
+            Transaction.created_at >= latest.recorded_at,
+        )
+        .with_entities(func.sum(Transaction.amount))
+        .scalar() or Decimal("0")
+    )
+
+    return current + income_total - expense_total
+
+
 def make_transfer_ref_id(
     from_account_id: int,
     to_account_id: int,
@@ -48,6 +94,27 @@ def make_transfer_ref_id(
         f"{fee or 0}:{note or ''}"
     )
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def apply_balance_delta(db, user_id: int, account_id: int, delta: Decimal):
+    latest = (
+        db.query(Balance)
+        .filter(
+            Balance.account_id == account_id,
+            Balance.user_id == user_id,
+        )
+        .order_by(Balance.recorded_at.desc())
+        .first()
+    )
+
+    base_amount = latest.amount if latest else Decimal("0")
+    balance = Balance(
+        user_id=user_id,
+        account_id=account_id,
+        amount=base_amount + delta,
+    )
+    db.add(balance)
+    return balance
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -81,26 +148,72 @@ def create_transfer(
             detail="Cannot transfer to the same account"
         )
 
+    source_currency = payload.from_currency or from_account.currency
+    destination_currency = payload.to_currency or to_account.currency
+
+    if source_currency != from_account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transfer source currency must match the source account currency",
+        )
+    if destination_currency != to_account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transfer destination currency must match the destination account currency",
+        )
+
+    source_amount = payload.from_amount or payload.amount
+    destination_amount = payload.to_amount or payload.amount
+
+    if from_account.currency == to_account.currency and source_amount != destination_amount:
+        raise HTTPException(
+            status_code=400,
+            detail="Same-currency transfers require matching source and destination amounts",
+        )
+
+    available_balance = get_latest_account_balance(db, current_user.id, payload.from_account_id)
+    if available_balance is not None and source_amount > available_balance:
+        raise HTTPException(
+            status_code=400,
+            detail="Insufficient funds in source account",
+        )
+
     try:
         # A retry of the same transfer must be identified by the exact same row-level
         # ref_id used when the original transfer was written. We compare against the
         # source leg, because that is the canonical entry for the transfer and is the
         # value that the second request will re-use.
-        from_ref_id = make_ref_id(
+        legacy_from_ref_id = make_ref_id(
             payload.from_account_id,
             payload.date,
-            payload.amount,
+            source_amount,
             "OUT",
         )
-        to_ref_id = make_ref_id(
+        legacy_to_ref_id = make_ref_id(
             payload.to_account_id,
             payload.date,
-            payload.amount,
+            destination_amount,
             "IN",
+        )
+        from_ref_id = make_transfer_ref_id(
+            payload.from_account_id,
+            payload.to_account_id,
+            payload.date,
+            source_amount,
+            fee=payload.fee,
+            note=payload.note or f"Transfer to {to_account.name}",
+        )
+        to_ref_id = make_transfer_ref_id(
+            payload.to_account_id,
+            payload.from_account_id,
+            payload.date,
+            destination_amount,
+            fee=payload.fee,
+            note=payload.note or f"Transfer from {from_account.name}",
         )
 
         existing_from_tx = db.query(Transaction).filter(
-            Transaction.ref_id == from_ref_id,
+            Transaction.ref_id.in_([from_ref_id, legacy_from_ref_id]),
             Transaction.user_id == current_user.id,
         ).first()
         if existing_from_tx:
@@ -117,7 +230,7 @@ def create_transfer(
                 "FEE",
             )
             existing_fee_tx = db.query(Transaction).filter(
-                Transaction.ref_id == fee_ref_id,
+                Transaction.ref_id.in_([fee_ref_id]),
                 Transaction.user_id == current_user.id,
             ).first()
             if existing_fee_tx:
@@ -130,21 +243,23 @@ def create_transfer(
             user_id=current_user.id,
             account_id=payload.from_account_id,
             date=payload.date,
-            amount=payload.amount,
+            amount=source_amount,
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer to {to_account.name}",
             ref_id=from_ref_id,
+            currency=source_currency,
         )
         to_tx = Transaction(
             user_id=current_user.id,
             account_id=payload.to_account_id,
             date=payload.date,
-            amount=payload.amount,
+            amount=destination_amount,
             type=TransactionTypeEnum.TRANSFER,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer from {from_account.name}",
             ref_id=to_ref_id,
+            currency=destination_currency,
         )
 
         db.add_all([from_tx, to_tx])
@@ -177,6 +292,11 @@ def create_transfer(
             )
             db.add(fee_tx)
 
+        db.commit()
+        apply_balance_delta(db, current_user.id, payload.from_account_id, -source_amount)
+        apply_balance_delta(db, current_user.id, payload.to_account_id, destination_amount)
+        if payload.fee and payload.fee > 0:
+            apply_balance_delta(db, current_user.id, payload.from_account_id, -payload.fee)
         db.commit()
         db.refresh(from_tx)
         db.refresh(to_tx)
@@ -251,6 +371,24 @@ def create_transaction(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    submitted_currency = payload.currency
+    if submitted_currency and submitted_currency != account.currency:
+        raise HTTPException(
+            status_code=400,
+            detail="Transaction currency must match the account currency",
+        )
+
+    if payload.type == TransactionTypeEnum.EXPENSE:
+        available_balance = get_latest_account_balance(db, current_user.id, payload.account_id)
+        if available_balance is not None and payload.amount > available_balance:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient funds in source account",
+            )
+
+    payload_data = payload.model_dump()
+    payload_data["currency"] = submitted_currency or account.currency
+
     # ref_id is a deterministic hash of the same business fields the user sees.
     # If the same payload is retried, the hash matches and we reject the duplicate
     # instead of inserting a second transaction for the same event.
@@ -274,11 +412,17 @@ def create_transaction(
     tx = Transaction(
         user_id=current_user.id,
         ref_id=ref_id,
-        **payload.model_dump()
+        **payload_data,
     )
     db.add(tx)
     db.commit()
     db.refresh(tx)
+
+    delta = payload.amount if payload.type == TransactionTypeEnum.INCOME else -payload.amount
+    if payload.type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
+        apply_balance_delta(db, current_user.id, payload.account_id, delta)
+        db.commit()
+
     return tx
 
 

@@ -1,8 +1,8 @@
 // frontend/src/components/transactions/DeleteTransactionDialog.tsx
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionService } from "@/services";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import type { Transaction } from "@/types";
-import { formatIDR } from "@/lib/formatters";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ export default function DeleteTransactionDialog({
   transaction,
 }: DeleteTransactionDialogProps) {
   const queryClient = useQueryClient();
+  const { formatAmount } = useCurrency();
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -58,7 +59,7 @@ export default function DeleteTransactionDialog({
             Are you sure you want to delete this transaction?
             <br />
             <span className="block mt-1 text-[#1C1410] font-medium">
-              {transaction?.note || transaction?.category || "Untitled"} · {formatIDR(Number(transaction?.amount || 0))}
+              {transaction?.note || transaction?.category || "Untitled"} · {formatAmount(Number(transaction?.amount || 0), transaction?.currency ?? "IDR")}
             </span>
             <br />
             {transaction?.type === "TRANSFER" && (

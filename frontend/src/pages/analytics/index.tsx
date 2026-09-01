@@ -1,6 +1,6 @@
 // frontend/src/pages/AnalyticsPage.tsx
 import { useMemo, useState } from "react";
-import { useNetworth, useMonthly, useCategories, useSpendingByAccount, useAmountVisibility } from "@/hooks";
+import { useNetworth, useMonthly, useCategories, useSpendingByAccount, useAmountVisibility, useAuth } from "@/hooks";
 import { Eye, EyeOff } from "lucide-react";
 import { BANK_LABELS, BANK_COLORS } from "@/lib/constants";
 import type { MonthlySummary } from "@/types";
@@ -28,7 +28,8 @@ export default function AnalyticsPage() {
   usePageTitle("Analytics");
 
   // ── Amount visibility ──
-  const { globalVisible, toggleGlobal } = useAmountVisibility();
+  const { user } = useAuth();
+  const { globalVisible, toggleGlobal } = useAmountVisibility(user?.id);
 
   // ── State ────────────────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState<string>(

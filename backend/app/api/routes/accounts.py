@@ -1,18 +1,19 @@
 import hashlib
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import accounts_limit
-from app.models.models import Account, Transaction
+from app.models.models import Account, Balance, Transaction
 from app.schemas.schemas import AccountCreate, AccountOut, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 
-def make_account_ref_id(user_id: int, name: str, bank: str) -> str:
+def make_account_ref_id(user_id: int, name: str, bank: str, currency: str | None = None) -> str:
     """Stable hash used to detect accidental duplicate account creation."""
-    raw = f"{user_id}:{name}:{bank}"
+    raw = f"{user_id}:{name}:{bank}:{currency or ''}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -47,11 +48,17 @@ def create_account(
     # Account creation is blocked by parent ownership validation before insert.
     # The route keeps user-scoped data isolation strict by ensuring parent ids are
     # owned by the current user rather than creating orphaned account hierarchies.
-    account_ref_id = make_account_ref_id(current_user.id, payload.name, payload.bank.value)
+    account_ref_id = make_account_ref_id(
+        current_user.id,
+        payload.name,
+        payload.bank.value,
+        payload.currency.value if payload.currency else None,
+    )
     existing = db.query(Account).filter(
         Account.user_id == current_user.id,
         Account.name == payload.name,
         Account.bank == payload.bank,
+        Account.currency == payload.currency,
     ).first()
     if existing:
         raise HTTPException(
@@ -78,6 +85,15 @@ def create_account(
     db.add(account)
     db.commit()
     db.refresh(account)
+
+    zero_balance = Balance(
+        user_id=current_user.id,
+        account_id=account.id,
+        amount=Decimal("0"),
+    )
+    db.add(zero_balance)
+    db.commit()
+
     return account
 
 

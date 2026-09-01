@@ -35,6 +35,16 @@ def test_create_balance_account_not_found(client):
     assert response.json()["error"] == "Account not found"
 
 
+def test_create_balance_rejects_negative_amount(client, sample_account):
+    response = client.post(
+        "/api/v1/balances",
+        json={"account_id": sample_account["id"], "amount": "-1000"},
+    )
+
+    assert response.status_code == 400
+    assert "negative" in response.json()["error"].lower()
+
+
 def test_list_balances(client, sample_balance):
     # ── Act ───────────────────────────────────
     response = client.get("/api/v1/balances")
@@ -42,8 +52,9 @@ def test_list_balances(client, sample_balance):
     # ── Assert ────────────────────────────────
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
+    assert len(data) == 2
     assert data[0]["amount"] == "32100000.00"
+    assert any(item["amount"] == "0.00" for item in data)
 
 
 def test_list_balances_empty(client):
@@ -62,8 +73,9 @@ def test_list_balances_filter_by_account(client, sample_account, sample_balance)
     # ── Assert ────────────────────────────────
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
+    assert len(data) == 2
     assert data[0]["account_id"] == sample_account["id"]
+    assert any(item["amount"] == "0.00" for item in data)
 
 
 def test_list_balances_filter_wrong_account(client, sample_balance):
@@ -115,12 +127,11 @@ def test_get_latest_balance_account_not_found(client):
 
 
 def test_get_latest_balance_no_snapshot(client, sample_account):
-    # ── Act — account exists but no snapshot ──
+    # Account creation now always seeds a zero-value snapshot.
     response = client.get(f"/api/v1/balances/{sample_account['id']}/latest")
 
-    # ── Assert ────────────────────────────────
-    assert response.status_code == 404
-    assert response.json()["error"] == "No balance snapshot found for this account"
+    assert response.status_code == 200
+    assert response.json()["amount"] == "0.00"
 
 
 def test_create_balance_duplicate_timestamp(client, sample_account):
@@ -157,10 +168,10 @@ def test_create_balance_duplicate_timestamp(client, sample_account):
     balance2_id = response2.json()["id"]
     assert balance2_id != balance1_id
 
-    # ── Verify — Both balances exist ────────
+    # ── Verify — Both balances exist along with the account's seeded zero snapshot ────────
     list_response = client.get(f"/api/v1/balances?account_id={sample_account['id']}")
     assert list_response.status_code == 200
-    assert len(list_response.json()) == 2
+    assert len(list_response.json()) == 3
 
 
 def test_get_latest_balance_with_duplicates(client, sample_account):

@@ -14,7 +14,6 @@ export default function FileUploadArea({
   file,
   onFileSelect,
   onRemove,
-  error,
   setError,
 }: FileUploadAreaProps) {
   const inputRef = useRef<HTMLInputElement>(null);

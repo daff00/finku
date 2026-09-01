@@ -83,7 +83,7 @@ function TransactionRow({
           : txn.type === "INCOME"
             ? "+"
             : ""}
-        {formatAmount(Number(txn.amount))}
+        {formatAmount(Number(txn.amount), txn.currency ?? "IDR")}
       </span>
     </div>
   );

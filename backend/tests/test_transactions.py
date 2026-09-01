@@ -43,6 +43,61 @@ def test_create_transaction_account_not_found(client):
     assert response.json()["error"] == "Account not found"
 
 
+def test_create_transaction_uses_account_currency(client):
+    account_payload = {
+        "name": "USD Account",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "USD",
+    }
+    account_response = client.post("/api/v1/accounts", json=account_payload)
+    assert account_response.status_code == 201
+    account_id = account_response.json()["id"]
+
+    payload = {
+        "account_id": account_id,
+        "date": "2026-07-25",
+        "amount": "20.00",
+        "type": "INCOME",
+        "category": "SALARY",
+        "note": "USD salary",
+    }
+
+    response = client.post("/api/v1/transactions", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["currency"] == "USD"
+    assert data["amount"] == "20.00"
+
+
+def test_create_transaction_rejects_currency_mismatch(client):
+    account_payload = {
+        "name": "USD Account",
+        "bank": "BCA",
+        "type": "SAVINGS",
+        "color": "#0066AE",
+        "currency": "USD",
+    }
+    account_response = client.post("/api/v1/accounts", json=account_payload)
+    assert account_response.status_code == 201
+    account_id = account_response.json()["id"]
+
+    payload = {
+        "account_id": account_id,
+        "date": "2026-07-25",
+        "amount": "12500000",
+        "type": "INCOME",
+        "category": "SALARY",
+        "note": "Wrong currency",
+        "currency": "IDR",
+    }
+
+    response = client.post("/api/v1/transactions", json=payload)
+    assert response.status_code == 400
+    assert "currency" in response.json()["error"].lower()
+
+
 def test_create_duplicate_transaction(client, sample_account, sample_transaction):
     from datetime import datetime
     now = datetime.now()
@@ -276,11 +331,18 @@ def test_delete_transaction_not_found(client):
 
 
 def test_create_transfer(client, sample_account, sample_jago_account):
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": sample_account["id"],
+            "amount": "20000000",
+        },
+    )
     # ── Arrange ───────────────────────────────
     payload = {
         "from_account_id": sample_account["id"],
         "to_account_id": sample_jago_account["id"],
-        "date": "2026-07-01",
+        "date": "2026-07-02",
         "amount": "5000000",
         "note": "Transfer to Jago",
     }
@@ -303,6 +365,78 @@ def test_create_transfer(client, sample_account, sample_jago_account):
     assert from_tx["amount"] == to_tx["amount"]
 
 
+def test_create_transfer_rejects_insufficient_funds(client, sample_account, sample_jago_account):
+    client.post(
+        "/api/v1/balances",
+        json={"account_id": sample_account["id"], "amount": "1000"},
+    )
+
+    payload = {
+        "from_account_id": sample_account["id"],
+        "to_account_id": sample_jago_account["id"],
+        "date": "2026-07-01",
+        "amount": "2000",
+        "note": "Transfer above balance",
+    }
+
+    response = client.post("/api/v1/transactions/transfer", json=payload)
+
+    assert response.status_code == 400
+    assert "insufficient" in response.json()["error"].lower()
+
+
+def test_create_cross_currency_transfer(client):
+    from_account = client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "USD Wallet",
+            "bank": "BCA",
+            "type": "SAVINGS",
+            "color": "#0066AE",
+            "currency": "USD",
+        },
+    ).json()
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": from_account["id"],
+            "amount": "50",
+        },
+    )
+    to_account = client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "IDR Wallet",
+            "bank": "JAGO",
+            "type": "POCKET",
+            "color": "#00B14F",
+            "currency": "IDR",
+        },
+    ).json()
+
+    payload = {
+        "from_account_id": from_account["id"],
+        "to_account_id": to_account["id"],
+        "date": "2026-07-02",
+        "amount": "20",
+        "from_currency": "USD",
+        "to_currency": "IDR",
+        "from_amount": "20",
+        "to_amount": "320000",
+        "rate_applied": "16000",
+        "note": "USD to IDR transfer",
+    }
+
+    response = client.post("/api/v1/transactions/transfer", json=payload)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data[0]["currency"] == "USD"
+    assert data[1]["currency"] == "IDR"
+    assert data[0]["amount"] == "20.00"
+    assert data[1]["amount"] == "320000.00"
+
+
 def test_create_transfer_same_account(client, sample_account):
     # ── Arrange ───────────────────────────────
     payload = {
@@ -318,6 +452,75 @@ def test_create_transfer_same_account(client, sample_account):
     # ── Assert ────────────────────────────────
     assert response.status_code == 400
     assert "same account" in response.json()["error"]
+
+
+def test_transfer_to_zero_balance_updates_latest_balance(client, sample_account, sample_jago_account):
+    client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": sample_account["id"],
+            "date": "2026-09-01",
+            "amount": "250000.00",
+            "type": "INCOME",
+            "category": "SALARY",
+            "note": "Seed source funds",
+        },
+    )
+
+    response = client.post(
+        "/api/v1/transactions/transfer",
+        json={
+            "from_account_id": sample_account["id"],
+            "to_account_id": sample_jago_account["id"],
+            "date": "2026-09-02",
+            "amount": "125000",
+            "note": "Transfer into zero-balance account",
+        },
+    )
+
+    assert response.status_code == 201
+
+    destination_balance = client.get(f"/api/v1/balances/{sample_jago_account['id']}/latest")
+    assert destination_balance.status_code == 200
+    assert destination_balance.json()["amount"] == "125000.00"
+
+
+def test_create_transfer_multiple_same_day_allowed_with_distinct_notes(client, sample_account, sample_jago_account):
+    client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": sample_account["id"],
+            "date": "2026-09-01",
+            "amount": "500000.00",
+            "type": "INCOME",
+            "category": "SALARY",
+            "note": "Seed source funds",
+        },
+    )
+
+    first = client.post(
+        "/api/v1/transactions/transfer",
+        json={
+            "from_account_id": sample_account["id"],
+            "to_account_id": sample_jago_account["id"],
+            "date": "2026-09-05",
+            "amount": "7500",
+            "note": "First transfer of the day",
+        },
+    )
+    second = client.post(
+        "/api/v1/transactions/transfer",
+        json={
+            "from_account_id": sample_account["id"],
+            "to_account_id": sample_jago_account["id"],
+            "date": "2026-09-05",
+            "amount": "7500",
+            "note": "Second transfer of the day",
+        },
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
 
 
 def test_create_transfer_source_not_found(client, sample_jago_account):
@@ -357,6 +560,13 @@ def test_delete_transfer_cascades(client, sample_transfer):
 
 def test_create_transfer_idempotent(client, sample_account, sample_jago_account):
     """Test idempotency: retry same transfer twice, expect 409 on retry."""
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": sample_account["id"],
+            "amount": "25000000",
+        },
+    )
     # ── Arrange ───────────────────────────────
     payload = {
         "from_account_id": sample_account["id"],
@@ -390,6 +600,13 @@ def test_create_transfer_idempotent(client, sample_account, sample_jago_account)
 
 def test_create_transfer_with_fee_idempotent(client, sample_account, sample_jago_account):
     """Test idempotency: transfer with fee included, retry twice."""
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": sample_account["id"],
+            "amount": "20000000",
+        },
+    )
     # ── Arrange ───────────────────────────────
     payload = {
         "from_account_id": sample_account["id"],
@@ -423,6 +640,13 @@ def test_create_transfer_with_fee_idempotent(client, sample_account, sample_jago
 
 def test_create_transfer_rollback_on_failure(client, sample_account, sample_jago_account, db):
     """Test rollback: if database error occurs, no orphaned transactions remain."""
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": sample_account["id"],
+            "amount": "5000000",
+        },
+    )
     # ── Arrange ───────────────────────────────
     payload = {
         "from_account_id": sample_account["id"],
