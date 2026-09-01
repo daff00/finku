@@ -96,6 +96,7 @@ class Account(Base):
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("accounts.id"), default=None
     )
+    account_number: Mapped[str | None] = mapped_column(String(4), nullable=True)
     name: Mapped[str] = mapped_column(String(100))
     bank: Mapped[BankEnum] = mapped_column(SAEnum(BankEnum))
     type: Mapped[AccountTypeEnum] = mapped_column(SAEnum(AccountTypeEnum))

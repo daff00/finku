@@ -1,6 +1,7 @@
 // frontend/src/components/layout/Sidebar.tsx
-import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -12,60 +13,62 @@ import {
   PanelLeftOpen,
   LogOut,
   User as UserIcon,
-} from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface SidebarProps {
+  onAddTransaction: () => void; // new prop
+}
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/import', label: 'Import', icon: Upload },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/import", label: "Import", icon: Upload },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onAddTransaction }: SidebarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapse = () => setCollapsed((prev) => !prev);
-  const handleNewTransaction = () => navigate('/transactions');
-  const handleLogout = () => logout();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   const userInitial =
     user?.display_name?.charAt(0) ||
     user?.username?.charAt(0) ||
-    'U';
+    "U";
 
   return (
     <aside
       className={cn(
-        'shrink-0 hidden lg:flex flex-col bg-surface h-dvh sticky top-0 border-r border-border/50 transition-all duration-300 ease-in-out',
-        collapsed ? 'w-[64px]' : 'w-[220px]'
+        "shrink-0 hidden lg:flex flex-col bg-surface h-dvh sticky top-0 border-r border-border/50 transition-all duration-300 ease-in-out",
+        collapsed ? "w-[64px]" : "w-[220px]"
       )}
     >
       {/* ── Logo + Collapse Toggle ────────────────────────────── */}
-      {/* Increased height: h-14 → h-20, more padding */}
       <div
         className={cn(
-          'flex items-center border-b border-border/50',
-          collapsed ? 'justify-center px-2 h-16' : 'justify-between px-5 h-20'
+          "flex items-center border-b border-border/50 h-14",
+          collapsed ? "justify-center px-2" : "justify-between px-4"
         )}
       >
         {!collapsed && (
-          <div className="flex items-center gap-3">
-            {/* Bigger kanji box */}
-            <div className="w-7 h-7 bg-accent rounded-sm flex items-center justify-center shrink-0">
-              <span className="text-white text-sm font-mono">金</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-5 h-5 bg-accent rounded-sm flex items-center justify-center">
+              <span className="text-white text-[10px] font-mono">金</span>
             </div>
             <div className="flex flex-col leading-none">
-              {/* Bigger title */}
-              <span className="text-lg font-light tracking-tight text-text-primary font-playfair">
+              <span className="text-[15px] font-light tracking-tight text-text-primary">
                 Finku
               </span>
-              {/* Bigger subtitle */}
-              <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted mt-0.5">
+              <span className="text-[8px] uppercase tracking-[0.15em] text-text-muted">
                 FINANCE · 間
               </span>
             </div>
@@ -73,30 +76,27 @@ export default function Sidebar() {
         )}
         <button
           onClick={toggleCollapse}
-          className={cn(
-            'p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40',
-            collapsed ? '' : '-mr-1'
-          )}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <PanelLeftOpen size={18} strokeWidth={1.5} />
+            <PanelLeftOpen size={16} strokeWidth={1.5} />
           ) : (
-            <PanelLeftClose size={18} strokeWidth={1.5} />
+            <PanelLeftClose size={16} strokeWidth={1.5} />
           )}
         </button>
       </div>
 
-      {/* ── Add Transaction ────────────────────────────────────── */}
+      {/* ── Add Transaction Button ────────────────────────────── */}
       <div
         className={cn(
-          'border-b border-border/50',
-          collapsed ? 'flex justify-center px-2 py-3' : 'px-4 py-3'
+          "border-b border-border/50 py-3",
+          collapsed ? "flex justify-center px-2" : "px-4"
         )}
       >
         {collapsed ? (
           <button
-            onClick={handleNewTransaction}
+            onClick={onAddTransaction}
             className="p-2 rounded-[4px] bg-accent text-white hover:bg-accent-hover transition-colors"
             aria-label="New Transaction"
             title="New Transaction"
@@ -105,7 +105,7 @@ export default function Sidebar() {
           </button>
         ) : (
           <button
-            onClick={handleNewTransaction}
+            onClick={onAddTransaction}
             className="w-full btn-accent flex items-center justify-center gap-2 py-2.5 text-[13px]"
           >
             <Plus size={14} strokeWidth={2} />
@@ -126,17 +126,17 @@ export default function Sidebar() {
             <li key={to}>
               <NavLink
                 to={to}
-                end={to === '/'}
+                end={to === "/"}
                 title={collapsed ? label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center rounded-[4px] text-[13px] transition-colors cursor-pointer',
+                    "flex items-center rounded-[4px] text-[13px] transition-colors cursor-pointer",
                     collapsed
-                      ? 'justify-center px-2 !py-0 h-10'
-                      : 'gap-3 !py-2 !px-3',
+                      ? "justify-center px-2 !py-0 h-10"
+                      : "gap-3 !py-2 !px-3",
                     isActive
-                      ? 'text-accent bg-accent/5'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-border/40'
+                      ? "text-accent bg-accent/5"
+                      : "text-text-secondary hover:text-text-primary hover:bg-border/40"
                   )
                 }
               >
@@ -145,8 +145,8 @@ export default function Sidebar() {
                     {!collapsed && (
                       <span
                         className={cn(
-                          'shrink-0 w-[3px] h-4 rounded-sm transition-colors',
-                          isActive ? 'bg-accent' : 'bg-transparent'
+                          "shrink-0 w-[3px] h-4 rounded-sm transition-colors",
+                          isActive ? "bg-accent" : "bg-transparent"
                         )}
                       />
                     )}
@@ -158,8 +158,8 @@ export default function Sidebar() {
                     {!collapsed && (
                       <span
                         className={cn(
-                          'whitespace-nowrap transition-opacity duration-200',
-                          isActive ? 'font-medium' : 'font-normal'
+                          "whitespace-nowrap transition-opacity duration-200",
+                          isActive ? "font-medium" : "font-normal"
                         )}
                       >
                         {label}
@@ -178,8 +178,8 @@ export default function Sidebar() {
         {user ? (
           <div
             className={cn(
-              'flex items-center',
-              collapsed ? 'justify-center' : 'justify-between gap-2'
+              "flex items-center",
+              collapsed ? "justify-center" : "justify-between gap-2"
             )}
           >
             {!collapsed && (
@@ -203,8 +203,8 @@ export default function Sidebar() {
         ) : (
           <div
             className={cn(
-              'flex items-center text-text-muted text-sm',
-              collapsed ? 'justify-center' : 'gap-2'
+              "flex items-center text-text-muted text-sm",
+              collapsed ? "justify-center" : "gap-2"
             )}
           >
             {!collapsed && <UserIcon size={16} />}

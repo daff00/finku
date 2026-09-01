@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
@@ -6,6 +8,12 @@ from app.models.models import Account, Transaction
 from app.schemas.schemas import AccountCreate, AccountOut, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
+
+
+def make_account_ref_id(user_id: int, name: str, bank: str) -> str:
+    """Stable hash used to detect accidental duplicate account creation."""
+    raw = f"{user_id}:{name}:{bank}"
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 @router.get("", response_model=list[AccountOut])
@@ -17,18 +25,14 @@ def list_accounts(
     db: DbSession,
     limit: int = 100,
     offset: int = 0,
+    include_inactive: bool = False,
 ):
-    return (
-        db.query(Account)
-        .filter(
-            Account.user_id == current_user.id,
-            Account.is_active.is_(True),
-        )
-        .order_by(Account.created_at.asc())
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
+    query = db.query(Account).filter(Account.user_id == current_user.id)
+
+    if not include_inactive:
+        query = query.filter(Account.is_active.is_(True))
+
+    return query.order_by(Account.created_at.asc()).offset(offset).limit(limit).all()
 
 
 @router.post("", response_model=AccountOut, status_code=201)
@@ -40,17 +44,36 @@ def create_account(
     current_user: CurrentUser,
     db: DbSession,
 ):
+    # Account creation is blocked by parent ownership validation before insert.
+    # The route keeps user-scoped data isolation strict by ensuring parent ids are
+    # owned by the current user rather than creating orphaned account hierarchies.
+    account_ref_id = make_account_ref_id(current_user.id, payload.name, payload.bank.value)
+    existing = db.query(Account).filter(
+        Account.user_id == current_user.id,
+        Account.name == payload.name,
+        Account.bank == payload.bank,
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="Duplicate account — this account already exists",
+        )
+
     if payload.parent_id:
-        parent = db.query(Account).filter(
-            Account.id == payload.parent_id,
-            Account.user_id == current_user.id,  # ← must belong to same user
-        ).first()
+        parent = (
+            db.query(Account)
+            .filter(
+                Account.id == payload.parent_id,
+                Account.user_id == current_user.id,  # ← must belong to same user
+            )
+            .first()
+        )
         if not parent:
             raise HTTPException(status_code=404, detail="Parent account not found")
 
     account = Account(
         user_id=current_user.id,  # ← set user_id
-        **payload.model_dump()
+        **payload.model_dump(),
     )
     db.add(account)
     db.commit()
@@ -67,10 +90,14 @@ def get_account(
     current_user: CurrentUser,
     db: DbSession,
 ):
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id,  # ← filter by user
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,  # ← filter by user
+        )
+        .first()
+    )
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
     return account
@@ -87,10 +114,14 @@ def get_account_transactions(
     limit: int = 50,
     offset: int = 0,
 ):
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id,
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
+        .first()
+    )
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
@@ -117,10 +148,14 @@ def update_account(
     current_user: CurrentUser,
     db: DbSession,
 ):
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id,
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
+        .first()
+    )
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
@@ -141,24 +176,33 @@ def delete_account(
     db: DbSession,
 ):
     # Idempotency: Fetch account if exists
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id,
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
+        .first()
+    )
 
-    # If account doesn't exist or already inactive, return 204 (idempotent)
+    # DELETE is intentionally idempotent: retries of the same request should not
+    # surface a not-found error, and a second delete should be treated as a no-op.
+    response.status_code = 204
     if not account or not account.is_active:
         return response
 
     # Check for existing transactions - this is a hard constraint
-    has_transactions = db.query(Transaction).filter(
-        Transaction.account_id == account_id,
-        Transaction.user_id == current_user.id,
-    ).first()
+    has_transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == current_user.id,
+        )
+        .first()
+    )
     if has_transactions:
         raise HTTPException(
-            status_code=409,
-            detail="Cannot delete account with existing transactions"
+            status_code=409, detail="Cannot delete account with existing transactions"
         )
 
     # Mark account as inactive (soft delete)
