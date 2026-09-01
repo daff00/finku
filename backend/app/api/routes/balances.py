@@ -48,6 +48,12 @@ def create_balance(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    if payload.amount < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Balance amount cannot be negative",
+        )
+
     balance = Balance(
         user_id=current_user.id,
         **payload.model_dump()
