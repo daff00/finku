@@ -1,12 +1,23 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
+from slowapi.middleware import SlowAPIASGIMiddleware
 
+from app.api.routes import (
+    accounts,
+    analytics,
+    auth,
+    balances,
+    exchange_rate,
+    imports,
+    transactions,
+)
 from app.core.config import settings
-from app.core.logging import setup_logging, LoggingMiddleware
 from app.core.exceptions import register_exception_handlers
-from app.api.routes import accounts, transactions, balances, analytics, imports, auth
+from app.core.logging import LoggingMiddleware, setup_logging
+from app.core.rate_limit import limiter
 
 # setup logging first
 setup_logging()
@@ -34,6 +45,7 @@ app = FastAPI(
 
 # middleware
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(SlowAPIASGIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -41,6 +53,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.state.limiter = limiter
 
 # exception handlers
 register_exception_handlers(app)
@@ -52,6 +66,7 @@ app.include_router(balances.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(imports.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(exchange_rate.router, prefix="/api/v1")
 
 
 @app.get("/")

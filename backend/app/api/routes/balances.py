@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import balances_limit
 from app.models.models import Account, Balance
 from app.schemas.schemas import BalanceCreate, BalanceOut
 
@@ -8,7 +9,10 @@ router = APIRouter(prefix="/balances", tags=["balances"])
 
 
 @router.get("/", response_model=list[BalanceOut])
+@balances_limit
 def list_balances(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     account_id: int | None = None,
@@ -29,7 +33,10 @@ def list_balances(
 
 
 @router.post("/", response_model=BalanceOut, status_code=201)
+@balances_limit
 def create_balance(
+    request: Request,
+    response: Response,
     payload: BalanceCreate,
     current_user: CurrentUser,
     db: DbSession,
@@ -40,6 +47,12 @@ def create_balance(
     ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
+
+    if payload.amount < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Balance amount cannot be negative",
+        )
 
     balance = Balance(
         user_id=current_user.id,
@@ -52,8 +65,11 @@ def create_balance(
 
 
 @router.get("/{account_id}/latest", response_model=BalanceOut)
+@balances_limit
 def get_latest_balance(
     account_id: int,
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ):

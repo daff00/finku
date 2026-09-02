@@ -1,6 +1,7 @@
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import imports_limit
 from app.models.models import Account, BankEnum
 from app.parsers.registry import get_parser_for_bank, is_bank_supported
 from app.schemas.schemas import ImportResultOut
@@ -9,7 +10,10 @@ router = APIRouter(prefix="/import", tags=["import"])
 
 
 @router.post("/", response_model=ImportResultOut, status_code=201)
+@imports_limit
 def import_statement(
+    request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
     account_id: int = Form(...),

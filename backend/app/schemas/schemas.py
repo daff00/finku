@@ -23,11 +23,13 @@ class AccountCreate(BaseModel):
     color: str
     currency: CurrencyEnum = CurrencyEnum.IDR
     parent_id: int | None = None
+    account_number: str | None = None
     
 class AccountOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     parent_id: int | None
+    account_number: str | None
     name: str
     bank: BankEnum
     type: AccountTypeEnum
@@ -53,7 +55,7 @@ class TransactionCreate(BaseModel):
     category: CategoryEnum
     note: str = ""
     source: SourceEnum = SourceEnum.MANUAL
-    currency: CurrencyEnum = CurrencyEnum.IDR
+    currency: CurrencyEnum | None = None
     account_id: int
     original_amount: Decimal | None = None
     original_currency: CurrencyEnum | None = None
@@ -95,6 +97,11 @@ class TransferCreate(BaseModel):
     amount: Decimal
     note: str = ""
     fee: Decimal = Decimal(0)
+    from_currency: CurrencyEnum | None = None
+    to_currency: CurrencyEnum | None = None
+    from_amount: Decimal | None = None
+    to_amount: Decimal | None = None
+    rate_applied: Decimal | None = None
 
 
 # Balance Schemas

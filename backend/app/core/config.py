@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     JWT_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
+    ACCOUNTS_RATE_LIMIT: str = "100/minute"
+    API_RATE_LIMIT: str = "100/minute"
+    TRANSACTIONS_RATE_LIMIT: str = "100/minute"
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
     ADMIN_SECRET_KEY: str
     

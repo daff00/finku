@@ -78,6 +78,9 @@ def client(db):
         yield test_client
 
     # clean up override after test
+    limiter = getattr(app.state, "limiter", None)
+    if limiter is not None and hasattr(limiter, "reset"):
+        limiter.reset()
     app.dependency_overrides.clear()
 
 
@@ -164,13 +167,20 @@ def sample_balance(client, sample_account):
 
 @pytest.fixture
 def sample_transfer(client, sample_account, sample_jago_account):
-    """Creates a transfer between BCA and Jago."""
+    """Creates a funded transfer between BCA and Jago."""
+    client.post(
+        "/api/v1/balances",
+        json={
+            "account_id": sample_account["id"],
+            "amount": "10000000",
+        },
+    )
     response = client.post(
         "/api/v1/transactions/transfer",
         json={
             "from_account_id": sample_account["id"],
             "to_account_id": sample_jago_account["id"],
-            "date": "2026-07-01",
+            "date": "2026-07-02",
             "amount": "5000000",
             "note": "Transfer to Jago",
         },

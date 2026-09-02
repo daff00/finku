@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- red square background -->
+  <rect width="32" height="32" rx="6" fill="#C0392B"/>
+  <!-- 金 kanji centered -->
+  <text
+    x="16"
+    y="23"
+    font-size="18"
+    fill="white"
+    font-weight="300"
+    text-anchor="middle"
+    font-family="system-ui, sans-serif"
+  >金</text>
+</svg>

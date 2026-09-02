@@ -96,6 +96,7 @@ class Account(Base):
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("accounts.id"), default=None
     )
+    account_number: Mapped[str | None] = mapped_column(String(4), nullable=True)
     name: Mapped[str] = mapped_column(String(100))
     bank: Mapped[BankEnum] = mapped_column(SAEnum(BankEnum))
     type: Mapped[AccountTypeEnum] = mapped_column(SAEnum(AccountTypeEnum))
@@ -103,6 +104,7 @@ class Account(Base):
     currency: Mapped[CurrencyEnum] = mapped_column(
         SAEnum(CurrencyEnum), default=CurrencyEnum.IDR
     )
+    # ref_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[dt] = mapped_column(
         DateTime(timezone=True), default=lambda: dt.now(timezone.utc)

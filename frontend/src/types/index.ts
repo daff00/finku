@@ -78,6 +78,7 @@ type CurrencyEnum = (typeof CurrencyEnum)[keyof typeof CurrencyEnum]
 export type Account = {
     id: number
     parent_id: number | null
+    account_number: string | null
     name: string
     bank: BankEnum
     type: AccountTypeEnum
@@ -153,6 +154,7 @@ export type AccountCreate = {
     color: string
     currency?: CurrencyEnum
     parent_id?: number | null
+    account_number?: string
 }
 
 export type AccountUpdate = {
@@ -195,6 +197,11 @@ export type TransferCreate = {
     amount: string
     note?: string
     fee?: string
+    from_currency?: CurrencyEnum
+    to_currency?: CurrencyEnum
+    from_amount?: string
+    to_amount?: string
+    rate_applied?: string
 }
 
 export type BalanceCreate = {
@@ -210,3 +217,17 @@ export type TransactionFilters = {
     limit?: number
     offset?: number
 }
+
+export interface User {
+  id: number;
+  username: string;
+  display_name: string | null;   // can be null if not set
+  is_active: boolean;
+  created_at: string;            // ISO 8601 date string
+}
+
+export type SpendingCategory = {
+  category: string;
+  total: string | number;
+  percentage: number;
+};

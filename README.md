@@ -4,8 +4,8 @@
 
 ## Features
 - 📊 Real-time net worth across all accounts
-- 🏦 Supports BCA, Mandiri, Mandiri RDN, Seabank, Bank Jago, OVO, GoPay
-- 📥 Import transactions via CSV or PDF
+- 🏦 Bank support: BCA ✅ | Mandiri, Seabank, Bank Jago (coming soon)
+- 📥 Import transactions via PDF (BCA currently supported)
 - ✍️ Manual transaction entry
 - 📈 Monthly analytics — income, expenses, category breakdown
 - 📱 Responsive — works on desktop and mobile browser (PWA)
@@ -49,8 +49,12 @@ npm run dev
 - [x] Project scaffolding
 - [x] Database schema + migrations
 - [x] REST API (accounts, transactions, analytics)
-- [ ] CSV import (Mandiri, Seabank, Bank Jago)
-- [ ] PDF import (BCA)
-- [ ] Dashboard UI
-- [ ] Analytics page
+- [x] PDF import (BCA)
+- [x] Rate limiting
+- [x] Dashboard UI (working)
+- [x] Import page UI (working)
+- [ ] Additional PDF parsers (Mandiri, Seabank, Bank Jago) — after PWA
+- [ ] CSV import support — deferred
+- [ ] Transactions & Analytics pages UI
 - [ ] Mobile responsive + PWA
+- [ ] Docker / home server deployment
