@@ -86,25 +86,25 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
   // ── Reusable input class ──
   const inputClass = `
     h-auto w-full
-    !border-0 !border-b !border-[#E8E4DE]
+    !border-0 !border-b !border-border
     !rounded-none
     !bg-transparent
     !px-0 !py-1.5
-    !font-sans !text-[13px] !text-[#1C1410]
+    !font-sans !text-[13px] !text-text-primary
     !shadow-none
     !outline-none !ring-0 !ring-offset-0
-    placeholder:!text-[#C4B5A0]
-    focus:!border-[#1C1410]
+    placeholder:!text-text-muted
+    focus:!border-text-primary
     focus:!outline-none
     focus:!ring-0 focus:!ring-offset-0
   `;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
+      <DialogContent className="bg-surface border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-lg font-light text-[#1C1410]">Add Account</DialogTitle>
-          <DialogDescription className="font-sans text-[#8B7355] text-sm">
+          <DialogTitle className="font-serif text-lg font-light text-text-primary">Add Account</DialogTitle>
+          <DialogDescription className="font-sans text-text-secondary text-sm">
             Enter the details of your bank account.
           </DialogDescription>
         </DialogHeader>
@@ -113,7 +113,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
           <div className="space-y-4 py-4">
             {/* Name */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Account Name
               </Label>
               <Input
@@ -127,14 +127,14 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Bank */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Bank
               </Label>
               <Select value={bank} onValueChange={(value) => setBank(value || "BCA")}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-border bg-transparent px-0 shadow-none font-sans text-sm text-text-primary focus:border-text-primary focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
+                <SelectContent className="rounded-[4px] border-[0.5px] border-border bg-surface shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
                   {bankOptions.map(({ value, label }) => (
                     <SelectItem key={value} value={value} className="font-sans text-sm">
                       {label}
@@ -146,14 +146,14 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Type */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Account Type
               </Label>
               <Select value={type} onValueChange={(value) => setType(value || AccountTypeEnum.SAVINGS)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-border bg-transparent px-0 shadow-none font-sans text-sm text-text-primary focus:border-text-primary focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
+                <SelectContent className="rounded-[4px] border-[0.5px] border-border bg-surface shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
                   {typeOptions.map((type) => (
                     <SelectItem key={type} value={type} className="font-sans text-sm">
                       {type}
@@ -165,8 +165,8 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Account Number */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
-                Account Number <span className="font-sans text-[#C4B5A0] text-[9px] ml-1">(Last 4 digits)</span>
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
+                Account Number <span className="font-sans text-text-muted text-[9px] ml-1">(Last 4 digits)</span>
               </Label>
               <Input
                 value={accountNumber}
@@ -178,7 +178,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Color */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Color
               </Label>
               <div className="flex items-center gap-3">
@@ -186,7 +186,7 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="w-10 h-10 rounded-[4px] border-[0.5px] border-[#E8E4DE] cursor-pointer bg-transparent p-0.5"
+                  className="w-10 h-10 rounded-[4px] border-[0.5px] border-border cursor-pointer bg-transparent p-0.5"
                 />
                 <Input
                   value={color}
@@ -199,14 +199,14 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Currency */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Currency
               </Label>
               <Select value={currency} onValueChange={(value) => setCurrency(value || CurrencyEnum.IDR)}>
-                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-[#E8E4DE] bg-transparent px-0 shadow-none font-sans text-sm text-[#1C1410] focus:border-[#1C1410] focus:ring-0 focus:outline-none">
+                <SelectTrigger className="h-10 rounded-[4px] border-0 border-b border-border bg-transparent px-0 shadow-none font-sans text-sm text-text-primary focus:border-text-primary focus:ring-0 focus:outline-none">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-[4px] border-[0.5px] border-[#E8E4DE] bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
+                <SelectContent className="rounded-[4px] border-[0.5px] border-border bg-surface shadow-[0_8px_24px_rgba(28,20,16,0.08)]">
                   {Object.values(CurrencyEnum).map((curr) => (
                     <SelectItem key={curr} value={curr} className="font-sans text-sm">
                       {curr}
@@ -218,9 +218,9 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
 
             {/* Parent ID (optional) */}
             <div className="space-y-1.5">
-              <Label className="font-sans text-[10px] uppercase font-semibold text-[#8B7355] tracking-[0.12em]">
+              <Label className="font-sans text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                 Parent Account ID
-                <span className="font-sans text-[#C4B5A0] text-[9px] ml-1">(optional)</span>
+                <span className="font-sans text-text-muted text-[9px] ml-1">(optional)</span>
               </Label>
               <Input
                 type="number"
@@ -232,19 +232,19 @@ export default function CreateAccountDialog({ open, onOpenChange }: CreateAccoun
             </div>
           </div>
 
-          <DialogFooter className="flex gap-2 border-t-[0.5px] border-[#E8E4DE] pt-4">
+          <DialogFooter className="flex gap-2 border-t-[0.5px] border-border pt-4">
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-[#8B7355] hover:text-[#1C1410] hover:bg-[#FAFAF8] rounded-[4px] text-sm font-sans"
+              className="text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-[4px] text-sm font-sans"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={mutation.isPending || !name.trim()}
-              className="bg-[#C0392B] text-white hover:bg-[#A83224] rounded-[4px] text-sm font-sans px-4 py-2"
+              className="bg-accent text-white hover:bg-accent-hover-strong rounded-[4px] text-sm font-sans px-4 py-2"
             >
               {mutation.isPending ? "Creating..." : "Create Account"}
             </Button>

@@ -1,13 +1,14 @@
 // frontend/src/components/transactions/TransactionFilters.tsx
+import { ChevronDown } from "lucide-react";
 import { TransactionTypeEnum } from "@/types";
 import type { Transaction } from "@/types";
+import { BANK_LABELS } from "@/lib/constants";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const TYPE_FILTERS = [
   { label: "All", value: undefined },
@@ -47,10 +48,9 @@ export default function TransactionFilters({
               font-sans text-[12px] font-medium
               transition-colors cursor-pointer
               border-[0.5px]
-              ${
-                isSelected
-                  ? "bg-accent text-white border-accent hover:bg-accent-hover"
-                  : "bg-surface text-text-secondary border-border hover:bg-border/30 hover:text-text-primary"
+              ${isSelected
+                ? "bg-accent text-white border-accent hover:bg-accent-hover"
+                : "bg-surface text-text-secondary border-border hover:bg-border/30 hover:text-text-primary"
               }
             `}
           >
@@ -59,23 +59,44 @@ export default function TransactionFilters({
         );
       })}
 
-      <Select
-        value={selectedBank ?? "ALL"}
-        onValueChange={(value) => onBankChange(value === "ALL" ? null : value)}
-      >
-        <SelectTrigger className="h-8 w-[150px] border-[0.5px] border-border bg-surface text-[12px] text-text-secondary focus:ring-0 focus:ring-offset-0">
-          <SelectValue placeholder="All Banks" />
-        </SelectTrigger>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex h-8 w-[150px] items-center justify-between gap-2 rounded-[4px] border-[0.5px] border-border bg-surface px-3 font-sans text-[12px] text-text-secondary hover:text-text-primary transition-colors focus:outline-none"
+          aria-label="Filter by bank"
+        >
+          <span className="truncate">
+            {selectedBank ? (BANK_LABELS[selectedBank] ?? selectedBank) : "All Banks"}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-secondary" />
+        </DropdownMenuTrigger>
 
-        <SelectContent className="border-[0.5px] border-border bg-surface shadow-lg">
-          <SelectItem value="ALL">All Banks</SelectItem>
+        <DropdownMenuContent
+          align="start"
+          className="w-[150px] max-h-64 overflow-y-auto bg-surface border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
+        >
+          <DropdownMenuItem
+            onClick={() => onBankChange(null)}
+            className={`cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${selectedBank === null
+                ? "bg-bg text-text-primary font-medium"
+                : "text-text-secondary hover:bg-bg hover:text-text-primary"
+              }`}
+          >
+            All Banks
+          </DropdownMenuItem>
           {bankOptions.map((bank) => (
-            <SelectItem key={bank} value={bank}>
-              {bank}
-            </SelectItem>
+            <DropdownMenuItem
+              key={bank}
+              onClick={() => onBankChange(bank)}
+              className={`cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${selectedBank === bank
+                  ? "bg-bg text-text-primary font-medium"
+                  : "text-text-secondary hover:bg-bg hover:text-text-primary"
+                }`}
+            >
+              {BANK_LABELS[bank] ?? bank}
+            </DropdownMenuItem>
           ))}
-        </SelectContent>
-      </Select>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

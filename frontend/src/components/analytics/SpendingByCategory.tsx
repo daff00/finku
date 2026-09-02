@@ -27,7 +27,7 @@ export default function SpendingByCategory({
   const { formatAmount } = useCurrency();
 
   if (!data || data.length === 0) {
-    return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
+    return <p className="font-sans text-[12px] text-text-muted">{emptyMessage}</p>;
   }
 
   const sorted = [...data]
@@ -42,12 +42,12 @@ export default function SpendingByCategory({
         return (
           <div key={item.category} className="space-y-1">
             <div className="flex items-center justify-between text-[13px] font-sans">
-              <span className="text-[#1C1410] font-normal">{toTitleCase(item.category)}</span>
-              <span className="font-mono text-[#1C1410] font-medium">
+              <span className="text-text-primary font-normal">{toTitleCase(item.category)}</span>
+              <span className="font-mono text-text-primary font-medium">
                 {showAmount ? formatAmount(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
               </span>
             </div>
-            <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
+            <div className="w-full h-[4px] bg-border rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{

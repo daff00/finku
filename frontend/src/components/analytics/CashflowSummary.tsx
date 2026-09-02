@@ -35,17 +35,17 @@ export default function CashflowSummary({
         <CashflowStat
           label="Income"
           value={showAmount ? formatAmount(income) : "•••••••••"}
-          color="#27AE60"
+          color="var(--color-income)"
         />
         <CashflowStat
           label="Expense"
           value={showAmount ? formatAmount(expense) : "•••••••••"}
-          color="#C0392B"
+          color="var(--color-expense)"
         />
         <CashflowStat
           label="Saving Rate"
           value={showAmount ? `${savingRate}%` : "••%"}
-          color="#1C1410"
+          color="var(--color-text-primary)"
         />
       </div>
 

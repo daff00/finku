@@ -23,13 +23,13 @@ type QuickInsightsProps = {
 function getStatusColor(type: Insight["type"]) {
   switch (type) {
     case "success":
-      return "bg-[#F6FAF7] border-[#D8E8DC] text-[#27AE60]";
+      return "bg-success-subtle-bg border-success-subtle-border text-income";
     case "warning":
-      return "bg-[#FEF9F0] border-[#F5E6D0] text-[#E8750A]";
+      return "bg-warning-subtle-bg border-warning-subtle-border text-bank-mandiri-rdn";
     case "danger":
-      return "bg-[#FEF8F7] border-[#E8D2CE] text-[#C0392B]";
+      return "bg-danger-subtle-bg border-danger-subtle-border text-accent";
     default:
-      return "bg-[#FAFAF8] border-[#E8E4DE] text-[#8B7355]";
+      return "bg-bg border-border text-text-secondary";
   }
 }
 
@@ -197,7 +197,7 @@ export default function QuickInsights({
             )}`}
           >
             {insight.icon}
-            <span className="font-sans text-[12px] leading-relaxed text-[#1C1410]">
+            <span className="font-sans text-[12px] leading-relaxed text-text-primary">
               {insight.text}
             </span>
           </div>

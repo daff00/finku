@@ -52,33 +52,33 @@ export default function DeleteTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
+      <DialogContent className="bg-white border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-lg font-light text-[#1C1410]">Delete Transaction</DialogTitle>
-          <DialogDescription className="font-sans text-[#8B7355] text-sm">
+          <DialogTitle className="font-serif text-lg font-light text-text-primary">Delete Transaction</DialogTitle>
+          <DialogDescription className="font-sans text-text-secondary text-sm">
             Are you sure you want to delete this transaction?
             <br />
-            <span className="block mt-1 text-[#1C1410] font-medium">
+            <span className="block mt-1 text-text-primary font-medium">
               {transaction?.note || transaction?.category || "Untitled"} · {formatAmount(Number(transaction?.amount || 0), transaction?.currency ?? "IDR")}
             </span>
             <br />
             {transaction?.type === "TRANSFER" && (
-              <span className="text-[#C0392B] text-xs">
+              <span className="text-accent text-xs">
                 ⚠️ This is a transfer. Both sides of the transfer will be deleted.
               </span>
             )}
-            <span className="block mt-2 text-[#C4B5A0] text-xs">
+            <span className="block mt-2 text-text-muted text-xs">
               This action cannot be undone.
             </span>
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="flex gap-2 border-t-[0.5px] border-[#E8E4DE] pt-4">
+        <DialogFooter className="flex gap-2 border-t-[0.5px] border-border pt-4">
           <Button
             type="button"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-[#8B7355] hover:text-[#1C1410] hover:bg-[#FAFAF8] rounded-[4px] text-sm font-sans"
+            className="text-text-secondary hover:text-text-primary hover:bg-bg rounded-[4px] text-sm font-sans"
           >
             Cancel
           </Button>
@@ -86,7 +86,7 @@ export default function DeleteTransactionDialog({
             type="button"
             onClick={handleDelete}
             disabled={mutation.isPending}
-            className="bg-[#C0392B] text-white hover:bg-[#A83224] rounded-[4px] text-sm font-sans px-4 py-2"
+            className="bg-accent text-white hover:bg-accent-hover-strong rounded-[4px] text-sm font-sans px-4 py-2"
           >
             {mutation.isPending ? "Deleting..." : "Delete Transaction"}
           </Button>

@@ -21,10 +21,10 @@ export default function ProfileForm({
   return (
     <div className="space-y-3">
       <div>
-        <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+        <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
           Display Name
         </Label>
-        <p className="mt-0.5 font-sans text-[10px] text-[#A6947E]">
+        <p className="mt-0.5 font-sans text-[10px] text-text-hint">
           Shown throughout your account.
         </p>
       </div>
@@ -36,15 +36,15 @@ export default function ProfileForm({
             onChange={(e) => setDisplayName(e.target.value)}
             className="
               h-auto flex-1
-              !border-0 !border-b !border-[#E8E4DE]
+              !border-0 !border-b !border-border
               !rounded-none
               !bg-transparent
               !px-0 !py-1.5
-              !font-sans !text-[13px] !text-[#1C1410]
+              !font-sans !text-[13px] !text-text-primary
               !shadow-none
               !outline-none !ring-0
-              placeholder:!text-[#C4B5A0]
-              focus:!border-[#1C1410]
+              placeholder:!text-text-muted
+              focus:!border-text-primary
               focus:!outline-none
               focus:!ring-0
             "
@@ -58,12 +58,12 @@ export default function ProfileForm({
               h-9 shrink-0
               !rounded-[4px]
               !border-0
-              !bg-[#C0392B]
+              !bg-accent
               !px-4
               !font-sans !text-[11px] !font-medium !text-white
               !shadow-none
               transition-colors
-              hover:!bg-[#A83224]
+              hover:!bg-accent-hover-strong
               disabled:!opacity-50 disabled:!cursor-not-allowed
             "
           >
@@ -79,8 +79,8 @@ export default function ProfileForm({
               px-3 py-2
               text-[11px]
               ${message.type === "success"
-                ? "border-[#D8E8DC] bg-[#F6FAF7] text-[#27AE60]"
-                : "border-[#E8D2CE] bg-[#FEF8F7] text-[#C0392B]"
+                ? "border-success-subtle-border bg-success-subtle-bg text-color-income"
+                : "border-danger-subtle-border bg-danger-subtle-bg text-accent"
               }
             `}
           >
