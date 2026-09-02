@@ -45,13 +45,13 @@ export default function MonthSelector({ selectedMonth, onMonthChange }: MonthSel
   };
 
   return (
-    <div className="flex items-center justify-center gap-6 py-2 border-b-[0.5px] border-dashed border-[#E8E4DE]">
+    <div className="flex items-center justify-center gap-6 py-2 border-b-[0.5px] border-dashed border-border">
       <Button
         onClick={goPrev}
         disabled={currentIndex >= monthOptions.length - 1}
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-[#8B7355] hover:text-[#1C1410] disabled:opacity-40"
+        className="h-8 w-8 text-text-secondary hover:text-text-primary disabled:opacity-40"
         aria-label="Previous month"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -59,16 +59,16 @@ export default function MonthSelector({ selectedMonth, onMonthChange }: MonthSel
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex items-center gap-2 font-sans text-[13px] font-medium text-[#1C1410] hover:text-[#C0392B] transition-colors px-2 py-1 rounded-[4px] focus:outline-none"
+          className="flex items-center gap-2 font-sans text-[13px] font-medium text-text-primary hover:text-accent transition-colors px-2 py-1 rounded-[4px] focus:outline-none"
           aria-label="Select month"
         >
           <span>{currentLabel}</span>
-          <ChevronLeft className="h-4 w-4 text-[#8B7355] rotate-[-90deg]" />
+          <ChevronLeft className="h-4 w-4 text-text-secondary rotate-[-90deg]" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="center"
-          className="w-56 max-h-64 overflow-y-auto bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
+          className="w-56 max-h-64 overflow-y-auto bg-white border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
         >
           {monthOptions.map((month) => (
             <DropdownMenuItem
@@ -76,8 +76,8 @@ export default function MonthSelector({ selectedMonth, onMonthChange }: MonthSel
               onClick={() => onMonthChange(month.value)}
               className={`cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${
                 month.value === selectedMonth
-                  ? "bg-[#FAFAF8] text-[#1C1410] font-medium"
-                  : "text-[#8B7355] hover:bg-[#FAFAF8] hover:text-[#1C1410]"
+                  ? "bg-bg text-text-primary font-medium"
+                  : "text-text-secondary hover:bg-bg hover:text-text-primary"
               }`}
             >
               {month.label}
@@ -91,7 +91,7 @@ export default function MonthSelector({ selectedMonth, onMonthChange }: MonthSel
         disabled={currentIndex <= 0}
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-[#8B7355] hover:text-[#1C1410] disabled:opacity-40"
+        className="h-8 w-8 text-text-secondary hover:text-text-primary disabled:opacity-40"
         aria-label="Next month"
       >
         <ChevronRight className="h-4 w-4" />

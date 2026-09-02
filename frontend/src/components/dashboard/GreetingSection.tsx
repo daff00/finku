@@ -20,10 +20,10 @@ export default function GreetingSection({ user }: GreetingSectionProps) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="font-sans text-[15px] sm:text-[16px] font-medium text-[#6F5A43]">
+        <p className="font-sans text-[15px] sm:text-[16px] font-medium text-text-secondary-strong">
           {greeting}, {displayName}
         </p>
-        <p className="font-sans text-[12px] sm:text-[13px] font-medium text-[#8B7355] mt-1">
+        <p className="font-sans text-[12px] sm:text-[13px] font-medium text-text-secondary mt-1">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             day: "numeric",

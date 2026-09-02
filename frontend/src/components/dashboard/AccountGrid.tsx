@@ -13,7 +13,7 @@ export default function AccountGrid({ accounts, balanceMap, showAmount }: Accoun
   const { formatAmount } = useCurrency();
 
   if (accounts.length === 0) {
-    return <div className="mt-3 text-[12px] text-[#8B7355] font-sans">No accounts yet.</div>;
+    return <div className="mt-3 text-[12px] text-text-secondary font-sans">No accounts yet.</div>;
   }
 
   return (
@@ -30,7 +30,7 @@ export default function AccountGrid({ accounts, balanceMap, showAmount }: Accoun
             style={{ borderLeftWidth: "3px", borderLeftColor: bankColor }}
           >
             <p className="text-[13px] text-text-primary font-serif">{account.name}</p>
-            <p className="text-[10px] text-[#8B7355] font-sans mt-0.5">
+            <p className="text-[10px] text-text-secondary font-sans mt-0.5">
               {bankLabel} · {account.type}
             </p>
             <p className="font-mono text-[15px] text-text-primary mt-3">

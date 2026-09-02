@@ -59,6 +59,26 @@
   --section-gap: 32px;
   --card-padding-x: 16px;
   --card-padding-y: 14px;
+
+  /* New-color */
+  --color-success-subtle-bg: #F6FAF7;
+  --color-success-subtle-border: #D8E8DC;
+
+  --color-warning-subtle-bg: #FEF9F0;
+  --color-warning-subtle-border: #F5E6D0;
+
+  --color-danger-subtle-bg: #FEF8F7;
+  --color-danger-subtle-border: #E8D2CE;
+  --color-danger-subtle-hover: #FEF2F2;
+
+  --color-text-secondary-strong: #6F5A43;
+  --color-text-hint: #A6947E;
+
+  --color-border-subtle: #D8D1C8;
+  --color-surface-hover: #F7F5F1;
+  --color-surface-muted: #F2EFE9;
+
+  --color-accent-hover-strong: #A83224;
 }
 
 @layer utilities {
@@ -91,6 +111,28 @@
   --color-accent-hover: #C0392B;
 
   /* Bank colors stay the same, but you can override if needed */
+
+   /* success — barely-there green lift off the surface tone */
+  --color-success-subtle-bg: #19211B;
+  --color-success-subtle-border: #263426;
+
+  /* warning — barely-there warm lift */
+  --color-warning-subtle-bg: #241E17;
+  --color-warning-subtle-border: #362C1F;
+
+  /* danger — barely-there red lift */
+  --color-danger-subtle-bg: #241815;
+  --color-danger-subtle-border: #362320;
+  --color-danger-subtle-hover: #2B1B18;
+
+  --color-text-secondary-strong: #A69682;
+  --color-text-hint: #6B5D4E;
+
+  --color-border-subtle: #332E28;
+  --color-surface-hover: #201C17;
+  --color-surface-muted: #1D1A15;
+
+  --color-accent-hover-strong: #D1382A;
 }
 
 /* ── Base styles ──────────────────────────────────────────────── */

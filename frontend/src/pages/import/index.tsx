@@ -85,8 +85,8 @@ export default function ImportPage() {
     <div className="space-y-8 pb-12">
       {/* Page Header */}
       <div>
-        <h1 className="font-serif text-2xl font-light tracking-tight text-[#1C1410]">Import</h1>
-        <p className="mt-1 font-sans text-sm text-[#8B7355]">
+        <h1 className="font-serif text-2xl font-light tracking-tight text-text-primary">Import</h1>
+        <p className="mt-1 font-sans text-sm text-text-secondary">
           Upload your bank statement to import transactions
         </p>
       </div>
@@ -114,9 +114,9 @@ export default function ImportPage() {
             />
 
             {localError && (
-              <div className="flex items-start gap-2.5 rounded-[4px] border-[0.5px] border-[#C0392B]/20 bg-[#FEF8F7] px-3.5 py-3">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C0392B]" />
-                <p className="font-sans text-[11px] leading-relaxed text-[#C0392B]">{localError}</p>
+              <div className="flex items-start gap-2.5 rounded-[4px] border-[0.5px] border-accent/20 bg-danger-subtle-bg px-3.5 py-3">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                <p className="font-sans text-[11px] leading-relaxed text-accent">{localError}</p>
               </div>
             )}
 
@@ -124,7 +124,7 @@ export default function ImportPage() {
               <Button
                 type="submit"
                 disabled={mutation.isPending || !selectedAccount || !file}
-                className="h-10 w-full rounded-[4px] bg-[#C0392B] px-5 font-sans text-[12px] font-medium text-white shadow-none transition-colors hover:bg-[#A83224] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                className="h-10 w-full rounded-[4px] bg-accent px-5 font-sans text-[12px] font-medium text-white shadow-none transition-colors hover:bg-accent-hover-strong disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
               >
                 {mutation.isPending ? (
                   <>
@@ -140,10 +140,10 @@ export default function ImportPage() {
               </Button>
 
               {!selectedAccount && !isLoading && (
-                <span className="font-sans text-[10px] text-[#A6947E]">Select an account to continue</span>
+                <span className="font-sans text-[10px] text-text-hint">Select an account to continue</span>
               )}
               {selectedAccount && !file && (
-                <span className="font-sans text-[10px] text-[#A6947E]">Choose a PDF statement to continue</span>
+                <span className="font-sans text-[10px] text-text-hint">Choose a PDF statement to continue</span>
               )}
             </div>
           </form>

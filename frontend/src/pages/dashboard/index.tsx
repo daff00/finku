@@ -108,7 +108,7 @@ export default function DashboardPage() {
           {/* Net Worth */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[14px] uppercase tracking-[0.12em] text-[#8B7355] font-sans font-bold">
+              <p className="text-[14px] uppercase tracking-[0.12em] text-text-secondary font-sans font-bold">
                 NET WORTH
               </p>
               <button
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           {/* Accounts */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#8B7355] font-sans">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-text-secondary font-sans">
                 ACCOUNTS ({accountList.length})
               </p>
               <button
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-5 bg-surface border-[0.5px] border-border rounded-[4px] p-5 lg:p-6 space-y-6">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#8B7355] font-sans">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-text-secondary font-sans">
                 CASHFLOW SUMMARY
               </p>
               <button

@@ -31,8 +31,8 @@ export default function NetWorthTrend({
     if (!active || !payload || payload.length === 0) return null;
 
     return (
-      <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] px-3 py-2 shadow-sm">
-        <p className="font-sans text-[11px] text-[#8B7355] mb-1">{label}</p>
+      <div className="bg-white border-[0.5px] border-border rounded-[4px] px-3 py-2 shadow-sm">
+        <p className="font-sans text-[11px] text-text-secondary mb-1">{label}</p>
         {payload.map((item: any) => (
           <p key={item.name} className="font-mono text-[12px]" style={{ color: item.color }}>
             {item.name}: {showAmount ? formatAmount(Number(item.value ?? 0)) : "•••••••••"}
@@ -44,22 +44,22 @@ export default function NetWorthTrend({
 
   return (
     <section>
-      <h2 className="font-sans text-[11px] font-medium tracking-wide text-[#8B7355] mb-2">
+      <h2 className="font-sans text-[11px] font-medium tracking-wide text-text-secondary mb-2">
         Net Worth Trend
       </h2>
 
-      <div className="bg-white border-[0.5px] border-[#E8E4DE] rounded-[4px] p-5">
+      <div className="bg-white border-[0.5px] border-border rounded-[4px] p-5">
         <div className="flex items-center justify-between mb-4">
-          <span className="font-serif text-2xl text-[#1C1410]">
+          <span className="font-serif text-2xl text-text-primary">
             {showAmount ? formatAmount(netWorth) : "•••••••••"}
           </span>
           {chartData.length >= 2 && (
-            <span className="font-sans text-[11px] text-[#8B7355]">{chartData.length} months</span>
+            <span className="font-sans text-[11px] text-text-secondary">{chartData.length} months</span>
           )}
         </div>
 
         {chartData.length === 0 ? (
-          <p className="font-sans text-[12px] text-[#C4B5A0] text-center py-8">No trend data available.</p>
+          <p className="font-sans text-[12px] text-text-muted text-center py-8">No trend data available.</p>
         ) : (
           <div className="w-full py-2">
             <ResponsiveContainer width="100%" height={150}>
@@ -83,9 +83,9 @@ export default function NetWorthTrend({
                   type="monotone"
                   dataKey="income"
                   name="Income"
-                  stroke="#27AE60"
+                  stroke="#var(--color-income)"
                   strokeWidth={1.5}
-                  dot={{ r: 2.5, fill: "#FFFFFF", stroke: "#27AE60", strokeWidth: 1.5 }}
+                  dot={{ r: 2.5, fill: "#FFFFFF", stroke: "#var(--color-income)", strokeWidth: 1.5 }}
                   activeDot={{ r: 4, strokeWidth: 1.5 }}
                 />
                 <Line

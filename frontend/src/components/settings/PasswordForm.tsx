@@ -29,15 +29,15 @@ export default function PasswordForm({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-2.5">
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] bg-[#FAFAF8]">
-          <LockKeyhole className="h-3.5 w-3.5 text-[#8B7355]" />
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] bg-bg">
+          <LockKeyhole className="h-3.5 w-3.5 text-text-secondary" />
         </div>
 
         <div>
-          <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8B7355]">
+          <Label className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
             Change Password
           </Label>
-          <p className="mt-0.5 font-sans text-[10px] text-[#A6947E]">
+          <p className="mt-0.5 font-sans text-[10px] text-text-hint">
             At least 8 characters.
           </p>
         </div>
@@ -50,15 +50,15 @@ export default function PasswordForm({
           onChange={(e) => setCurrentPassword(e.target.value)}
           className="
             h-auto w-full
-            !border-0 !border-b !border-[#E8E4DE]
+            !border-0 !border-b !border-border
             !rounded-none
             !bg-transparent
             !px-0 !py-1.5
-            !font-sans !text-[13px] !text-[#1C1410]
+            !font-sans !text-[13px] !text-text-primary
             !shadow-none
             !outline-none !ring-0
-            placeholder:!text-[#C4B5A0]
-            focus:!border-[#1C1410]
+            placeholder:!text-text-muted
+            focus:!border-text-primary
             focus:!outline-none
             focus:!ring-0
           "
@@ -73,15 +73,15 @@ export default function PasswordForm({
             onChange={(e) => setNewPassword(e.target.value)}
             className="
               h-auto w-full
-              !border-0 !border-b !border-[#E8E4DE]
+              !border-0 !border-b !border-border
               !rounded-none
               !bg-transparent
               !px-0 !py-1.5
-              !font-sans !text-[13px] !text-[#1C1410]
+              !font-sans !text-[13px] !text-text-primary
               !shadow-none
               !outline-none !ring-0
-              placeholder:!text-[#C4B5A0]
-              focus:!border-[#1C1410]
+              placeholder:!text-text-muted
+              focus:!border-text-primary
               focus:!outline-none
               focus:!ring-0
             "
@@ -96,15 +96,15 @@ export default function PasswordForm({
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="
               h-auto w-full
-              !border-0 !border-b !border-[#E8E4DE]
+              !border-0 !border-b !border-border
               !rounded-none
               !bg-transparent
               !px-0 !py-1.5
-              !font-sans !text-[13px] !text-[#1C1410]
+              !font-sans !text-[13px] !text-text-primary
               !shadow-none
               !outline-none !ring-0
-              placeholder:!text-[#C4B5A0]
-              focus:!border-[#1C1410]
+              placeholder:!text-text-muted
+              focus:!border-text-primary
               focus:!outline-none
               focus:!ring-0
             "
@@ -123,8 +123,8 @@ export default function PasswordForm({
                 px-3 py-2
                 text-[11px]
                 ${message.type === "success"
-                  ? "border-[#D8E8DC] bg-[#F6FAF7] text-[#27AE60]"
-                  : "border-[#E8D2CE] bg-[#FEF8F7] text-[#C0392B]"
+                  ? "border-success-subtle-border bg-success-subtle-bg text-color-income"
+                  : "border-danger-subtle-border bg-danger-subtle-bg text-accent"
                 }
               `}
             >
@@ -146,12 +146,12 @@ export default function PasswordForm({
               h-9 w-full shrink-0
               !rounded-[4px]
               !border-0
-              !bg-[#C0392B]
+              !bg-accent
               !px-4
               !font-sans !text-[11px] !font-medium !text-white
               !shadow-none
               transition-colors
-              hover:!bg-[#A83224]
+              hover:!bg-accent-hover-strong
               disabled:!opacity-50 disabled:!cursor-not-allowed
               sm:w-auto
             "
