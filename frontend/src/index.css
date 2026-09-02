@@ -133,6 +133,10 @@
   --color-surface-muted: #1D1A15;
 
   --color-accent-hover-strong: #D1382A;
+
+  --color-income-subtle: #16261D;
+  --color-expense-subtle: #2A1815;
+  --color-accent-subtle: #2A1815;
 }
 
 /* ── Base styles ──────────────────────────────────────────────── */
