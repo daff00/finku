@@ -7,7 +7,7 @@ export default function ImportSkeleton() {
         <div className="h-4 w-48 bg-border/40 rounded mt-2" />
       </div>
 
-      <div className="rounded-[4px] !ring-0 bg-white">
+      <div className="rounded-[4px] !ring-0 bg-surface">
         <div className="border-b-[0.5px] border-dashed border-border px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-[3px] bg-border/60" />

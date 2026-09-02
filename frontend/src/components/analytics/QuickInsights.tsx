@@ -23,9 +23,9 @@ type QuickInsightsProps = {
 function getStatusColor(type: Insight["type"]) {
   switch (type) {
     case "success":
-      return "bg-success-subtle-bg border-success-subtle-border text-color-income";
+      return "bg-success-subtle-bg border-success-subtle-border text-income";
     case "warning":
-      return "bg-warning-subtle-bg border-warning-subtle-border text-color-bank-mandiri-rdn";
+      return "bg-warning-subtle-bg border-warning-subtle-border text-bank-mandiri-rdn";
     case "danger":
       return "bg-danger-subtle-bg border-danger-subtle-border text-accent";
     default:

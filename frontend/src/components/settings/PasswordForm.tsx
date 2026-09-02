@@ -123,7 +123,7 @@ export default function PasswordForm({
                 px-3 py-2
                 text-[11px]
                 ${message.type === "success"
-                  ? "border-success-subtle-border bg-success-subtle-bg text-color-income"
+                  ? "border-success-subtle-border bg-success-subtle-bg text-income"
                   : "border-danger-subtle-border bg-danger-subtle-bg text-accent"
                 }
               `}

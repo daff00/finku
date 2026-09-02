@@ -50,7 +50,7 @@ export default function DeleteAccountDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
+      <DialogContent className="bg-surface border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-lg font-light text-text-primary">Deactivate Account</DialogTitle>
           <DialogDescription className="font-sans text-text-secondary text-sm">
@@ -68,7 +68,7 @@ export default function DeleteAccountDialog({
             type="button"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-text-secondary hover:text-text-primary hover:bg-bg rounded-[4px] text-sm font-sans"
+            className="text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-[4px] text-sm font-sans"
           >
             Cancel
           </Button>

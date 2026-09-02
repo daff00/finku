@@ -98,29 +98,47 @@
 
 /* ── Dark Mode overrides (shadcn uses .dark on <html>) ── */
 .dark {
-  --color-bg: #0F0D0B;
-  --color-surface: #1A1714;
-  --color-border: #2C2820;
-  --color-border-strong: #3D3530;
+  /* Neutral gray scale — desaturated, standard dark-UI values */
+  --color-bg: #121212;
+  --color-surface: #1E1E1E;
+  --color-border: #333333;
+  --color-border-strong: #454545;
 
-  --color-text-primary: #F0EBE3;
-  --color-text-secondary: #8B7B6B;
-  --color-text-muted: #5C4F44;
+  --color-text-primary: #D4D4D4;
+  --color-text-secondary: #A0A0A0;
+  --color-text-muted: #6B6B6B;
 
-  --color-accent: #E0453A;
-  --color-accent-hover: #C0392B;
+  --color-bank-bca: #5B8FB0;        /* was #0066AE — muted, less saturated blue */
+  --color-bank-mandiri: #C99A5C;    /* was #F5A623 — muted amber instead of vivid orange */
+  --color-bank-mandiri-rdn: #B8734A;/* was #E8750A */
+  --color-bank-jago: #5FA377;       /* was #00B14F — muted sage-green */
+  --color-bank-seabank: #C97A4A;    /* was #FF5C00 */
+  --color-bank-ovo: #7A6BA8;        /* was #4C3494 */
+  --color-bank-gopay: #4FA3B8;      /* was #00AED6 */
+  --color-bank-mt4: #5B7FC9;        /* was #2962FF */
+  --color-bank-crypto: #C99A4A;     /* was #F7931A */
+  --color-bank-cash: #6B7D8B;       /* was #607D8B — already fairly muted, small tweak */
+  --color-bank-other: #8A8A8A;      /* was #9E9E9E — fine, keep close */
 
-  /* Bank colors stay the same, but you can override if needed */
+  /* Accent — same hue, brightened for dark backgrounds (standard practice:
+     lighten + slightly desaturate an accent when moving it onto a dark bg,
+     since saturated colors read as "louder" on black than on white) */
+  --color-accent: #B8544A;
+  --color-accent-hover: #C96257;
+  --color-accent-subtle: #241715;
 
-   /* success — barely-there green lift off the surface tone */
+  --color-income: #4ADE80;
+  --color-income-subtle: #14231A;
+
+  --color-expense: #E85D50;
+  --color-expense-subtle: #2A1917;
+
   --color-success-subtle-bg: #19211B;
   --color-success-subtle-border: #263426;
 
-  /* warning — barely-there warm lift */
   --color-warning-subtle-bg: #241E17;
   --color-warning-subtle-border: #362C1F;
 
-  /* danger — barely-there red lift */
   --color-danger-subtle-bg: #241815;
   --color-danger-subtle-border: #362320;
   --color-danger-subtle-hover: #2B1B18;
@@ -133,18 +151,15 @@
   --color-surface-muted: #1D1A15;
 
   --color-accent-hover-strong: #D1382A;
-
-  --color-income-subtle: #16261D;
-  --color-expense-subtle: #2A1815;
-  --color-accent-subtle: #2A1815;
 }
 
 /* ── Base styles ──────────────────────────────────────────────── */
-/* * {
-  box-sizing: border-box;
+* {
+  /* box-sizing: border-box;
   margin: 0;
-  padding: 0;
-} */
+  padding: 0; */
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
 
 html {
   font-family: var(--font-sans);
@@ -214,18 +229,46 @@ body {
 }
 
 /* bank color left border accent */
-.bank-accent-bca         { border-left: 3px solid var(--color-bank-bca); }
-.bank-accent-mandiri     { border-left: 3px solid var(--color-bank-mandiri); }
-.bank-accent-mandiri-rdn { border-left: 3px solid var(--color-bank-mandiri-rdn); }
-.bank-accent-jago        { border-left: 3px solid var(--color-bank-jago); }
-.bank-accent-seabank     { border-left: 3px solid var(--color-bank-seabank); }
-.bank-accent-ovo         { border-left: 3px solid var(--color-bank-ovo); }
-.bank-accent-gopay       { border-left: 3px solid var(--color-bank-gopay); }
+.bank-accent-bca {
+  border-left: 3px solid var(--color-bank-bca);
+}
+
+.bank-accent-mandiri {
+  border-left: 3px solid var(--color-bank-mandiri);
+}
+
+.bank-accent-mandiri-rdn {
+  border-left: 3px solid var(--color-bank-mandiri-rdn);
+}
+
+.bank-accent-jago {
+  border-left: 3px solid var(--color-bank-jago);
+}
+
+.bank-accent-seabank {
+  border-left: 3px solid var(--color-bank-seabank);
+}
+
+.bank-accent-ovo {
+  border-left: 3px solid var(--color-bank-ovo);
+}
+
+.bank-accent-gopay {
+  border-left: 3px solid var(--color-bank-gopay);
+}
 
 /* amount colors */
-.amount-income  { color: var(--color-income); }
-.amount-expense { color: var(--color-expense); }
-.amount-neutral { color: var(--color-text-primary); }
+.amount-income {
+  color: var(--color-income);
+}
+
+.amount-expense {
+  color: var(--color-expense);
+}
+
+.amount-neutral {
+  color: var(--color-text-primary);
+}
 
 /* accent button */
 .btn-accent {

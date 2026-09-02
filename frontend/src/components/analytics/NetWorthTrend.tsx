@@ -10,10 +10,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const COLORS = {
-  muted: "#8B7355",
-};
-
 interface NetWorthTrendProps {
   netWorth: number;
   chartData: Array<{ month: string; income: number; expense: number }>;
@@ -31,7 +27,7 @@ export default function NetWorthTrend({
     if (!active || !payload || payload.length === 0) return null;
 
     return (
-      <div className="bg-white border-[0.5px] border-border rounded-[4px] px-3 py-2 shadow-sm">
+      <div className="bg-surface border-[0.5px] border-border rounded-[4px] px-3 py-2 shadow-sm">
         <p className="font-sans text-[11px] text-text-secondary mb-1">{label}</p>
         {payload.map((item: any) => (
           <p key={item.name} className="font-mono text-[12px]" style={{ color: item.color }}>
@@ -48,7 +44,7 @@ export default function NetWorthTrend({
         Net Worth Trend
       </h2>
 
-      <div className="bg-white border-[0.5px] border-border rounded-[4px] p-5">
+      <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-5">
         <div className="flex items-center justify-between mb-4">
           <span className="font-serif text-2xl text-text-primary">
             {showAmount ? formatAmount(netWorth) : "•••••••••"}
@@ -67,7 +63,7 @@ export default function NetWorthTrend({
                 <CartesianGrid stroke="transparent" vertical={false} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 10, fill: COLORS.muted, fontFamily: "Inter" }}
+                  tick={{ fontSize: 10, fill: "var(--color-text-secondary)", fontFamily: "Inter" }}
                   axisLine={false}
                   tickLine={false}
                   tickMargin={8}
@@ -83,18 +79,18 @@ export default function NetWorthTrend({
                   type="monotone"
                   dataKey="income"
                   name="Income"
-                  stroke="#var(--color-income)"
+                  stroke="var(--color-income)"
                   strokeWidth={1.5}
-                  dot={{ r: 2.5, fill: "#FFFFFF", stroke: "#var(--color-income)", strokeWidth: 1.5 }}
+                  dot={{ r: 2.5, fill: "var(--color-surface)", stroke: "var(--color-income)", strokeWidth: 1.5 }}
                   activeDot={{ r: 4, strokeWidth: 1.5 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="expense"
                   name="Expense"
-                  stroke="#C0392B"
+                  stroke="var(--color-expense)"
                   strokeWidth={1.5}
-                  dot={{ r: 2.5, fill: "#FFFFFF", stroke: "#C0392B", strokeWidth: 1.5 }}
+                  dot={{ r: 2.5, fill: "var(--color-surface)", stroke: "var(--color-expense)", strokeWidth: 1.5 }}
                   activeDot={{ r: 4, strokeWidth: 1.5 }}
                 />
               </LineChart>

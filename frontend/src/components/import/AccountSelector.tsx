@@ -35,10 +35,10 @@ export default function AccountSelector({
             w-full justify-between
             h-10 rounded-[4px]
             border-[0.5px] border-border
-            bg-white
+            bg-surface
             px-3
             font-sans text-[12px] text-text-primary
-            hover:bg-bg
+            hover:bg-surface-hover
             focus:border-text-primary focus:ring-0 focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
             flex items-center
@@ -58,7 +58,7 @@ export default function AccountSelector({
         <DropdownMenuContent
           align="start"
           sideOffset={4}
-          className="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[4px] border-[0.5px] border-border bg-white shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
+          className="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[4px] border-[0.5px] border-border bg-surface shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
         >
           {accounts.length === 0 ? (
             <div className="px-2 py-1.5 text-[12px] text-text-secondary font-sans">
@@ -69,7 +69,7 @@ export default function AccountSelector({
               <DropdownMenuItem
                 key={account.id}
                 onClick={() => onSelect(account.id)}
-                className="cursor-pointer rounded-[4px] px-2 py-1.5 font-sans text-[12px] text-text-primary hover:bg-bg focus:bg-bg"
+                className="cursor-pointer rounded-[4px] px-2 py-1.5 font-sans text-[12px] text-text-primary hover:bg-surface-hover focus:bg-surface-hover"
               >
                 {account.name} · {BANK_LABELS[account.bank] ?? account.bank}
               </DropdownMenuItem>

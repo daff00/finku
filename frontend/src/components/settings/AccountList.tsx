@@ -1,4 +1,5 @@
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { BANK_COLORS, BANK_LABELS } from "@/lib/constants";
 import type { Account } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ interface AccountListProps {
   onAdd: () => void;
 }
 
+const PAGE_SIZE = 5;
+
 export default function AccountList({
   accounts,
   isLoading,
@@ -18,11 +21,13 @@ export default function AccountList({
   onDelete,
   onAdd,
 }: AccountListProps) {
+  const [page, setPage] = useState(1);
+
   if (isLoading) {
     return (
       <div className="space-y-2">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-[66px] bg-white border-[0.5px] border-border rounded-[4px] animate-pulse" />
+          <div key={i} className="h-[66px] bg-surface border-[0.5px] border-border rounded-[4px] animate-pulse" />
         ))}
       </div>
     );
@@ -30,7 +35,7 @@ export default function AccountList({
 
   if (!accounts || accounts.length === 0) {
     return (
-      <div className="bg-white border-[0.5px] border-border rounded-[4px] p-6 text-center">
+      <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-6 text-center">
         <p className="text-text-secondary text-sm font-sans">No bank accounts added yet.</p>
         <Button
           variant="link"
@@ -44,10 +49,18 @@ export default function AccountList({
     );
   }
 
+  const totalPages = Math.ceil(accounts.length / PAGE_SIZE);
+  const clampedPage = Math.min(page, totalPages); // guard if list shrinks after delete
+  const startIndex = (clampedPage - 1) * PAGE_SIZE;
+  const pageAccounts = accounts.slice(startIndex, startIndex + PAGE_SIZE);
+
+  const goPrev = () => setPage((p) => Math.max(1, p - 1));
+  const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
+
   return (
     <div className="space-y-2">
-      {accounts.map((account) => {
-        const bankColor = BANK_COLORS[account.bank] || "#6B7280";
+      {pageAccounts.map((account) => {
+        const bankColor = account.color || BANK_COLORS[account.bank] || "var(--color-bank-other)";
         const bankLabel = BANK_LABELS[account.bank] || account.bank;
         const lastFour = account.account_number
           ? account.account_number.slice(-4)
@@ -56,7 +69,7 @@ export default function AccountList({
         return (
           <div
             key={account.id}
-            className="bg-white border-[0.5px] border-border rounded-[4px] p-3 flex items-center justify-between gap-4 border-l-[3px] hover:bg-bg transition-colors group"
+            className="bg-surface border-[0.5px] border-border rounded-[4px] p-3 flex items-center justify-between gap-4 border-l-[3px] hover:bg-surface-hover transition-colors group"
             style={{ borderLeftColor: bankColor }}
           >
             <div className="min-w-0">
@@ -79,7 +92,7 @@ export default function AccountList({
               <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                 <button
                   onClick={() => onEdit(account)}
-                  className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg rounded-[2px] transition-colors"
+                  className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-[2px] transition-colors"
                   title="Edit account"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -96,6 +109,32 @@ export default function AccountList({
           </div>
         );
       })}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <span className="font-sans text-[11px] text-text-secondary">
+            Page {clampedPage} of {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={goPrev}
+              disabled={clampedPage === 1}
+              className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-[2px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={goNext}
+              disabled={clampedPage === totalPages}
+              className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-[2px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              aria-label="Next page"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

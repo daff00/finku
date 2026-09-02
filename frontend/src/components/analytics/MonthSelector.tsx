@@ -68,17 +68,16 @@ export default function MonthSelector({ selectedMonth, onMonthChange }: MonthSel
 
         <DropdownMenuContent
           align="center"
-          className="w-56 max-h-64 overflow-y-auto bg-white border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
+          className="w-56 max-h-64 overflow-y-auto bg-surface border-[0.5px] border-border rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1"
         >
           {monthOptions.map((month) => (
             <DropdownMenuItem
               key={month.value}
               onClick={() => onMonthChange(month.value)}
-              className={`cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${
-                month.value === selectedMonth
+              className={`cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${month.value === selectedMonth
                   ? "bg-bg text-text-primary font-medium"
                   : "text-text-secondary hover:bg-bg hover:text-text-primary"
-              }`}
+                }`}
             >
               {month.label}
             </DropdownMenuItem>

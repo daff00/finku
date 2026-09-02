@@ -20,7 +20,7 @@ export default function GreetingSection({ user }: GreetingSectionProps) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="font-sans text-[15px] sm:text-[16px] font-medium text-text-secondary-strong">
+        <p className="font-sans text-[15px] sm:text-[16px] font-medium text-text-primary">
           {greeting}, {displayName}
         </p>
         <p className="font-sans text-[12px] sm:text-[13px] font-medium text-text-secondary mt-1">

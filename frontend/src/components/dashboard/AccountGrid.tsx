@@ -20,7 +20,7 @@ export default function AccountGrid({ accounts, balanceMap, showAmount }: Accoun
     <div className="hidden sm:grid grid-cols-2 gap-3 mt-3">
       {accounts.map((account) => {
         const balance = balanceMap[account.id] ?? "0";
-        const bankColor = BANK_COLORS[account.bank] || "#8B7355";
+        const bankColor = account.color || BANK_COLORS[account.bank] || "#8B7355";
         const bankLabel = BANK_LABELS[account.bank] || account.bank;
 
         return (

@@ -6,10 +6,11 @@ import { useAuth, useAccounts } from "@/hooks";
 import type { Account } from "@/types";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 // ── ShadCN Components ──────────────────────────────────────────
 import { Button } from "@/components/ui/button";
-import { LogOut, ShieldCheck, Plus } from "lucide-react";
+import { LogOut, ShieldCheck, Plus, Moon, Sun } from "lucide-react";
 
 // ── Child Components ───────────────────────────────────────────
 import UserAvatar from "@/components/settings/UserAvatar";
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = useAccounts({ include_inactive: true });
+  const { isDark, toggle: toggleDarkMode } = useDarkMode();
 
   // ── Profile state ─────────────────────────────────────────────
   const [displayName, setDisplayName] = useState(user?.display_name || "");
@@ -122,7 +124,7 @@ export default function SettingsPage() {
           Profile & Security
         </h2>
 
-        <div className="bg-white border-[0.5px] border-border rounded-[4px] p-5 space-y-5">
+        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-5 space-y-5">
           {/* User Avatar & Name */}
           <UserAvatar user={user ?? null} />
 
@@ -151,11 +153,54 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* ── Appearance ─────────────────────────────────────────── */}
+      <section>
+        <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary mb-3">
+          Appearance
+        </h2>
+        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 shrink-0 rounded-[2px] bg-bg border-[0.5px] border-border flex items-center justify-center">
+                {isDark ? (
+                  <Moon className="w-4 h-4 text-text-secondary" />
+                ) : (
+                  <Sun className="w-4 h-4 text-text-secondary" />
+                )}
+              </div>
+              <div>
+                <p className="font-serif text-sm text-text-primary">Dark Mode</p>
+                <p className="font-sans text-[11px] text-text-secondary mt-0.5">
+                  {isDark ? "Currently on" : "Currently off"}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={toggleDarkMode}
+              role="switch"
+              aria-checked={isDark}
+              aria-label="Toggle dark mode"
+              className={`!relative !flex !h-6 !w-10 !min-h-0 !min-w-0 !shrink-0 !items-center !justify-start !rounded-full !p-0.5 !shadow-none transition-colors duration-200 ${isDark ? "!bg-accent" : "!bg-border"
+                }`}
+            >
+              <span
+                className={`h-5 w-5 shrink-0 rounded-full bg-white transition-transform duration-200 ${isDark ? "translate-x-4" : "translate-x-0"
+                  }`}
+              />
+            </Button>
+
+
+          </div>
+        </div>
+      </section>
+
       {/* ── Bank Accounts ──────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between gap-3 mb-3">
           <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
-            Bank Accounts ({accounts?.length || 0})
+            Accounts ({accounts?.length || 0})
           </h2>
           <Button
             variant="ghost"
@@ -182,7 +227,7 @@ export default function SettingsPage() {
         <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary mb-3">
           Account Security
         </h2>
-        <div className="bg-white border-[0.5px] border-border rounded-[4px] p-4">
+        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 shrink-0 rounded-[2px] bg-bg border-[0.5px] border-border flex items-center justify-center">
               <ShieldCheck className="w-4 h-4 text-text-secondary" />
@@ -203,7 +248,7 @@ export default function SettingsPage() {
         <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary mb-3">
           Account
         </h2>
-        <div className="bg-white border-[0.5px] border-border rounded-[4px] p-4">
+        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-4">
           <button
             onClick={handleLogout}
             className="text-accent hover:text-accent-hover-strong transition-colors text-sm font-sans flex items-center gap-2"
@@ -222,7 +267,7 @@ export default function SettingsPage() {
         <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary mb-3">
           About
         </h2>
-        <div className="bg-white border-[0.5px] border-border rounded-[4px] p-4 space-y-1">
+        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-4 space-y-1">
           <p className="font-serif text-sm text-text-primary">Finku</p>
           <p className="font-sans text-xs text-text-secondary">Personal Finance · Privacy First</p>
           <p className="font-sans text-xs text-text-muted">
