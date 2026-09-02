@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useDarkMode } from "@/hooks/useDarkMode";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -13,8 +14,11 @@ import {
   PanelLeftOpen,
   LogOut,
   User as UserIcon,
+  Moon,
+  Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   onAddTransaction: () => void; // new prop
@@ -31,6 +35,7 @@ const navItems = [
 export default function Sidebar({ onAddTransaction }: SidebarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { isDark, toggle } = useDarkMode();
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapse = () => setCollapsed((prev) => !prev);
@@ -74,7 +79,7 @@ export default function Sidebar({ onAddTransaction }: SidebarProps) {
             </div>
           </div>
         )}
-        <button
+        <Button
           onClick={toggleCollapse}
           className="p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -84,7 +89,7 @@ export default function Sidebar({ onAddTransaction }: SidebarProps) {
           ) : (
             <PanelLeftClose size={16} strokeWidth={1.5} />
           )}
-        </button>
+        </Button>
       </div>
 
       {/* ── Add Transaction Button ────────────────────────────── */}
@@ -173,6 +178,14 @@ export default function Sidebar({ onAddTransaction }: SidebarProps) {
         </ul>
       </nav>
 
+      <Button
+        onClick={toggle}
+        className="p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40"
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+      </Button>
+
       {/* ── User + Logout ────────────────────────────────────── */}
       <div className="border-t border-border/50 px-3 py-3">
         {user ? (
@@ -192,13 +205,13 @@ export default function Sidebar({ onAddTransaction }: SidebarProps) {
                 </span>
               </div>
             )}
-            <button
+            <Button
               onClick={handleLogout}
               className="p-1.5 text-text-muted hover:text-accent transition-colors rounded-sm hover:bg-border/30"
               title="Logout"
             >
               <LogOut size={16} strokeWidth={1.5} />
-            </button>
+            </Button>
           </div>
         ) : (
           <div

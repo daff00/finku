@@ -128,8 +128,8 @@ export default function AnalyticsPage() {
       {/* ── Page Header with Global Toggle ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-2xl font-light tracking-tight text-[#1C1410]">Analytics</h1>
-          <p className="mt-1 font-sans text-sm text-[#8B7355]">Insights into your financial health</p>
+          <h1 className="font-serif text-2xl font-light tracking-tight text-text-primary">Analytics</h1>
+          <p className="mt-1 font-sans text-sm text-text-secondary">Insights into your financial health</p>
         </div>
         <button
           onClick={toggleGlobal}
@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
 
       {/* Spending by Category */}
       <section>
-        <h2 className="font-sans text-[11px] font-medium tracking-wide text-[#8B7355] mb-3">
+        <h2 className="font-sans text-[11px] font-medium tracking-wide text-text-secondary mb-3">
           Spending by Category
         </h2>
         <SpendingByCategory
@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
 
       {/* Spending by Bank Account */}
       <section>
-        <h2 className="font-sans text-[11px] font-medium tracking-wide text-[#8B7355] mb-3">
+        <h2 className="font-sans text-[11px] font-medium tracking-wide text-text-secondary mb-3">
           Spending by Bank Account
         </h2>
         <SpendingByAccount
@@ -214,5 +214,5 @@ export default function AnalyticsPage() {
 }
 
 function Divider() {
-  return <div className="border-t-[0.5px] border-dashed border-[#E8E4DE]" />;
+  return <div className="border-t-[0.5px] border-dashed border-border" />;
 }

@@ -25,9 +25,9 @@ export default function NetWorthCard({
   const displayNetChange = showAmount ? formatAmount(netChangeNum) : "•••••••••";
 
   return (
-    <div className="bg-surface border-[0.5px] border-border border-l-[3px] border-l-[#8B7355] rounded-[4px] p-5">
+    <div className="bg-surface border-[0.5px] border-border border-l-[3px] border-l-text-secondary rounded-[4px] p-5">
       {/* Currency label */}
-      <p className="text-[11px] text-[#8B7355] font-sans mb-1">
+      <p className="text-[11px] text-text-secondary font-sans mb-1">
         {currency === "IDR" ? "🇮🇩 IDR" : "🇺🇸 USD"}
       </p>
 
@@ -36,7 +36,7 @@ export default function NetWorthCard({
         {displayNetworth}
       </p>
 
-      <p className="font-sans text-[11px] text-[#8B7355] mt-1">
+      <p className="font-sans text-[11px] text-text-secondary mt-1">
         Total across {accountCount} accounts
       </p>
 
@@ -48,7 +48,7 @@ export default function NetWorthCard({
         >
           {isPositive ? "+" : ""}
           {displayNetChange}
-          <span className="font-sans text-[#8B7355] ml-1">this month</span>
+          <span className="font-sans text-text-secondary ml-1">this month</span>
         </p>
       )}
 

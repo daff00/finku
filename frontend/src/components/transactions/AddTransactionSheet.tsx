@@ -1,6 +1,7 @@
 // frontend/src/components/transactions/AddTransactionSheet.tsx
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 
 import { transactionService } from "@/services";
 import { useAccounts } from "@/hooks";
@@ -18,12 +19,11 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -48,12 +48,33 @@ const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS)
 
 type TransactionType = Transaction["type"];
 
+// Formats a raw numeric string ("1234567.5") into a display string ("1,234,567.5")
+// without touching the underlying raw value used for the backend payload.
+function formatDisplayAmount(raw: string): string {
+    if (!raw) return "";
+    const [intPart, decPart] = raw.split(".");
+    const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
+}
+
+// ── Reusable dropdown trigger/content classes (matches MonthSelector styling) ──
+const dropdownTriggerClass =
+    "flex h-auto w-full items-center justify-between border-0 border-b border-border rounded-none bg-transparent px-0 py-2 text-[13px] font-sans text-text-primary focus:border-accent focus:outline-none";
+const dropdownContentClass =
+    "border-[0.5px] border-border bg-surface rounded-[4px] shadow-[0_8px_24px_rgba(28,20,16,0.08)] p-1 max-h-56 overflow-y-auto";
+const dropdownItemClass = (isSelected: boolean) =>
+    `cursor-pointer font-sans text-[13px] px-3 py-2 rounded-[4px] transition-colors ${
+        isSelected
+            ? "bg-bg text-text-primary font-medium"
+            : "text-text-secondary hover:bg-bg hover:text-text-primary"
+    }`;
+
 // ── Component ────────────────────────────────────────────────────
 export default function AddTransactionSheet({
     open,
     onOpenChange,
 }: AddTransactionSheetProps) {
-    
+
     const [accountId, setAccountId] = useState<string>("");
 
     const queryClient = useQueryClient();
@@ -69,13 +90,13 @@ export default function AddTransactionSheet({
     const [currency, setCurrency] = useState<"IDR" | "USD">(
         activeCurrency === "USD" ? "USD" : "IDR"
     );
-    const [amount, setAmount] = useState("");
+    const [amount, setAmount] = useState(""); // raw, backend-safe value
     const [title, setTitle] = useState("");
     const [targetAccountId, setTargetAccountId] = useState<string>("");
     const [category, setCategory] = useState<string>("");
     const [date, setDate] = useState(TODAY);
     const [note, setNote] = useState("");
-    const [fee, setFee] = useState("");
+    const [fee, setFee] = useState(""); // raw, backend-safe value
 
     // ── Auto-select first account ─────────────────────────────────
     useEffect(() => {
@@ -140,6 +161,8 @@ export default function AddTransactionSheet({
     };
 
     const sanitizeDecimalInput = (val: string) => {
+        // Strip everything except digits and dots — this also strips the
+        // display commas back out, so the underlying raw value stays clean.
         const cleaned = val.replace(/[^\d.]/g, "");
         if (!cleaned) return "";
         const parts = cleaned.split(".");
@@ -158,6 +181,10 @@ export default function AddTransactionSheet({
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAmount(sanitizeDecimalInput(e.target.value));
+    };
+
+    const handleFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFee(sanitizeDecimalInput(e.target.value));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -218,6 +245,18 @@ export default function AddTransactionSheet({
     const isSubmitting =
         createTx.isPending || createTransfer.isPending;
 
+    const selectedAccountName = accountId
+        ? accounts.find((a) => String(a.id) === accountId)?.name ?? "Select account"
+        : "Select account";
+
+    const selectedTargetAccountName = targetAccountId
+        ? accounts.find((a) => String(a.id) === targetAccountId)?.name ?? "Select target account"
+        : "Select target account";
+
+    const selectedCategoryLabel = category
+        ? CATEGORY_OPTIONS.find((c) => c.value === category)?.label ?? "Select category"
+        : "Select category";
+
     // ── Render ────────────────────────────────────────────────────
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -254,15 +293,23 @@ export default function AddTransactionSheet({
                         <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                             Currency
                         </Label>
-                        <Select value={currency} onValueChange={(value) => setCurrency(value === "USD" ? "USD" : "IDR")}>
-                            <SelectTrigger className="h-auto border-0 border-b border-border rounded-none bg-transparent px-0 py-2 shadow-none focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none">
-                                <SelectValue placeholder="Select currency" />
-                            </SelectTrigger>
-                            <SelectContent className="border-border bg-surface">
-                                <SelectItem value="IDR">IDR</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className={dropdownTriggerClass}>
+                                <span>{currency}</span>
+                                <ChevronDown className="h-3.5 w-3.5 text-text-secondary" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className={dropdownContentClass}>
+                                {["IDR", "USD"].map((c) => (
+                                    <DropdownMenuItem
+                                        key={c}
+                                        onClick={() => setCurrency(c as "IDR" | "USD")}
+                                        className={dropdownItemClass(currency === c)}
+                                    >
+                                        {c}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* ── Amount ── */}
@@ -273,7 +320,7 @@ export default function AddTransactionSheet({
                         <Input
                             type="text"
                             inputMode="numeric"
-                            value={amount}
+                            value={formatDisplayAmount(amount)}
                             onChange={handleAmountChange}
                             placeholder="0"
                             className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
@@ -291,7 +338,6 @@ export default function AddTransactionSheet({
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="e.g., Lunch, Salary, etc."
                             className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
-                            autoFocus
                         />
                     </div>
 
@@ -300,21 +346,23 @@ export default function AddTransactionSheet({
                         <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                             {type === TransactionTypeEnum.TRANSFER ? "From Account" : "Account"}
                         </Label>
-                        <Select
-                            value={accountId}
-                            onValueChange={(val) => setAccountId(val || "")}
-                        >
-                            <SelectTrigger className="h-auto border-0 border-b border-border rounded-none bg-transparent px-0 py-2 shadow-none focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none">
-                                {accountId ? accounts.find(a => String(a.id) === accountId)?.name || "Select account" : "Select account"}
-                            </SelectTrigger>
-                            <SelectContent className="border-border bg-surface">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className={dropdownTriggerClass}>
+                                <span className="truncate">{selectedAccountName}</span>
+                                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-secondary" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className={dropdownContentClass}>
                                 {accounts.map((acc) => (
-                                    <SelectItem key={acc.id} value={String(acc.id)}>
+                                    <DropdownMenuItem
+                                        key={acc.id}
+                                        onClick={() => setAccountId(String(acc.id))}
+                                        className={dropdownItemClass(accountId === String(acc.id))}
+                                    >
                                         {acc.name}
-                                    </SelectItem>
+                                    </DropdownMenuItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* ── Target account (only for transfers) ── */}
@@ -323,23 +371,25 @@ export default function AddTransactionSheet({
                             <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                                 To Account
                             </Label>
-                            <Select
-                                value={targetAccountId}
-                                onValueChange={(val) => setTargetAccountId(val || "")}
-                            >
-                                <SelectTrigger className="h-auto border-0 border-b border-border rounded-none bg-transparent px-0 py-2 shadow-none focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none">
-                                    {targetAccountId ? accounts.find(a => String(a.id) === targetAccountId)?.name || "Select target account" : "Select target account"}
-                                </SelectTrigger>
-                                <SelectContent className="border-border bg-surface">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className={dropdownTriggerClass}>
+                                    <span className="truncate">{selectedTargetAccountName}</span>
+                                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-secondary" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className={dropdownContentClass}>
                                     {accounts
                                         .filter((a) => String(a.id) !== accountId)
                                         .map((acc) => (
-                                            <SelectItem key={acc.id} value={String(acc.id)}>
+                                            <DropdownMenuItem
+                                                key={acc.id}
+                                                onClick={() => setTargetAccountId(String(acc.id))}
+                                                className={dropdownItemClass(targetAccountId === String(acc.id))}
+                                            >
                                                 {acc.name}
-                                            </SelectItem>
+                                            </DropdownMenuItem>
                                         ))}
-                                </SelectContent>
-                            </Select>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
 
@@ -349,21 +399,23 @@ export default function AddTransactionSheet({
                             <Label className="text-[10px] uppercase font-semibold text-text-secondary tracking-[0.12em]">
                                 Category
                             </Label>
-                            <Select
-                                value={category}
-                                onValueChange={(val) => setCategory(val || "")}
-                            >
-                                <SelectTrigger className="h-auto border-0 border-b border-border rounded-none bg-transparent px-0 py-2 shadow-none focus:border-accent focus:ring-0 focus:ring-offset-0 focus:outline-none">
-                                    <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent className="border-border bg-surface max-h-56 overflow-y-auto">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className={dropdownTriggerClass}>
+                                    <span>{selectedCategoryLabel}</span>
+                                    <ChevronDown className="h-3.5 w-3.5 text-text-secondary" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className={dropdownContentClass}>
                                     {CATEGORY_OPTIONS.map((cat) => (
-                                        <SelectItem key={cat.value} value={cat.value}>
+                                        <DropdownMenuItem
+                                            key={cat.value}
+                                            onClick={() => setCategory(cat.value)}
+                                            className={dropdownItemClass(category === cat.value)}
+                                        >
                                             {cat.label}
-                                        </SelectItem>
+                                        </DropdownMenuItem>
                                     ))}
-                                </SelectContent>
-                            </Select>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
 
@@ -377,7 +429,6 @@ export default function AddTransactionSheet({
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
-                            autoFocus
                         />
                     </div>
 
@@ -391,7 +442,6 @@ export default function AddTransactionSheet({
                             onChange={(e) => setNote(e.target.value)}
                             placeholder="e.g., QRIS / Reference"
                             className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
-                            autoFocus
                         />
                     </div>
 
@@ -404,13 +454,10 @@ export default function AddTransactionSheet({
                             <Input
                                 type="text"
                                 inputMode="numeric"
-                                value={fee}
-                                onChange={(e) => {
-                                    setFee(sanitizeDecimalInput(e.target.value));
-                                }}
+                                value={formatDisplayAmount(fee)}
+                                onChange={handleFeeChange}
                                 placeholder="0"
                                 className="h-auto text-center font-mono text-base sm:text-2xl font-normal bg-transparent border-0 border-b border-border rounded-none px-0 py-2 focus:border-accent [&:focus]:ring-0 [&:focus]:ring-offset-0 [&:focus]:outline-none"
-                                autoFocus
                             />
                         </div>
                     )}

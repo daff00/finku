@@ -24,7 +24,7 @@ export default function SpendingByAccount({
   const { formatAmount } = useCurrency();
 
   if (!data || data.length === 0) {
-    return <p className="font-sans text-[12px] text-[#C4B5A0]">{emptyMessage}</p>;
+    return <p className="font-sans text-[12px] text-text-muted">{emptyMessage}</p>;
   }
 
   return (
@@ -32,19 +32,19 @@ export default function SpendingByAccount({
       {data.map((item) => (
         <div key={item.accountId} className="space-y-1">
           <div className="flex items-center justify-between text-[13px] font-sans">
-            <span className="text-[#1C1410] font-normal flex items-center gap-2 min-w-0">
+            <span className="text-text-primary font-normal flex items-center gap-2 min-w-0">
               <span
                 className="w-2 h-2 rounded-full inline-block shrink-0"
                 style={{ backgroundColor: item.color }}
               />
               <span className="truncate">{item.accountName}</span>
-              <span className="text-[#8B7355] text-[11px] shrink-0">({item.bankLabel})</span>
+              <span className="text-text-secondary text-[11px] shrink-0">({item.bankLabel})</span>
             </span>
-            <span className="font-mono text-[#1C1410] font-medium ml-4 shrink-0">
+            <span className="font-mono text-text-primary font-medium ml-4 shrink-0">
               {showAmount ? formatAmount(item.total) : "•••••••••"} ({item.percentage.toFixed(0)}%)
             </span>
           </div>
-          <div className="w-full h-[4px] bg-[#E8E4DE] rounded-full overflow-hidden">
+          <div className="w-full h-[4px] bg-border rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{

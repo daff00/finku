@@ -2,17 +2,17 @@ import { BankEnum, AccountTypeEnum, CategoryEnum } from "@/types";
 
 // ── Bank Colors ───────────────────────────────────────────────────
 export const BANK_COLORS: Record<string, string> = {
-  [BankEnum.BCA]: "#0066AE",
-  [BankEnum.MANDIRI]: "#F5A623",
-  [BankEnum.MANDIRI_RDN]: "#E8750A",
-  [BankEnum.JAGO]: "#00B14F",
-  [BankEnum.SEABANK]: "#FF5C00",
-  [BankEnum.OVO]: "#4C3494",
-  [BankEnum.GOPAY]: "#00AED6",
-  [BankEnum.MT4]: "#2962FF",
-  [BankEnum.AJAIB_CRYPTO]: "#F7931A",
-  [BankEnum.CASH]: "#607D8B",
-  [BankEnum.OTHER]: "#9E9E9E",
+  [BankEnum.BCA]: "var(--color-bank-bca)",
+  [BankEnum.MANDIRI]: "var(--color-bank-mandiri)",
+  [BankEnum.MANDIRI_RDN]: "var(--color-bank-mandiri-rdn)",
+  [BankEnum.JAGO]: "var(--color-bank-jago)",
+  [BankEnum.SEABANK]: "var(--color-bank-seabank)",
+  [BankEnum.OVO]: "var(--color-bank-ovo)",
+  [BankEnum.GOPAY]: "var(--color-bank-gopay)",
+  [BankEnum.MT4]: "var(--color-bank-mt4)",
+  [BankEnum.AJAIB_CRYPTO]: "var(--color-bank-crypto)",
+  [BankEnum.CASH]: "var(--color-bank-cash)",
+  [BankEnum.OTHER]: "var(--color-bank-other)",
 };
 
 // ── Bank Labels ───────────────────────────────────────────────────
