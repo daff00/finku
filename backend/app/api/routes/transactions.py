@@ -467,10 +467,33 @@ def update_transaction(
             detail="Cannot edit transfer transactions directly"
         )
 
-    for field, value in payload.model_dump(exclude_none=True).items():
+    # Capture the OLD effect on balance before mutating anything
+    old_type = tx.type
+    old_amount = tx.amount
+    old_account_id = tx.account_id
+
+    update_data = payload.model_dump(exclude_none=True)
+    for field, value in update_data.items():
         setattr(tx, field, value)
+
+    new_type = tx.type
+    new_amount = tx.amount
+    new_account_id = tx.account_id
+
     db.commit()
     db.refresh(tx)
+
+    # Reverse the old effect, then apply the new effect.
+    # Handles amount changes, type changes (income<->expense), and account changes.
+    if old_type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
+        old_delta = old_amount if old_type == TransactionTypeEnum.INCOME else -old_amount
+        apply_balance_delta(db, current_user.id, old_account_id, -old_delta)
+
+    if new_type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
+        new_delta = new_amount if new_type == TransactionTypeEnum.INCOME else -new_amount
+        apply_balance_delta(db, current_user.id, new_account_id, new_delta)
+
+    db.commit()
     return tx
 
 
@@ -483,24 +506,21 @@ def delete_transaction(
     current_user: CurrentUser,
     db: DbSession,
 ):
-    # Idempotency: Fetch transaction if exists
     tx = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == current_user.id,
     ).first()
 
-    # DELETE is intentionally idempotent: retries of the same request should not
-    # surface a not-found error, and a second delete should be treated as a no-op.
     response.status_code = 204
     if not tx:
         return response
 
-    # If transaction is a transfer, cascade delete both sides
     if tx.type == TransactionTypeEnum.TRANSFER:
         pair = db.query(TransferPair).filter(
             (TransferPair.from_transaction_id == tx.id) |
             (TransferPair.to_transaction_id == tx.id)
         ).first()
+
         if pair:
             other_id = (
                 pair.to_transaction_id
@@ -511,11 +531,53 @@ def delete_transaction(
                 Transaction.id == other_id,
                 Transaction.user_id == current_user.id,
             ).first()
+
+            # Determine direction for THIS transaction (tx) via the pair
+            tx_is_sender = pair.from_transaction_id == tx.id
+
+            # Reverse this leg's effect: sender legs subtracted (-amount) so
+            # reversal adds it back (+amount); receiver legs added (+amount)
+            # so reversal subtracts it (-amount).
+            apply_balance_delta(
+                db, current_user.id, tx.account_id,
+                tx.amount if tx_is_sender else -tx.amount,
+            )
+
+            if other_tx:
+                other_is_sender = not tx_is_sender
+                apply_balance_delta(
+                    db, current_user.id, other_tx.account_id,
+                    other_tx.amount if other_is_sender else -other_tx.amount,
+                )
+
+            # ── Remove associated transfer fee, if any ──
+            # Fee transactions are created as separate EXPENSE rows on the
+            # source (sender) account, with note="BI-FAST transfer fee" and
+            # their own deterministic ref_id. They aren't linked via
+            # TransferPair, so we find them by matching account + date + note.
+            sender_tx = tx if tx_is_sender else other_tx
+            if sender_tx:
+                fee_tx = db.query(Transaction).filter(
+                    Transaction.user_id == current_user.id,
+                    Transaction.account_id == sender_tx.account_id,
+                    Transaction.date == sender_tx.date,
+                    Transaction.type == TransactionTypeEnum.EXPENSE,
+                    Transaction.note == "BI-FAST transfer fee",
+                ).first()
+                if fee_tx:
+                    apply_balance_delta(db, current_user.id, fee_tx.account_id, fee_tx.amount)
+                    db.delete(fee_tx)
+
             db.delete(pair)
             db.flush()
             if other_tx:
                 db.delete(other_tx)
             db.flush()
+
+    else:
+        # INCOME/EXPENSE: reverse whatever effect this transaction had
+        reversal_delta = tx.amount if tx.type == TransactionTypeEnum.EXPENSE else -tx.amount
+        apply_balance_delta(db, current_user.id, tx.account_id, reversal_delta)
 
     db.delete(tx)
     db.commit()
