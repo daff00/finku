@@ -184,3 +184,27 @@ class TokenOut(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+    
+class ProfileUpdate(BaseModel):
+    display_name: str
+
+    @field_validator("display_name")
+    @classmethod
+    def display_name_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Display name cannot be empty")
+        return v.strip()
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password cannot be longer than 72 characters")
+        return v
