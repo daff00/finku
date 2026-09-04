@@ -14,6 +14,7 @@ from app.models.models import (
     CategoryEnum,
     Transaction,
     TransactionTypeEnum,
+    TransferDirectionEnum,
     TransferPair,
 )
 from app.schemas.schemas import (
@@ -26,53 +27,10 @@ from app.schemas.schemas import (
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 
-# ── Helper ────────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────────
 def make_ref_id(account_id: int, txn_date: date, amount, note: str) -> str:
     raw = f"{account_id}:{txn_date}:{amount}:{note}"
     return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def get_latest_account_balance(db, user_id: int, account_id: int):
-    from app.models.models import Balance, Transaction, TransactionTypeEnum
-
-    latest = (
-        db.query(Balance)
-        .filter(
-            Balance.account_id == account_id,
-            Balance.user_id == user_id,
-        )
-        .order_by(Balance.recorded_at.desc())
-        .first()
-    )
-
-    if latest is None:
-        return None
-
-    current = latest.amount
-    income_total = (
-        db.query(Transaction)
-        .filter(
-            Transaction.account_id == account_id,
-            Transaction.user_id == user_id,
-            Transaction.type == TransactionTypeEnum.INCOME,
-            Transaction.created_at > latest.recorded_at,
-        )
-        .with_entities(func.sum(Transaction.amount))
-        .scalar() or Decimal("0")
-    )
-    expense_total = (
-        db.query(Transaction)
-        .filter(
-            Transaction.account_id == account_id,
-            Transaction.user_id == user_id,
-            Transaction.type == TransactionTypeEnum.EXPENSE,
-            Transaction.created_at > latest.recorded_at,
-        )
-        .with_entities(func.sum(Transaction.amount))
-        .scalar() or Decimal("0")
-    )
-
-    return current + income_total - expense_total
 
 
 def make_transfer_ref_id(
@@ -96,25 +54,86 @@ def make_transfer_ref_id(
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def apply_balance_delta(db, user_id: int, account_id: int, delta: Decimal):
-    latest = (
+def compute_current_balance(db: DbSession, user_id: int, account_id: int) -> Decimal:
+    """
+    Computes an account's current balance live from transaction history.
+
+    Balance = latest manual checkpoint (if any) + net effect of every
+    transaction recorded on/after that checkpoint's date.
+
+    This replaces the old append-only "apply a delta on every mutation"
+    approach. There is nothing to keep in sync — the balance is always
+    derived fresh from the actual Transaction rows, so editing or deleting
+    a transaction automatically produces the correct balance with no
+    separate reversal bookkeeping required.
+    """
+    latest_checkpoint = (
         db.query(Balance)
-        .filter(
-            Balance.account_id == account_id,
-            Balance.user_id == user_id,
-        )
+        .filter(Balance.account_id == account_id, Balance.user_id == user_id)
         .order_by(Balance.recorded_at.desc())
         .first()
     )
 
-    base_amount = latest.amount if latest else Decimal("0")
-    balance = Balance(
-        user_id=user_id,
-        account_id=account_id,
-        amount=base_amount + delta,
+    checkpoint_amount = latest_checkpoint.amount if latest_checkpoint else Decimal("0")
+    checkpoint_date = (
+        latest_checkpoint.recorded_at.date()
+        if latest_checkpoint and hasattr(latest_checkpoint.recorded_at, "date")
+        else (latest_checkpoint.recorded_at if latest_checkpoint else date.min)
     )
-    db.add(balance)
-    return balance
+
+    income_sum = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.INCOME,
+            Transaction.date >= checkpoint_date,
+        )
+        .scalar()
+    )
+
+    expense_sum = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.EXPENSE,
+            Transaction.date >= checkpoint_date,
+        )
+        .scalar()
+    )
+
+    transfer_out_sum = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.TRANSFER,
+            Transaction.direction == TransferDirectionEnum.OUT,
+            Transaction.date >= checkpoint_date,
+        )
+        .scalar()
+    )
+
+    transfer_in_sum = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionTypeEnum.TRANSFER,
+            Transaction.direction == TransferDirectionEnum.IN,
+            Transaction.date >= checkpoint_date,
+        )
+        .scalar()
+    )
+
+    return (
+        checkpoint_amount
+        + income_sum
+        - expense_sum
+        + transfer_in_sum
+        - transfer_out_sum
+    )
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -171,29 +190,20 @@ def create_transfer(
             detail="Same-currency transfers require matching source and destination amounts",
         )
 
-    available_balance = get_latest_account_balance(db, current_user.id, payload.from_account_id)
-    if available_balance is not None and source_amount > available_balance:
+    available_balance = compute_current_balance(db, current_user.id, payload.from_account_id)
+    total_outflow = source_amount + (payload.fee or Decimal("0"))
+    if total_outflow > available_balance:
         raise HTTPException(
             status_code=400,
             detail="Insufficient funds in source account",
         )
 
     try:
-        # A retry of the same transfer must be identified by the exact same row-level
-        # ref_id used when the original transfer was written. We compare against the
-        # source leg, because that is the canonical entry for the transfer and is the
-        # value that the second request will re-use.
         legacy_from_ref_id = make_ref_id(
-            payload.from_account_id,
-            payload.date,
-            source_amount,
-            "OUT",
+            payload.from_account_id, payload.date, source_amount, "OUT",
         )
         legacy_to_ref_id = make_ref_id(
-            payload.to_account_id,
-            payload.date,
-            destination_amount,
-            "IN",
+            payload.to_account_id, payload.date, destination_amount, "IN",
         )
         from_ref_id = make_transfer_ref_id(
             payload.from_account_id,
@@ -224,13 +234,10 @@ def create_transfer(
 
         if payload.fee and payload.fee > 0:
             fee_ref_id = make_ref_id(
-                payload.from_account_id,
-                payload.date,
-                payload.fee,
-                "FEE",
+                payload.from_account_id, payload.date, payload.fee, "FEE",
             )
             existing_fee_tx = db.query(Transaction).filter(
-                Transaction.ref_id.in_([fee_ref_id]),
+                Transaction.ref_id == fee_ref_id,
                 Transaction.user_id == current_user.id,
             ).first()
             if existing_fee_tx:
@@ -245,6 +252,7 @@ def create_transfer(
             date=payload.date,
             amount=source_amount,
             type=TransactionTypeEnum.TRANSFER,
+            direction=TransferDirectionEnum.OUT,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer to {to_account.name}",
             ref_id=from_ref_id,
@@ -256,6 +264,7 @@ def create_transfer(
             date=payload.date,
             amount=destination_amount,
             type=TransactionTypeEnum.TRANSFER,
+            direction=TransferDirectionEnum.IN,
             category=CategoryEnum.TRANSFER,
             note=payload.note or f"Transfer from {from_account.name}",
             ref_id=to_ref_id,
@@ -263,17 +272,15 @@ def create_transfer(
         )
 
         db.add_all([from_tx, to_tx])
-        db.flush()  # Assign IDs to transactions without committing
+        db.flush()
 
-        # Create transfer pair linking the two transactions
         pair = TransferPair(
             from_transaction_id=from_tx.id,
             to_transaction_id=to_tx.id,
         )
         db.add(pair)
+        db.flush()
 
-        # ── BI-FAST fee transaction ───────────────────────────────────
-        # Fee transactions also need deduplication
         if payload.fee and payload.fee > 0:
             fee_tx = Transaction(
                 user_id=current_user.id,
@@ -284,29 +291,21 @@ def create_transfer(
                 category=CategoryEnum.BILLS,
                 note="BI-FAST transfer fee",
                 ref_id=make_ref_id(
-                    payload.from_account_id,
-                    payload.date,
-                    payload.fee,
-                    "FEE",
+                    payload.from_account_id, payload.date, payload.fee, "FEE",
                 ),
             )
             db.add(fee_tx)
+            db.flush()
+            pair.fee_transaction_id = fee_tx.id
 
-        db.commit()
-        apply_balance_delta(db, current_user.id, payload.from_account_id, -source_amount)
-        apply_balance_delta(db, current_user.id, payload.to_account_id, destination_amount)
-        if payload.fee and payload.fee > 0:
-            apply_balance_delta(db, current_user.id, payload.from_account_id, -payload.fee)
         db.commit()
         db.refresh(from_tx)
         db.refresh(to_tx)
         return [from_tx, to_tx]
 
     except HTTPException:
-        # Re-raise HTTP exceptions (e.g., 404, 409, 400)
         raise
     except Exception as e:
-        # Rollback on any unexpected error to prevent orphaned transactions
         db.rollback()
         raise HTTPException(
             status_code=500,
@@ -379,8 +378,8 @@ def create_transaction(
         )
 
     if payload.type == TransactionTypeEnum.EXPENSE:
-        available_balance = get_latest_account_balance(db, current_user.id, payload.account_id)
-        if available_balance is not None and payload.amount > available_balance:
+        available_balance = compute_current_balance(db, current_user.id, payload.account_id)
+        if payload.amount > available_balance:
             raise HTTPException(
                 status_code=400,
                 detail="Insufficient funds in source account",
@@ -389,14 +388,8 @@ def create_transaction(
     payload_data = payload.model_dump()
     payload_data["currency"] = submitted_currency or account.currency
 
-    # ref_id is a deterministic hash of the same business fields the user sees.
-    # If the same payload is retried, the hash matches and we reject the duplicate
-    # instead of inserting a second transaction for the same event.
     ref_id = make_ref_id(
-        payload.account_id,
-        payload.date,
-        payload.amount,
-        payload.note,
+        payload.account_id, payload.date, payload.amount, payload.note,
     )
 
     existing = db.query(Transaction).filter(
@@ -417,11 +410,6 @@ def create_transaction(
     db.add(tx)
     db.commit()
     db.refresh(tx)
-
-    delta = payload.amount if payload.type == TransactionTypeEnum.INCOME else -payload.amount
-    if payload.type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
-        apply_balance_delta(db, current_user.id, payload.account_id, delta)
-        db.commit()
 
     return tx
 
@@ -467,33 +455,35 @@ def update_transaction(
             detail="Cannot edit transfer transactions directly"
         )
 
-    # Capture the OLD effect on balance before mutating anything
-    old_type = tx.type
-    old_amount = tx.amount
-    old_account_id = tx.account_id
-
     update_data = payload.model_dump(exclude_none=True)
+
+    # Determine what the resulting type/amount/account will be after this update,
+    # so we can validate sufficient funds BEFORE committing anything.
+    new_type = update_data.get("type", tx.type)
+    new_amount = update_data.get("amount", tx.amount)
+    new_account_id = tx.account_id  # account_id is not editable per TransactionUpdate schema
+
+    if new_type == TransactionTypeEnum.EXPENSE:
+        # Compute current balance, then add back this transaction's OLD effect
+        # (since it's still counted in the live total until we commit the change),
+        # giving us the true balance available for the NEW amount.
+        current_balance = compute_current_balance(db, current_user.id, new_account_id)
+        if tx.type == TransactionTypeEnum.EXPENSE:
+            current_balance += tx.amount
+        elif tx.type == TransactionTypeEnum.INCOME:
+            current_balance -= tx.amount
+
+        if new_amount > current_balance:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient funds in account",
+            )
+
     for field, value in update_data.items():
         setattr(tx, field, value)
 
-    new_type = tx.type
-    new_amount = tx.amount
-    new_account_id = tx.account_id
-
     db.commit()
     db.refresh(tx)
-
-    # Reverse the old effect, then apply the new effect.
-    # Handles amount changes, type changes (income<->expense), and account changes.
-    if old_type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
-        old_delta = old_amount if old_type == TransactionTypeEnum.INCOME else -old_amount
-        apply_balance_delta(db, current_user.id, old_account_id, -old_delta)
-
-    if new_type in {TransactionTypeEnum.INCOME, TransactionTypeEnum.EXPENSE}:
-        new_delta = new_amount if new_type == TransactionTypeEnum.INCOME else -new_amount
-        apply_balance_delta(db, current_user.id, new_account_id, new_delta)
-
-    db.commit()
     return tx
 
 
@@ -532,40 +522,14 @@ def delete_transaction(
                 Transaction.user_id == current_user.id,
             ).first()
 
-            # Determine direction for THIS transaction (tx) via the pair
-            tx_is_sender = pair.from_transaction_id == tx.id
-
-            # Reverse this leg's effect: sender legs subtracted (-amount) so
-            # reversal adds it back (+amount); receiver legs added (+amount)
-            # so reversal subtracts it (-amount).
-            apply_balance_delta(
-                db, current_user.id, tx.account_id,
-                tx.amount if tx_is_sender else -tx.amount,
-            )
-
-            if other_tx:
-                other_is_sender = not tx_is_sender
-                apply_balance_delta(
-                    db, current_user.id, other_tx.account_id,
-                    other_tx.amount if other_is_sender else -other_tx.amount,
-                )
-
-            # ── Remove associated transfer fee, if any ──
-            # Fee transactions are created as separate EXPENSE rows on the
-            # source (sender) account, with note="BI-FAST transfer fee" and
-            # their own deterministic ref_id. They aren't linked via
-            # TransferPair, so we find them by matching account + date + note.
-            sender_tx = tx if tx_is_sender else other_tx
-            if sender_tx:
+            # Delete the linked fee transaction, if any — no more date/note
+            # guessing, the pair links to it directly now.
+            if pair.fee_transaction_id:
                 fee_tx = db.query(Transaction).filter(
+                    Transaction.id == pair.fee_transaction_id,
                     Transaction.user_id == current_user.id,
-                    Transaction.account_id == sender_tx.account_id,
-                    Transaction.date == sender_tx.date,
-                    Transaction.type == TransactionTypeEnum.EXPENSE,
-                    Transaction.note == "BI-FAST transfer fee",
                 ).first()
                 if fee_tx:
-                    apply_balance_delta(db, current_user.id, fee_tx.account_id, fee_tx.amount)
                     db.delete(fee_tx)
 
             db.delete(pair)
@@ -573,11 +537,6 @@ def delete_transaction(
             if other_tx:
                 db.delete(other_tx)
             db.flush()
-
-    else:
-        # INCOME/EXPENSE: reverse whatever effect this transaction had
-        reversal_delta = tx.amount if tx.type == TransactionTypeEnum.EXPENSE else -tx.amount
-        apply_balance_delta(db, current_user.id, tx.account_id, reversal_delta)
 
     db.delete(tx)
     db.commit()

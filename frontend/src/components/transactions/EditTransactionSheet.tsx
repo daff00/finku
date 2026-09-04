@@ -90,7 +90,7 @@ export default function EditTransactionSheet({
 
   // Populate form whenever a new transaction is passed in
   useEffect(() => {
-    if (transaction) {
+    if (open && transaction) {
       setType(
         transaction.type === TransactionTypeEnum.INCOME
           ? TransactionTypeEnum.INCOME
@@ -102,7 +102,7 @@ export default function EditTransactionSheet({
       setNote(transaction.note ?? "");
       setCurrency(transaction.currency === "USD" ? "USD" : "IDR");
     }
-  }, [transaction]);
+  }, [open, transaction]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(sanitizeDecimalInput(e.target.value));
