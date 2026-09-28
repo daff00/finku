@@ -123,7 +123,7 @@ export default function LoginPage() {
         </form>
 
         {/* ── Register link ──────────────────────────────────── */}
-        <p className="text-center text-[12px] text-text-muted mt-6 font-sans">
+        {/* <p className="text-center text-[12px] text-text-muted mt-6 font-sans">
           Don't have an account?{" "}
           <Link
             to="/register"
@@ -131,7 +131,7 @@ export default function LoginPage() {
           >
             Register
           </Link>
-        </p>
+        </p> */}
 
         {/* ── Footer ──────────────────────────────────────────── */}
         <p className="text-center text-[11px] text-text-muted/70 mt-8 font-sans tracking-wide">
