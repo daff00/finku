@@ -73,6 +73,10 @@ class SourceEnum(str, Enum):
 class CurrencyEnum(str, Enum):
     IDR = "IDR"
     USD = "USD"
+    
+class TransferDirectionEnum(str, Enum):
+    OUT = "OUT"
+    IN = "IN"
 
 
 # Tables
@@ -162,6 +166,9 @@ class Transaction(Base):
         uselist=False,
     )
     user: Mapped["User"] = relationship("User")
+    direction: Mapped[TransferDirectionEnum | None] = mapped_column(
+        SAEnum(TransferDirectionEnum), nullable=True
+    )
 
 
 class Balance(Base):
@@ -182,18 +189,22 @@ class TransferPair(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     from_transaction_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"))
     to_transaction_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"))
+    fee_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("transactions.id"), nullable=True
+    )
     created_at: Mapped[dt] = mapped_column(
         DateTime(timezone=True), default=lambda: dt.now(timezone.utc)
     )
-    # relationship 1 — for from_transaction_id
     from_transaction: Mapped["Transaction"] = relationship(
         "Transaction",
         foreign_keys=[from_transaction_id],
         back_populates="transfer_from",
     )
-    # relationship 2 — for to_transaction_id
     to_transaction: Mapped["Transaction"] = relationship(
         "Transaction",
         foreign_keys=[to_transaction_id],
         back_populates="transfer_to",
+    )
+    fee_transaction: Mapped["Transaction | None"] = relationship(
+        "Transaction", foreign_keys=[fee_transaction_id]
     )

@@ -12,6 +12,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import RegisterPage from "@/pages/RegisterPage";
 import { Toaster } from "sonner";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import AdminCreateUserPage from "./pages/AdminCreateUserPage";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
 
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* <Route path="/register" element={<RegisterPage />} /> */}
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
@@ -31,6 +32,7 @@ function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/import" element={<Import />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/admin/create-user" element={<AdminCreateUserPage />} />
             </Route>
           </Route>
 

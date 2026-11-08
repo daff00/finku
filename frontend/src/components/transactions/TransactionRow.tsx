@@ -1,11 +1,12 @@
 // frontend/src/components/transactions/TransactionRow.tsx
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { TransactionTypeEnum } from "@/types";
 import type { Transaction } from "@/types";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
+import EditTransactionSheet from "./EditTransactionSheet";
 
 type AccountInfo = {
   name: string;
@@ -33,9 +34,10 @@ interface TransactionRowProps {
 
 export default function TransactionRow({ tx, account }: TransactionRowProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const { formatAmount } = useCurrency();
 
-  const bankColor = account?.color ?? "#8B7355";
+  const bankColor = account?.color ?? "var(--color-bank-other)";
   const categoryLabel = CATEGORY_LABELS[tx.category] ?? tx.category;
   const { color: amountColor, prefix: amountPrefix } = getTransactionAmountStyle(tx.type);
 
@@ -75,16 +77,31 @@ export default function TransactionRow({ tx, account }: TransactionRowProps) {
             </div>
           </div>
 
-          {/* Delete button — appears on hover */}
-          <button
-            onClick={() => setIsDeleteDialogOpen(true)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-text-muted hover:text-expense hover:bg-expense-subtle rounded-[4px]"
-            title="Delete transaction"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {/* Edit + Delete buttons — appear on hover */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setIsEditSheetOpen(true)}
+              className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded-[4px]"
+              title="Edit transaction"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="p-1.5 text-text-muted hover:text-expense hover:bg-expense-subtle rounded-[4px]"
+              title="Delete transaction"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
+
+      <EditTransactionSheet
+        open={isEditSheetOpen}
+        onOpenChange={setIsEditSheetOpen}
+        transaction={tx}
+      />
 
       <DeleteTransactionDialog
         open={isDeleteDialogOpen}
