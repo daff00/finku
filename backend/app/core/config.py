@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     TRANSACTIONS_RATE_LIMIT: str = "100/minute"
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
     ADMIN_SECRET_KEY: str
+    REGISTRATION_MODE: str = "admin_only"
     
     model_config = SettingsConfigDict(env_file='.env')
 

@@ -1,33 +1,48 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.auth_utils import create_access_token, hash_password, verify_password
 from app.core.config import settings
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import limiter
 from app.models.models import User
-from app.schemas.schemas import TokenOut, UserCreate, UserOut
+from app.schemas.schemas import (
+    PasswordChange,
+    ProfileUpdate,
+    TokenOut,
+    UserCreate,
+    UserOut,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+auth_limit = limiter.shared_limit("10/hour", scope="auth")
+
 
 @router.post("/register", response_model=UserOut, status_code=201)
+@auth_limit
 def register(
+    request: Request,
+    response: Response,
     payload: UserCreate,
     db: DbSession,
-    x_admin_key: str = Header(alias="X-Admin-Key"),
+    x_admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
 ):
     """
-    Admin-only endpoint to create new users.
-    Requires X-Admin-Key header matching ADMIN_SECRET_KEY in .env
+    Create a new user.
+    Behavior depends on settings.REGISTRATION_MODE:
+      - "admin_only": requires X-Admin-Key matching ADMIN_SECRET_KEY
+      - "public": open signup, no admin key required
     """
-    # 1. verify admin key
-    if x_admin_key != settings.ADMIN_SECRET_KEY:
+    if (
+        settings.REGISTRATION_MODE == "admin_only"
+        and x_admin_key != settings.ADMIN_SECRET_KEY
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden — invalid admin key",
         )
 
-    # 2. check username not already taken
     existing = db.query(User).filter(
         User.username == payload.username
     ).first()
@@ -37,7 +52,6 @@ def register(
             detail="Username already taken",
         )
 
-    # 3. create user with hashed password
     user = User(
         username=payload.username,
         password_hash=hash_password(payload.password),
@@ -112,3 +126,49 @@ def get_me(current_user: CurrentUser):
     Useful for frontend to know who is logged in.
     """
     return current_user
+
+@router.patch("/me", response_model=UserOut)
+def update_profile(
+    payload: ProfileUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """
+    Update the current user's display name.
+    Username is intentionally NOT editable — it's the fixed login identifier.
+    """
+    current_user.display_name = payload.display_name
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/change-password")
+@auth_limit
+def change_password(
+    request: Request,
+    response: Response,
+    payload: PasswordChange,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """
+    Change the current user's password.
+    Requires the correct current password before allowing the change.
+    """
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect",
+        )
+
+    if payload.new_password == payload.current_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password",
+        )
+
+    current_user.password_hash = hash_password(payload.new_password)
+    db.commit()
+
+    return {"message": "Password changed successfully"}

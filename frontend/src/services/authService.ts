@@ -11,9 +11,15 @@ export type TokenOut = {
     token_type: string
 }
 
+interface RegisterPayload {
+    username: string;
+    password: string;
+    display_name: string;
+    adminKey: string;
+}
+
 export const authService = {
     login: async (payload: LoginRequest): Promise<TokenOut> => {
-        //OAuth2 requires form-data not JSON
         const formData = new FormData()
         formData.append('username', payload.username)
         formData.append('password', payload.password)
@@ -49,8 +55,25 @@ export const authService = {
     clearToken: (): void => {
         localStorage.removeItem('token')
     },
-    register: async (payload: { username: string; password: string; display_name: string }) => {
-        const response = await api.post("/auth/register", payload);
+
+    register: async (payload: RegisterPayload): Promise<User> => {
+        const { adminKey, ...body } = payload;
+        const response = await api.post("/auth/register", body, {
+            headers: { "X-Admin-Key": adminKey },
+        });
         return response.data;
+    },
+
+    updateProfile: async (displayName: string): Promise<User> => {
+        const response = await api.patch('/auth/me', { display_name: displayName })
+        return response.data
+    },
+
+    changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+        const response = await api.post('/auth/change-password', {
+            current_password: currentPassword,
+            new_password: newPassword,
+        })
+        return response.data
     },
 }

@@ -1,12 +1,14 @@
 // frontend/src/pages/SettingsPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth, useAccounts } from "@/hooks";
 import type { Account } from "@/types";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { authService } from "@/services";
 
 // ── ShadCN Components ──────────────────────────────────────────
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ export default function SettingsPage() {
   usePageTitle('Settings')
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
   const { data: accounts, isLoading: accountsLoading } = useAccounts({ include_inactive: true });
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
 
@@ -54,10 +57,11 @@ export default function SettingsPage() {
     setProfileMessage(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setProfileMessage({ type: "success", text: "Profile updated successfully." });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update profile.";
+      await authService.updateProfile(displayName);
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      setProfileMessage({ type: "success", text: "Display name updated successfully." });
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || "Failed to update display name.";
       setProfileMessage({ type: "error", text: message });
     } finally {
       setIsUpdatingProfile(false);
@@ -81,13 +85,13 @@ export default function SettingsPage() {
     setPasswordMessage(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await authService.changePassword(currentPassword, newPassword);
       setPasswordMessage({ type: "success", text: "Password changed successfully." });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to change password.";
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || "Failed to change password.";
       setPasswordMessage({ type: "error", text: message });
     } finally {
       setIsChangingPassword(false);
