@@ -108,6 +108,7 @@ class TransferCreate(BaseModel):
 class BalanceCreate(BaseModel):
     account_id: int
     amount: Decimal
+    recorded_at: datetime | None = None
 
 
 class BalanceOut(BaseModel):

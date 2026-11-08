@@ -1,28 +1,31 @@
 # 💰 Finku — Personal Finance Tracker
 
-> A personal budget & net worth tracker that aggregates all your Indonesian bank accounts into one clean dashboard.
+> A personal budget & net worth tracker that aggregates Indonesian bank accounts and multi-currency assets into one clean, private dashboard. Designed with Japanese minimalism, full privacy (local machine or home server), and zero cloud dependencies.
 
 ## Features
-- 📊 Real-time net worth across all accounts
-- 🏦 Bank support: BCA ✅ | Mandiri, Seabank, Bank Jago (coming soon)
-- 📥 Import transactions via PDF (BCA currently supported)
-- ✍️ Manual transaction entry
-- 📈 Monthly analytics — income, expenses, category breakdown
-- 📱 Responsive — works on desktop and mobile browser (PWA)
+- 📊 **Real-time net worth** across accounts with balance snapshots and dynamic transaction deltas
+- 🏦 **Bank support**: BCA ✅ | Mandiri, Seabank, Bank Jago (coming soon)
+- 💵 **Multi-currency support**: IDR and USD accounts with live & cached exchange rate conversion
+- 📥 **Statement import**: PDF import with auto-categorization (BCA currently supported)
+- ✍️ **Transaction management**: Full CRUD, search, bank & category filtering, and transfer pairing
+- 📈 **Monthly analytics**: Cashflow trends, category breakdown, account spending, and net worth charts
+- 🌓 **Dark mode**: Japanese minimalist sumi-ink dark theme with persistent user preference
+- 🔒 **Privacy-first & invite-only**: Self-hosted on local network / home server; strictly admin-provisioned access with no public registration
 
 ## Tech Stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 19, TypeScript, Vite 8, Tailwind v4, shadcn/ui |
-| Backend | Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic |
-| Database | SQLite (PostgreSQL-ready) |
+| Frontend | React 19, TypeScript, Vite 8, Tailwind v4, shadcn/ui, TanStack Query v5, React Router v7 |
+| Backend | Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic, slowapi, loguru, uv |
+| Database | SQLite (PostgreSQL-ready via SQLAlchemy & Alembic migrations) |
 
 ## Project Structure
 ```
 finku/
-├── frontend/ # React PWA
-└── backend/ # FastAPI REST API
+├── frontend/   # React client
+├── backend/    # FastAPI REST API
+└── openspec/   # Specification-driven development changes and capabilities
 ```
 
 ## Quick Start
@@ -30,8 +33,6 @@ finku/
 ### Backend
 ```bash
 cd backend
-uv venv --python 3.12
-source .venv/bin/activate
 uv sync
 cp .env.example .env
 alembic upgrade head
@@ -45,16 +46,27 @@ npm install
 npm run dev
 ```
 
+### Tests
+```bash
+cd backend
+uv run pytest tests/ -v
+```
+
 ## Roadmap
-- [x] Project scaffolding
-- [x] Database schema + migrations
-- [x] REST API (accounts, transactions, analytics)
-- [x] PDF import (BCA)
-- [x] Rate limiting
-- [x] Dashboard UI (working)
-- [x] Import page UI (working)
-- [ ] Additional PDF parsers (Mandiri, Seabank, Bank Jago) — after PWA
-- [ ] CSV import support — deferred
-- [ ] Transactions & Analytics pages UI
-- [ ] Mobile responsive + PWA
-- [ ] Docker / home server deployment
+- [x] Project scaffolding & monorepo setup
+- [x] Database schema & Alembic migrations (SQLite batch-mode compliant)
+- [x] REST API (accounts, transactions, balances, analytics, auth)
+- [x] PDF statement import (BCA)
+- [x] Multi-currency transactions & exchange rate integration (IDR / USD)
+- [x] Idempotency & money-integrity safeguards (insufficient funds rejection)
+- [x] Rate limiting (slowapi)
+- [x] Dashboard UI (accounts grid, metric summaries, recent activity)
+- [x] Import page UI with preview & categorization
+- [x] Transactions UI (search, filters, date grouping, pagination, edit & delete)
+- [x] Analytics UI (net worth trend, cashflow, category breakdown)
+- [x] Settings UI (profile management, password changes, account CRUD dialogs)
+- [x] Dark mode with instant theme switching & persistence
+- [ ] Additional PDF parsers (Mandiri, Seabank, Bank Jago)
+- [ ] CSV import support
+- [ ] Mobile PWA service worker & offline caching
+- [ ] Docker Compose / home server deployment package

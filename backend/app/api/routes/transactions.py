@@ -70,7 +70,7 @@ def compute_current_balance(db: DbSession, user_id: int, account_id: int) -> Dec
     latest_checkpoint = (
         db.query(Balance)
         .filter(Balance.account_id == account_id, Balance.user_id == user_id)
-        .order_by(Balance.recorded_at.desc())
+        .order_by(Balance.recorded_at.desc(), Balance.id.desc())
         .first()
     )
 

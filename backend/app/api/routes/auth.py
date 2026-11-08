@@ -30,14 +30,9 @@ def register(
 ):
     """
     Create a new user.
-    Behavior depends on settings.REGISTRATION_MODE:
-      - "admin_only": requires X-Admin-Key matching ADMIN_SECRET_KEY
-      - "public": open signup, no admin key required
+    Strictly invite-only / admin registration: requires X-Admin-Key matching ADMIN_SECRET_KEY.
     """
-    if (
-        settings.REGISTRATION_MODE == "admin_only"
-        and x_admin_key != settings.ADMIN_SECRET_KEY
-    ):
+    if x_admin_key != settings.ADMIN_SECRET_KEY:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden — invalid admin key",

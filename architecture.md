@@ -81,15 +81,15 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 ---
 
-## 5. Single Admin Registration
+## 5. Single Admin Registration (Strictly Invite-Only)
 
-**Decision:** No public registration. Only admin (via X-Admin-Key header) can create users.
+**Decision:** No public registration. Only admin (via `X-Admin-Key` header matching `ADMIN_SECRET_KEY`) can create users.
 
 **Why:**
-- Privacy-first — don't want strangers registering
-- Personal tool for family/friends only
-- Simple — no registration flow, no email verification
-- ADMIN_SECRET_KEY in `.env` — you control who gets access
+- Privacy-first — personal tool for family/friends only; strangers should not register
+- Simple — no public registration flow, no email verification complexity
+- The admin provisions users either directly via API or through the dedicated `/admin/create-user` UI with their secret key
+- `ADMIN_SECRET_KEY` in `.env` guarantees you maintain full access control
 
 ---
 
@@ -99,41 +99,30 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 **Why not just on `accounts`:**
 - Simpler queries — no JOIN needed to check ownership
-- Safer — if you forget to JOIN, you leak data vs if you forget user_id filter
+- Safer — forgetting a JOIN leaks data vs explicit user_id filter
 - More explicit — ownership visible directly on every model
 
 **Why NOT on `transfer_pairs`:**
-- TransferPair is a linking table — just connects two transactions
-- Ownership derived from linked transactions
-- Adding user_id would be redundant
+- `TransferPair` is a linking table connecting `from_transaction_id`, `to_transaction_id`, and optional `fee_transaction_id`
+- Ownership is derived from linked transactions
+- `Transaction.direction` (`OUT` / `IN`) identifies the sender vs receiver leg
 
 ---
 
-## 7. Balance Snapshot Pattern
+## 7. Balance Snapshot & Dynamic Balance Calculation
 
-**Decision:** Periodic balance snapshots + delta calculation for net worth.
+**Decision:** Periodic balance snapshots + live transaction effect calculation.
 
-**Why not sum all transactions:**
-
-Problem: User has 5 years of BCA history before Finku existed.
-Summing transactions from day 1 = wrong (missing history).
-OVO/GoPay = no CSV export = can't import history.
-
+**Why not pure transaction sums from day 1:**
+- User has years of bank history before FinKu existed; summing from day 1 would be inaccurate
+- E-wallets (OVO/GoPay) lack automated history export
 
 **How it works:**
-
-Net worth = latest_snapshot + income_after - expense_after
-
-Example:
-BCA snapshot Jul 1 = Rp 30jt
-
-salary Jul 25 = Rp 12.5jt
-expenses Jul = Rp 2jt
-= BCA balance = Rp 40.5jt ✅
-
-**Trade-off:**
-- User must manually update snapshots periodically
-- More accurate than summing all transactions
+- When an account is created, an initial zero baseline snapshot is seeded (timestamped at epoch).
+- When real balance snapshots are recorded (`POST /api/v1/balances`), they establish new reference points.
+- `compute_current_balance` live-calculates:
+  `latest_snapshot + income_after - expense_after + transfers_in_after - transfers_out_after`
+- Multi-currency reporting (`USD` and `IDR`) converts amounts to base currency (`IDR`) using cached exchange rates (`GET /api/v1/exchange-rate`) before aggregation.
 
 ---
 
@@ -143,93 +132,71 @@ expenses Jul = Rp 2jt
 
 **Why PDF-only:**
 - Most Indonesian banks provide PDF as primary format (BCA, Jago, Seabank, OVO, GoPay)
-- Mandiri provides both PDF and CSV; we prioritize PDF for consistency
-- pdfplumber handles text-based PDFs well
-- BCA PDFs are text-based (not scanned) — confirmed copyable
+- pdfplumber handles text-based PDFs reliably with coordinate-based word grouping
 - Single format reduces parser complexity during MVP phase
 
 **Current implementation:**
-- BCA PDF parser is production-ready (uses pdfplumber + coordinate extraction)
-- Other bank parsers (Mandiri, Jago, Seabank) deferred until after PWA launch
-- Each parser inherits from BaseParser for consistent interface
-- Unified POST /import endpoint dispatches to correct parser via bank enum
-
-**Known limitations:**
-- BCA truncates merchant names (e.g. "INDOMA" = Indomaret) — bank's limitation, not ours
-- User can re-categorize transactions in import result before confirming
-- CSV import deferred; can be added in future if needed
+- BCA PDF parser is production-ready (`bca_pdf.py`)
+- Unified `POST /import` endpoint dispatches to the correct parser via bank enum
+- Other bank parsers (Mandiri, Jago, Seabank) deferred until post-MVP
 
 ---
 
 ## 9. Jago Pockets — All Independent
 
-**Decision:** Each Jago pocket is a separate `Account` with `type=POCKET`.
-No `parent_id` relationship — all pockets are top-level accounts.
+**Decision:** Each Jago pocket is a separate `Account` with `type=POCKET`. Top-level accounts with optional `parent_id` hierarchy.
 
 **Why:**
 - Jago's "MyAssets" = sum of ALL pockets
 - Each pocket has independent balance and transactions
 - Net worth includes ALL pockets independently
-- Transfers between pockets = internal transfer (TRANSFER type)
-
-**Trade-off:**
-- Can't show "Jago total" easily — must sum all JAGO accounts
-- Acceptable since user knows which accounts are Jago pockets
+- Transfers between pockets = internal transfer (`TRANSFER` type)
 
 ---
 
-## 10. React + TanStack Query (no Redux/Zustand)
+## 10. React + TanStack Query & Context State
 
-**Decision:** TanStack Query for all server state. No global state manager.
+**Decision:** TanStack Query for server state. Lightweight React Context for app-wide UI preferences. No Redux/Zustand.
 
 **Why:**
-- Finance data is server state — TanStack Query handles it perfectly
-- Auto caching, refetching, loading/error states built-in
-- No need for Redux/Zustand for this use case
-- Less code, less complexity
-
-**The only "global" state needed:**
-- Auth token → stored in localStorage
-- Theme (dark/light) → CSS variable / localStorage
+- Finance data is server state — TanStack Query handles caching, refetching, and loading states seamlessly
+- Only minimal client-side state is required:
+  - Auth token → stored in localStorage
+  - Theme (dark/light) → `useDarkMode` with CSS variables & localStorage
+  - Display Currency → `CurrencyContext` (`IDR` vs `USD` toggle)
 
 ---
 
 ## 11. Design Language — Japanese Minimalism + Dark Mode
 
-**Decision:** Japanese Minimalism as primary design language, with dark mode support.
+**Decision:** Japanese Minimalism as primary design language, with full dark mode support.
 
 **Philosophy:**
 - Ma (間) — deliberate negative space
 - Wabi-sabi — honest, nothing unnecessary
-- Numbers are the hero — typography must make figures immediately readable
+- Numbers are the hero — clean typography makes figures immediately readable
 
 **Colors:**
 - Light: `#FAFAF8` background (washi paper tone)
 - Dark: `#0F0D0B` background (sumi ink tone)
 - Accent: `#C0392B` (torii gate red)
-- Bank colors as left-border accents only — never full backgrounds
+- Bank colors as subtle accents only
+
+**Implementation:**
+- Theme toggle in Settings with instant transition and persistence
+- Clean responsive layout for both desktop and mobile viewports
 
 ---
 
 ## 12. Privacy-First Deployment
 
-**Target:** Home server (Raspberry Pi / old PC / NAS)
+**Target:** Home server (Raspberry Pi / mini PC / NAS) or local network.
 
 **Access options:**
 - Local WiFi only → `192.168.x.x`
-- Anywhere via Tailscale VPN → zero-config, free, encrypted
+- Secure remote access via Tailscale VPN (zero-config, encrypted, private)
 
-**Why not cloud:**
-- Financial data is sensitive
-- No subscription cost
-- Full control over data
-- Tailscale makes home server accessible anywhere securely
-
-**Current Implementation:**
-- Rate limiting via slowapi ✅ (user-based + IP-based key function)
-
-**Future V2:**
-- Docker Compose for easy deployment
-- PostgreSQL instead of SQLite (migration is seamless via Alembic)
-- HTTPS via Caddy or nginx
-- PWA capabilities (offline support, home screen install)
+**Security guardrails:**
+- Rate limiting via slowapi (user-based and IP-based limiters)
+- Negative-balance and insufficient-funds validation on transactions/transfers
+- Deterministic idempotency hashes (`ref_id`) on writes to prevent duplicate events

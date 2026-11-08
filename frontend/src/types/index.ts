@@ -24,7 +24,7 @@ export const BankEnum = {
     OTHER: "OTHER",
 } as const
 
-type BankEnum = (typeof BankEnum)[keyof typeof BankEnum]
+export type BankEnum = (typeof BankEnum)[keyof typeof BankEnum]
 
 export const AccountTypeEnum = {
     SAVINGS: "SAVINGS",
@@ -33,7 +33,7 @@ export const AccountTypeEnum = {
     POCKET: "POCKET",
 } as const
 
-type AccountTypeEnum = (typeof AccountTypeEnum)[keyof typeof AccountTypeEnum]
+export type AccountTypeEnum = (typeof AccountTypeEnum)[keyof typeof AccountTypeEnum]
 
 
 export const TransactionTypeEnum = {
@@ -42,7 +42,7 @@ export const TransactionTypeEnum = {
     TRANSFER: "TRANSFER",
 } as const
 
-type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum]
+export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum]
 
 export const CategoryEnum = {
     FOOD: "FOOD",
@@ -58,7 +58,7 @@ export const CategoryEnum = {
     OTHER: "OTHER",
 } as const
 
-type CategoryEnum = (typeof CategoryEnum)[keyof typeof CategoryEnum]
+export type CategoryEnum = (typeof CategoryEnum)[keyof typeof CategoryEnum]
 
 export const SourceEnum = {
     MANUAL: "MANUAL",
@@ -66,14 +66,14 @@ export const SourceEnum = {
     PDF: "PDF",
 } as const
 
-type SourceEnum = (typeof SourceEnum)[keyof typeof SourceEnum]
+export type SourceEnum = (typeof SourceEnum)[keyof typeof SourceEnum]
 
 export const CurrencyEnum = {
     IDR: "IDR",
     USD: "USD",
 } as const
 
-type CurrencyEnum = (typeof CurrencyEnum)[keyof typeof CurrencyEnum]
+export type CurrencyEnum = (typeof CurrencyEnum)[keyof typeof CurrencyEnum]
 
 export type Account = {
     id: number
