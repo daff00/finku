@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -90,6 +91,7 @@ def create_account(
         user_id=current_user.id,
         account_id=account.id,
         amount=Decimal("0"),
+        recorded_at=datetime(1970, 1, 1, tzinfo=timezone.utc),
     )
     db.add(zero_balance)
     db.commit()

@@ -12,6 +12,65 @@ from app.schemas.schemas import BalanceCreate, BalanceOut
 router = APIRouter(prefix="/balances", tags=["balances"])
 
 
+@router.get("", response_model=list[BalanceOut])
+@router.get("/", response_model=list[BalanceOut], include_in_schema=False)
+@balances_limit
+def list_balances(
+    request: Request,
+    response: Response,
+    current_user: CurrentUser,
+    db: DbSession,
+    account_id: int | None = None,
+    limit: int = 100,
+    offset: int = 0,
+):
+    q = db.query(Balance).filter(
+        Balance.user_id == current_user.id
+    )
+    if account_id:
+        q = q.filter(Balance.account_id == account_id)
+    return (
+        q.order_by(Balance.recorded_at.desc(), Balance.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+
+@router.post("", response_model=BalanceOut, status_code=201)
+@router.post("/", response_model=BalanceOut, status_code=201, include_in_schema=False)
+@balances_limit
+def create_balance(
+    request: Request,
+    response: Response,
+    payload: BalanceCreate,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    account = db.query(Account).filter(
+        Account.id == payload.account_id,
+        Account.user_id == current_user.id,
+    ).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    if payload.amount < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Balance amount cannot be negative",
+        )
+
+    data = payload.model_dump(exclude_unset=True)
+    balance = Balance(
+        user_id=current_user.id,
+        **data,
+    )
+    db.add(balance)
+    db.commit()
+    db.refresh(balance)
+    return balance
+
+
 def compute_current_balance(db: DbSession, user_id: int, account_id: int) -> Decimal:
     """
     Computes an account's current balance as:
@@ -22,7 +81,7 @@ def compute_current_balance(db: DbSession, user_id: int, account_id: int) -> Dec
     latest_snapshot = (
         db.query(Balance)
         .filter(Balance.account_id == account_id, Balance.user_id == user_id)
-        .order_by(Balance.recorded_at.desc())
+        .order_by(Balance.recorded_at.desc(), Balance.id.desc())
         .first()
     )
 
@@ -124,7 +183,7 @@ def get_latest_balance(
     latest_snapshot = (
         db.query(Balance)
         .filter(Balance.account_id == account_id, Balance.user_id == current_user.id)
-        .order_by(Balance.recorded_at.desc())
+        .order_by(Balance.recorded_at.desc(), Balance.id.desc())
         .first()
     )
 

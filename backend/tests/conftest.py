@@ -2,7 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
+from decimal import Decimal
 
 from app.core.auth_utils import create_access_token, hash_password
 from app.core.database import Base, get_db
@@ -138,6 +139,15 @@ def sample_transaction(client, sample_account):
 @pytest.fixture
 def sample_expense(client, sample_account):
     now = datetime.now()
+    bal_res = client.get(f"/api/v1/balances/{sample_account['id']}/latest")
+    if bal_res.status_code == 200 and Decimal(bal_res.json()["amount"]) < Decimal("48000"):
+        client.post(
+            "/api/v1/balances",
+            json={
+                "account_id": sample_account["id"],
+                "amount": "1000000",
+            },
+        )
     response = client.post(
         "/api/v1/transactions",
         json={
