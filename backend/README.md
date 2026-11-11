@@ -21,7 +21,7 @@ backend/
 │ │ └── database.py # SQLAlchemy engine + session
 │ ├── models/
 │ │ └── models.py # Database table definitions
-│ ├── parsers/ # CSV + PDF import parsers
+│ ├── parsers/ # Bank statement PDF parsers (BCA currently supported)
 │ ├── schemas/
 │ │ └── schemas.py # Pydantic request/response models
 │ └── services/ # Business logic
@@ -91,8 +91,7 @@ Base URL: `http://localhost:8000/api/v1`
 ### Import
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/import/csv` | Import CSV bank statement |
-| POST | `/import/pdf` | Import PDF statement (BCA) |
+| POST | `/import/` | Import BCA PDF bank statement |
 
 ## Environment Variables
 
@@ -102,3 +101,4 @@ Base URL: `http://localhost:8000/api/v1`
 | `SECRET_KEY` | JWT signing key | — |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiry | `10080` (7 days) |
 | `ALLOWED_ORIGINS` | CORS allowed origins | `http://localhost:5173` |
+| `ENVIRONMENT` | Runtime environment; prevents development seeding in production | `development` |

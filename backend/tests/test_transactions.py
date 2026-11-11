@@ -1,5 +1,7 @@
 import pytest
 
+from app.models.models import Transaction, TransferPair
+
 
 def test_create_transaction(client, sample_account):
     # ── Arrange ───────────────────────────────
@@ -23,6 +25,7 @@ def test_create_transaction(client, sample_account):
     assert data["category"] == "SALARY"
     assert data["account_id"] == sample_account["id"]
     assert data["ref_id"] is not None
+    assert data["direction"] is None
 
 
 def test_create_transaction_account_not_found(client):
@@ -360,8 +363,10 @@ def test_create_transfer(client, sample_account, sample_jago_account):
 
     assert from_tx["account_id"] == sample_account["id"]
     assert from_tx["type"] == "TRANSFER"
+    assert from_tx["direction"] == "OUT"
     assert to_tx["account_id"] == sample_jago_account["id"]
     assert to_tx["type"] == "TRANSFER"
+    assert to_tx["direction"] == "IN"
     assert from_tx["amount"] == to_tx["amount"]
 
 
@@ -556,6 +561,50 @@ def test_delete_transfer_cascades(client, sample_transfer):
 
     to_response = client.get(f"/api/v1/transactions/{to_tx_id}")
     assert to_response.status_code == 404
+
+
+def test_delete_fee_transaction_directly_is_rejected(
+    client, sample_account, sample_jago_account, db
+):
+    client.post(
+        "/api/v1/balances",
+        json={"account_id": sample_account["id"], "amount": "20000000"},
+    )
+    transfer_response = client.post(
+        "/api/v1/transactions/transfer",
+        json={
+            "from_account_id": sample_account["id"],
+            "to_account_id": sample_jago_account["id"],
+            "date": "2026-10-01",
+            "amount": "5000000",
+            "fee": "10000",
+            "note": "Transfer with protected fee",
+        },
+    )
+    assert transfer_response.status_code == 201
+
+    fee_transaction = db.query(Transaction).filter(
+        Transaction.note == "BI-FAST transfer fee",
+    ).one()
+    transfer_pair = db.query(TransferPair).filter(
+        TransferPair.fee_transaction_id == fee_transaction.id,
+    ).one()
+
+    response = client.delete(
+        f"/api/v1/transactions/{fee_transaction.id}",
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"] == (
+        "Cannot delete a transfer fee directly. Delete the transfer instead."
+    )
+    assert db.query(Transaction).filter(
+        Transaction.id == fee_transaction.id,
+    ).one()
+    assert db.query(TransferPair).filter(
+        TransferPair.id == transfer_pair.id,
+        TransferPair.fee_transaction_id == fee_transaction.id,
+    ).one()
 
 
 def test_create_transfer_idempotent(client, sample_account, sample_jago_account):

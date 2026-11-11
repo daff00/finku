@@ -61,7 +61,7 @@ uv run pytest tests/ -v
 - [x] Idempotency & money-integrity safeguards (insufficient funds rejection)
 - [x] Rate limiting (slowapi)
 - [x] Dashboard UI (accounts grid, metric summaries, recent activity)
-- [x] Import page UI with preview & categorization
+- [x] Import page UI with automatic categorization and post-import results
 - [x] Transactions UI (search, filters, date grouping, pagination, edit & delete)
 - [x] Analytics UI (net worth trend, cashflow, category breakdown)
 - [x] Settings UI (profile management, password changes, account CRUD dialogs)

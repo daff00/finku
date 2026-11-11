@@ -84,8 +84,7 @@ def create_account(
         **payload.model_dump(),
     )
     db.add(account)
-    db.commit()
-    db.refresh(account)
+    db.flush()
 
     zero_balance = Balance(
         user_id=current_user.id,
@@ -95,6 +94,7 @@ def create_account(
     )
     db.add(zero_balance)
     db.commit()
+    db.refresh(account)
 
     return account
 

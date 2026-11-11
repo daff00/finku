@@ -2,7 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from slowapi.middleware import SlowAPIASGIMiddleware
 
 from app.api.routes import (
@@ -15,6 +18,7 @@ from app.api.routes import (
     transactions,
 )
 from app.core.config import settings
+from app.core.dependencies import DbSession
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import LoggingMiddleware, setup_logging
 from app.core.rate_limit import limiter
@@ -79,7 +83,16 @@ def root():
 
 
 @app.get("/health")
-def health_check():
+@limiter.exempt
+def health_check(db: DbSession):
+    try:
+        db.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "disconnected"},
+        )
+
     return {
         "status": "healthy",
         "database": "connected",

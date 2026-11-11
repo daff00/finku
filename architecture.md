@@ -118,11 +118,12 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - E-wallets (OVO/GoPay) lack automated history export
 
 **How it works:**
-- When an account is created, an initial zero baseline snapshot is seeded (timestamped at epoch).
+- When an account is created, its zero baseline snapshot is created atomically in the same database transaction using one `db.commit()` (timestamped at the Unix epoch). If either insert fails, neither record is persisted.
 - When real balance snapshots are recorded (`POST /api/v1/balances`), they establish new reference points.
 - `compute_current_balance` live-calculates:
   `latest_snapshot + income_after - expense_after + transfers_in_after - transfers_out_after`
 - Multi-currency reporting (`USD` and `IDR`) converts amounts to base currency (`IDR`) using cached exchange rates (`GET /api/v1/exchange-rate`) before aggregation.
+- Fee transactions cannot be deleted directly. The user must delete the parent transfer instead.
 
 ---
 
@@ -138,6 +139,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 **Current implementation:**
 - BCA PDF parser is production-ready (`bca_pdf.py`)
 - Unified `POST /import` endpoint dispatches to the correct parser via bank enum
+- Import runs immediately after upload; there is no preview or confirmation step.
 - Other bank parsers (Mandiri, Jago, Seabank) deferred until post-MVP
 
 ---
