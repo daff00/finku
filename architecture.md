@@ -202,3 +202,23 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - Rate limiting via slowapi (user-based and IP-based limiters)
 - Negative-balance and insufficient-funds validation on transactions/transfers
 - Deterministic idempotency hashes (`ref_id`) on writes to prevent duplicate events
+
+---
+
+## 13. Exchange Rate — External API with 24h Cache
+
+**Decision:** Fetch exchange rates from `exchangerate-api.com` and cache them in memory for 24 hours.
+
+**Why this provider:**
+- Provides a simple REST API for currency rates
+- No API key is required by the current integration
+- Avoids adding exchange-rate credentials to the local configuration
+
+**Caching and fallback strategy:**
+- Successful rates are cached per currency pair with a 24-hour TTL.
+- `force_refresh=true` requests a fresh rate even when the cache is still valid.
+- If fetching fails, the last cached rate is returned as stale when available; otherwise, the app returns a fallback rate of `15300.0`.
+
+**Trade-off:**
+- The in-memory cache resets when the server restarts.
+- Rates are not guaranteed to be real-time; this is acceptable for personal finance tracking.

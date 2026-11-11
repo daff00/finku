@@ -34,8 +34,9 @@ finku/
 ```bash
 cd backend
 uv sync
-cp .env.example .env
+cp .env.example .env        # then fill in your secrets
 alembic upgrade head
+python seed.py              # development only
 fastapi dev app/main.py
 ```
 
