@@ -1,4 +1,9 @@
+from datetime import datetime, timezone
+from decimal import Decimal
+
 import pytest
+
+from app.models.models import Account, Balance
 
 
 def test_create_account(client):
@@ -39,7 +44,7 @@ def test_create_account_missing_required_fields(client):
     assert response.json()["error"] == "Validation error"
 
 
-def test_create_account_auto_creates_zero_balance_snapshot(client):
+def test_create_account_auto_creates_zero_balance_snapshot(client, db):
     payload = {
         "name": "BCA Zero",
         "bank": "BCA",
@@ -55,6 +60,46 @@ def test_create_account_auto_creates_zero_balance_snapshot(client):
     latest_balance = client.get(f"/api/v1/balances/{account_id}/latest")
     assert latest_balance.status_code == 200
     assert latest_balance.json()["amount"] == "0.00"
+
+    account = db.query(Account).filter(Account.id == account_id).one()
+    snapshot = db.query(Balance).filter(Balance.account_id == account_id).one()
+    assert snapshot.user_id == account.user_id
+    assert snapshot.amount == Decimal("0.00")
+    assert snapshot.recorded_at.replace(tzinfo=timezone.utc) == datetime(
+        1970, 1, 1, tzinfo=timezone.utc
+    )
+
+
+def test_create_account_rolls_back_if_baseline_creation_fails(
+    client, db, monkeypatch
+):
+    def fail_baseline_creation(*args, **kwargs):
+        raise RuntimeError("baseline creation failed")
+
+    monkeypatch.setattr(
+        "app.api.routes.accounts.Balance", fail_baseline_creation
+    )
+
+    with pytest.raises(RuntimeError, match="baseline creation failed"):
+        client.post(
+            "/api/v1/accounts",
+            json={
+                "name": "BCA Atomic Failure",
+                "bank": "BCA",
+                "type": "SAVINGS",
+                "color": "#0066AE",
+                "currency": "IDR",
+            },
+        )
+
+    db.rollback()
+    assert (
+        db.query(Account)
+        .filter(Account.name == "BCA Atomic Failure")
+        .count()
+        == 0
+    )
+    assert db.query(Balance).count() == 0
 
 
 def test_create_account_duplicate_name(client):

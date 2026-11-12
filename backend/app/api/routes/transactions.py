@@ -505,6 +505,15 @@ def delete_transaction(
     if not tx:
         return response
 
+    fee_pair = db.query(TransferPair).filter(
+        TransferPair.fee_transaction_id == tx.id,
+    ).first()
+    if fee_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete a transfer fee directly. Delete the transfer instead.",
+        )
+
     if tx.type == TransactionTypeEnum.TRANSFER:
         pair = db.query(TransferPair).filter(
             (TransferPair.from_transaction_id == tx.id) |

@@ -109,6 +109,7 @@ finku/
 │   │   ├── test_balances.py
 │   │   ├── test_imports.py
 │   │   ├── test_other_rate_limits.py
+│   │   ├── test_seed.py
 │   │   └── test_transactions.py
 │   ├── .env                        # local secrets (gitignored)
 │   ├── .env.example                # template (committed)
@@ -278,7 +279,7 @@ Authorization: Bearer <access_token>
 ### Auto-categorization
 - Keyword matching in `base_parser.auto_categorize()`
 - Default: `CategoryEnum.OTHER`
-- User can override in import preview UI before confirming
+- Categories are assigned during import; there is no preview or confirmation step
 
 ---
 
@@ -349,7 +350,7 @@ VITE_API_URL=http://localhost:8000/api/v1
 
 ```bash
 cd backend
-pytest tests/ -v                    # run all 89 tests
+pytest tests/ -v                    # run all 94 tests
 pytest tests/test_accounts.py -v    # run specific file
 pytest tests/ -v -k "transfer"      # run tests matching keyword
 ```
@@ -362,9 +363,10 @@ All fixtures defined in `tests/conftest.py`.
 ## Current Status (November 2026)
 
 ### Done ✅
+- **Phase 0 architecture integrity fixes complete**: atomic account/baseline creation, live database health check, protected transfer fee deletion, transaction direction contract, and production seed guard
 - Backend: complete CRUD for accounts, transactions, balances, and analytics
 - Backend: balance snapshot endpoints (`POST /api/v1/balances` and `GET /api/v1/balances`) fully restored, dynamic balance calculation (`compute_current_balance`) verified
-- Backend: complete test suite passing (89/89 tests green)
+- Backend: complete test suite passing (94/94 tests green)
 - Backend: JWT auth, strict admin-only user onboarding via `X-Admin-Key`, user isolation, and rate limiting active
 - Backend: multi-currency transaction/account support (IDR and USD) with cached exchange rate endpoint
 - Backend: negative-balance rejection, insufficient-funds validation, and transfer fee linkage
@@ -374,7 +376,7 @@ All fixtures defined in `tests/conftest.py`.
 - Frontend: Dark mode fully supported with theme toggle, `useDarkMode` hook, and localStorage persistence
 - Frontend: Global `CurrencyContext` with display currency switching across all components
 - Frontend: Admin user provisioning page at `/admin/create-user` using `ADMIN_SECRET_KEY`
-- OpenSpec: all core capabilities (`accounts-rate-limiting`, `api-idempotency`, `bank-statement-import`, `multi-currency-transactions`, `balance-snapshots`, `local-admin-auth`) documented and validated
+- OpenSpec: all core capabilities (`accounts-rate-limiting`, `api-idempotency`, `bank-statement-import`, `multi-currency-transactions`, `balance-snapshots`, `local-admin-auth`, `database-health`, `seed-environment-guard`) documented and validated
 
 ### In Progress / Deferred ⏳
 - Backend: remaining bank statement parsers (Mandiri, Jago, Seabank) deferred

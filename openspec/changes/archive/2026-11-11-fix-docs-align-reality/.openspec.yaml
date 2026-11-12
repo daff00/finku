@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-11-11
+goal: Remove stale architecture and endpoint claims and document completed Phase
+  0 fixes
+skip_specs: true

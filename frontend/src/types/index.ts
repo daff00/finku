@@ -101,6 +101,7 @@ export type Transaction = {
     ref_id: string | null
     original_amount: string | null
     original_currency: CurrencyEnum | null
+    direction: "OUT" | "IN" | null
     created_at: string
 }
 

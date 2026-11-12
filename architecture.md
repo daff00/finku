@@ -118,11 +118,12 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - E-wallets (OVO/GoPay) lack automated history export
 
 **How it works:**
-- When an account is created, an initial zero baseline snapshot is seeded (timestamped at epoch).
+- When an account is created, its zero baseline snapshot is created atomically in the same database transaction using one `db.commit()` (timestamped at the Unix epoch). If either insert fails, neither record is persisted.
 - When real balance snapshots are recorded (`POST /api/v1/balances`), they establish new reference points.
 - `compute_current_balance` live-calculates:
   `latest_snapshot + income_after - expense_after + transfers_in_after - transfers_out_after`
 - Multi-currency reporting (`USD` and `IDR`) converts amounts to base currency (`IDR`) using cached exchange rates (`GET /api/v1/exchange-rate`) before aggregation.
+- Fee transactions cannot be deleted directly. The user must delete the parent transfer instead.
 
 ---
 
@@ -138,6 +139,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 **Current implementation:**
 - BCA PDF parser is production-ready (`bca_pdf.py`)
 - Unified `POST /import` endpoint dispatches to the correct parser via bank enum
+- Import runs immediately after upload; there is no preview or confirmation step.
 - Other bank parsers (Mandiri, Jago, Seabank) deferred until post-MVP
 
 ---
@@ -200,3 +202,23 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - Rate limiting via slowapi (user-based and IP-based limiters)
 - Negative-balance and insufficient-funds validation on transactions/transfers
 - Deterministic idempotency hashes (`ref_id`) on writes to prevent duplicate events
+
+---
+
+## 13. Exchange Rate — External API with 24h Cache
+
+**Decision:** Fetch exchange rates from `exchangerate-api.com` and cache them in memory for 24 hours.
+
+**Why this provider:**
+- Provides a simple REST API for currency rates
+- No API key is required by the current integration
+- Avoids adding exchange-rate credentials to the local configuration
+
+**Caching and fallback strategy:**
+- Successful rates are cached per currency pair with a 24-hour TTL.
+- `force_refresh=true` requests a fresh rate even when the cache is still valid.
+- If fetching fails, the last cached rate is returned as stale when available; otherwise, the app returns a fallback rate of `15300.0`.
+
+**Trade-off:**
+- The in-memory cache resets when the server restarts.
+- Rates are not guaranteed to be real-time; this is acceptable for personal finance tracking.

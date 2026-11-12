@@ -1,3 +1,5 @@
+import os
+import sys
 from datetime import date, timedelta
 from decimal import Decimal
 from random import Random
@@ -14,6 +16,7 @@ from app.models.models import (
     SourceEnum,
     Transaction,
     TransactionTypeEnum,
+    TransferDirectionEnum,
     TransferPair,
     User,
 )
@@ -35,6 +38,7 @@ def add_transaction(
     category,
     note,
     ref_id,
+    direction: TransferDirectionEnum | None = None,
 ):
     tx = Transaction(
         user_id=user.id,
@@ -46,6 +50,7 @@ def add_transaction(
         note=note,
         source=SourceEnum.MANUAL,
         ref_id=ref_id,
+        direction=direction,
     )
     db.add(tx)
     return tx
@@ -235,6 +240,7 @@ def add_monthly_transfers(user, accounts, year, month):
         CategoryEnum.TRANSFER,
         "Transfer to Jago Main",
         f"transfer-bca-jago-{year}-{month:02d}-out",
+        TransferDirectionEnum.OUT,
     )
     to_tx = add_transaction(
         user,
@@ -245,6 +251,7 @@ def add_monthly_transfers(user, accounts, year, month):
         CategoryEnum.TRANSFER,
         "Transfer from BCA",
         f"transfer-bca-jago-{year}-{month:02d}-in",
+        TransferDirectionEnum.IN,
     )
     db.flush()
     db.add(TransferPair(from_transaction_id=from_tx.id, to_transaction_id=to_tx.id))
@@ -262,6 +269,7 @@ def add_monthly_transfers(user, accounts, year, month):
             CategoryEnum.TRANSFER,
             "Nabung liburan",
             f"transfer-liburan-{year}-{month:02d}-out",
+            TransferDirectionEnum.OUT,
         )
         to_tx = add_transaction(
             user,
@@ -272,6 +280,7 @@ def add_monthly_transfers(user, accounts, year, month):
             CategoryEnum.TRANSFER,
             "Nabung liburan",
             f"transfer-liburan-{year}-{month:02d}-in",
+            TransferDirectionEnum.IN,
         )
         db.flush()
         db.add(TransferPair(from_transaction_id=from_tx.id, to_transaction_id=to_tx.id))
@@ -289,6 +298,7 @@ def add_monthly_transfers(user, accounts, year, month):
             CategoryEnum.TRANSFER,
             "Dana darurat",
             f"transfer-darurat-{year}-{month:02d}-out",
+            TransferDirectionEnum.OUT,
         )
         to_tx = add_transaction(
             user,
@@ -299,6 +309,7 @@ def add_monthly_transfers(user, accounts, year, month):
             CategoryEnum.TRANSFER,
             "Dana darurat",
             f"transfer-darurat-{year}-{month:02d}-in",
+            TransferDirectionEnum.IN,
         )
         db.flush()
         db.add(TransferPair(from_transaction_id=from_tx.id, to_transaction_id=to_tx.id))
@@ -322,6 +333,14 @@ def add_investment(user, rdn, year, month):
 
 
 def seed():
+    if os.getenv("ENVIRONMENT", "development") == "production":
+        print("❌ ERROR: seed.py must not be run in production!")
+        print("   Set ENVIRONMENT=development to override (dangerous).")
+        sys.exit(1)
+
+    print("⚠️  WARNING: This seeds DEVELOPMENT data only.")
+    print("⚠️  Never run this against production data.")
+    print("⚠️  Default credentials: admin / admin")
     print("🌱 Seeding database with 6 months of realistic data...")
 
     # ── User ──────────────────────────────────────────────

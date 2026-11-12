@@ -11,6 +11,7 @@ from app.models.models import (
     CategoryEnum,
     CurrencyEnum,
     SourceEnum,
+    TransferDirectionEnum,
     TransactionTypeEnum,
 )
 
@@ -75,6 +76,7 @@ class TransactionOut(BaseModel):
     ref_id: str | None
     original_amount: Decimal | None
     original_currency: CurrencyEnum | None
+    direction: TransferDirectionEnum | None
     created_at : datetime
     
 class TransactionUpdate(BaseModel):
