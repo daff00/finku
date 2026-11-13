@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-13
+goal: Preserve UI behavior while ensuring global visibility toggles consistently
+  apply to every dashboard amount section

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useDarkMode } from "@/hooks/useDarkMode";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -13,9 +12,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-  User as UserIcon,
-  Moon,
-  Sun
+  User as UserIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,7 +32,6 @@ const navItems = [
 export default function Sidebar({ onAddTransaction }: SidebarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { isDark, toggle } = useDarkMode();
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapse = () => setCollapsed((prev) => !prev);
@@ -177,14 +173,6 @@ export default function Sidebar({ onAddTransaction }: SidebarProps) {
           ))}
         </ul>
       </nav>
-
-      <Button
-        onClick={toggle}
-        className="p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40"
-        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
-      </Button>
 
       {/* ── User + Logout ────────────────────────────────────── */}
       <div className="border-t border-border/50 px-3 py-3">

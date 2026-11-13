@@ -2,8 +2,8 @@
 
 ## What Is This?
 Personal finance PWA for tracking Indonesian bank accounts.
-Solo developer. Privacy-first — all data on local machine / home server.
-Strictly invite-only / single-admin provisioning. No public registration, no cloud, no third party services.
+Solo developer. Privacy-first — financial data stays on the local machine / home server.
+Strictly invite-only / single-admin provisioning. No public registration or cloud-hosted Finku backend. Exchange-rate lookups use an external provider and do not send account, transaction, or balance data.
 
 ## Quick Start
 ### Backend
@@ -121,8 +121,8 @@ finku/
     │   ├── components/
     │   │   ├── analytics/          # charts, net worth trends, category breakdown
     │   │   ├── dashboard/          # account grid, metrics
-    │   │   ├── layout/             # AppShell, Sidebar, BottomNav, TopBar
-    │   │   ├── settings/           # profile, password, account CRUD, appearance
+    │   │   ├── layout/             # AppShell, Sidebar, BottomNav
+    │   │   ├── settings/           # profile, password, account CRUD
     │   │   ├── shared/             # reusable across pages
     │   │   ├── transactions/       # transaction row, sheet, delete dialog, filters
     │   │   └── ui/                 # shadcn auto-generated
@@ -131,6 +131,7 @@ finku/
     │   ├── hooks/                  # TanStack Query & helper hooks
     │   │   ├── useAccounts.ts
     │   │   ├── useAmountVisibility.ts
+    │   │   ├── amountVisibilityState.ts
     │   │   ├── useAnalytics.ts
     │   │   ├── useAuth.ts
     │   │   ├── useBalances.ts
@@ -166,6 +167,12 @@ finku/
     │   │   └── index.ts            # TypeScript types mirroring backend schemas
     │   ├── App.tsx                 # routes & providers
     │   └── main.tsx                # entry point
+    ├── public/
+    │   └── icons/                  # generated PWA icon assets
+    ├── scripts/
+    │   └── generate-icons.mjs      # reproducible PWA icon generation
+    ├── tests/
+    │   └── amountVisibilityState.test.mjs
     ├── .env.local                  # local env vars (gitignored)
     ├── .env.example
     ├── package.json
@@ -183,7 +190,7 @@ finku/
 - NEVER use pip → always use uv add / uv remove
 - NEVER use passlib → use bcrypt directly
 - ALL SQLite FK migrations → must use batch mode (op.batch_alter_table)
-- ALL routes except /auth/login and /auth/register → require CurrentUser
+- All financial and user-specific API routes require CurrentUser, except login and admin-key-protected registration. Service root, `/health`, `/docs`, and `/redoc` are public.
 - ALL user registration → strictly admin-only with X-Admin-Key matching ADMIN_SECRET_KEY (no public signup)
 - ALL money calculations → use Decimal, never float arithmetic
 
@@ -258,10 +265,12 @@ amount: string  # API returns "12500000.00" as string
 - PATCH /api/v1/auth/me → updates current user's display name
 - POST /api/v1/auth/change-password → updates password after validating current password
 
-All other endpoints require:
+All protected API endpoints require:
 ```
 Authorization: Bearer <access_token>
 ```
+
+The service root, `/health`, `/docs`, and `/redoc` are public. Login is public; registration requires `X-Admin-Key`.
 
 ---
 
@@ -307,7 +316,7 @@ Base URL: `http://localhost:8000/api/v1`
 - POST /transactions/transfer
 
 **Balances:**
-- GET/POST /balances
+- GET/POST /balances (optional `account_id`, `limit`, and `offset` on GET)
 - GET /balances/{account_id}/latest
 
 **Analytics:**
@@ -317,10 +326,15 @@ Base URL: `http://localhost:8000/api/v1`
 - GET /analytics/accounts
 
 **Exchange Rate:**
-- GET /exchange-rate?from_currency=USD&to_currency=IDR&force_refresh=false (24h caching + fallback)
+- GET /exchange-rate/USD
+- GET /exchange-rate/{from_currency}?to_currency=IDR&force_refresh=false (24h latest-pair cache + fallback)
+- POST /exchange-rate/clear-cache (admin only)
 
 **Import:**
 - POST /import (BCA PDF support)
+
+**Service:**
+- GET / and GET /health (public; health checks database connectivity)
 
 ---
 
@@ -350,13 +364,19 @@ VITE_API_URL=http://localhost:8000/api/v1
 
 ```bash
 cd backend
-pytest tests/ -v                    # run all 94 tests
-pytest tests/test_accounts.py -v    # run specific file
-pytest tests/ -v -k "transfer"      # run tests matching keyword
+uv run pytest tests/ -v                 # run backend tests (currently 94 collected)
+uv run pytest tests/test_accounts.py -v # run specific file
+uv run pytest tests/ -v -k "transfer"   # run tests matching keyword
 ```
 
 Test DB is separate SQLite in-memory / temporary test database — never touches finku.db.
 All fixtures defined in `tests/conftest.py`.
+
+Frontend amount-visibility tests:
+```bash
+cd frontend
+npm test
+```
 
 ---
 
@@ -372,21 +392,24 @@ All fixtures defined in `tests/conftest.py`.
 - Backend: negative-balance rejection, insufficient-funds validation, and transfer fee linkage
 - Backend: BCA PDF import flow with duplicate detection
 - Frontend: Dashboard, Transactions (with search, bank/type filters, pagination, edit sheet, delete dialog), Analytics, Import, and Settings
-- Frontend: Settings page fully functional (display name update, password change, account management dialogs, dark mode toggle)
-- Frontend: Dark mode fully supported with theme toggle, `useDarkMode` hook, and localStorage persistence
+- Frontend: Settings page supports display name update, password change, and account management dialogs; no separate Appearance section
+- Frontend: Dark mode fully supported with the AppShell header toggle, `useDarkMode` hook, and localStorage persistence
+- Frontend: Dashboard global amount visibility clears section overrides; section-level visibility can be customized afterward
 - Frontend: Global `CurrencyContext` with display currency switching across all components
 - Frontend: Admin user provisioning page at `/admin/create-user` using `ADMIN_SECRET_KEY`
-- OpenSpec: all core capabilities (`accounts-rate-limiting`, `api-idempotency`, `bank-statement-import`, `multi-currency-transactions`, `balance-snapshots`, `local-admin-auth`, `database-health`, `seed-environment-guard`) documented and validated
+- Frontend: PWA foundation with install manifest, generated icons, shell-only service-worker precache, and user-confirmed updates
+- OpenSpec: all core capabilities (`accounts-rate-limiting`, `api-idempotency`, `bank-statement-import`, `multi-currency-transactions`, `balance-snapshots`, `local-admin-auth`, `database-health`, `seed-environment-guard`, `pwa-foundation`, `dashboard-display-controls`) documented and validated
 
 ### In Progress / Deferred ⏳
 - Backend: remaining bank statement parsers (Mandiri, Jago, Seabank) deferred
 - Backend: CSV import support deferred
-- Frontend: PWA service worker and offline caching deferred
+- Frontend: PWA Phase 2 offline UX (offline UI, install banner, network-error vs. 401 handling, and logout cleanup) deferred
 - Deployment: Docker compose and home server configuration deferred
 
 ### Next Backlog 🎯
-1. PWA & Offline Support
-   - Service worker registration, install banner, manifest configuration
+1. PWA Phase 2 — Offline UX
+   - Offline UI state and install banner
+   - Distinguish network errors from authentication failures and clear local session state on logout
 2. Home Server Deployment
    - Docker Compose setup for backend + frontend static hosting
 3. Statement Parser Expansion

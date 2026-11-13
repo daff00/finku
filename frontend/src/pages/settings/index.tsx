@@ -7,12 +7,11 @@ import { useAuth, useAccounts } from "@/hooks";
 import type { Account } from "@/types";
 import WabiSabiFooter from "@/components/WabiSabiFooter";
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { useDarkMode } from "@/hooks/useDarkMode";
 import { authService } from "@/services";
 
 // ── ShadCN Components ──────────────────────────────────────────
 import { Button } from "@/components/ui/button";
-import { LogOut, ShieldCheck, Plus, Moon, Sun } from "lucide-react";
+import { LogOut, ShieldCheck, Plus } from "lucide-react";
 
 // ── Child Components ───────────────────────────────────────────
 import UserAvatar from "@/components/settings/UserAvatar";
@@ -29,7 +28,6 @@ export default function SettingsPage() {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const { data: accounts, isLoading: accountsLoading } = useAccounts({ include_inactive: true });
-  const { isDark, toggle: toggleDarkMode } = useDarkMode();
 
   // ── Profile state ─────────────────────────────────────────────
   const [displayName, setDisplayName] = useState(user?.display_name || "");
@@ -153,49 +151,6 @@ export default function SettingsPage() {
               message={passwordMessage}
               onSubmit={handleChangePassword}
             />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Appearance ─────────────────────────────────────────── */}
-      <section>
-        <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary mb-3">
-          Appearance
-        </h2>
-        <div className="bg-surface border-[0.5px] border-border rounded-[4px] p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 shrink-0 rounded-[2px] bg-bg border-[0.5px] border-border flex items-center justify-center">
-                {isDark ? (
-                  <Moon className="w-4 h-4 text-text-secondary" />
-                ) : (
-                  <Sun className="w-4 h-4 text-text-secondary" />
-                )}
-              </div>
-              <div>
-                <p className="font-serif text-sm text-text-primary">Dark Mode</p>
-                <p className="font-sans text-[11px] text-text-secondary mt-0.5">
-                  {isDark ? "Currently on" : "Currently off"}
-                </p>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              onClick={toggleDarkMode}
-              role="switch"
-              aria-checked={isDark}
-              aria-label="Toggle dark mode"
-              className={`!relative !flex !h-6 !w-10 !min-h-0 !min-w-0 !shrink-0 !items-center !justify-start !rounded-full !p-0.5 !shadow-none transition-colors duration-200 ${isDark ? "!bg-accent" : "!bg-border"
-                }`}
-            >
-              <span
-                className={`h-5 w-5 shrink-0 rounded-full bg-white transition-transform duration-200 ${isDark ? "translate-x-4" : "translate-x-0"
-                  }`}
-              />
-            </Button>
-
-
           </div>
         </div>
       </section>
