@@ -6,6 +6,7 @@ export type ExchangeRate = {
   rate: number
   fetched_at: string
   cached: boolean
+  is_stale: boolean
 }
 
 export const exchangeRateService = {

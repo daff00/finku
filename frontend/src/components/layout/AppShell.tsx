@@ -8,10 +8,12 @@ import CurrencyToggle from "@/components/CurrencyToggle";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function AppShell() {
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const { isDark, toggle } = useDarkMode();
+  const { rateStatus } = useCurrency();
 
   const openAddSheet = () => setIsAddSheetOpen(true);
   const closeAddSheet = () => setIsAddSheetOpen(false);
@@ -23,6 +25,22 @@ export default function AppShell() {
         <main className="flex-1 p-6 pb-24 lg:pb-6 overflow-auto">
           <div className="flex justify-end gap-2 mb-6">
             <CurrencyToggle />
+            {rateStatus === "stale" && (
+              <span
+                role="status"
+                className="self-center rounded-[4px] border border-warning-subtle-border bg-warning-subtle-bg px-2 py-1 text-[10px] text-bank-mandiri-rdn"
+              >
+                kurs lama
+              </span>
+            )}
+            {rateStatus === "unavailable" && (
+              <span
+                role="status"
+                className="self-center rounded-[4px] border border-danger-subtle-border bg-danger-subtle-bg px-2 py-1 text-[10px] text-expense"
+              >
+                kurs tidak tersedia
+              </span>
+            )}
             <Button
               onClick={toggle}
               className="p-2 rounded-[4px] transition-colors text-text-muted hover:text-text-primary hover:bg-border/40"

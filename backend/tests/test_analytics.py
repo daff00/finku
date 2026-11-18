@@ -1,6 +1,31 @@
 import pytest
 from datetime import datetime
+from fastapi import HTTPException
+
+from app.api.routes import exchange_rate
+
 now = datetime.now()
+
+
+@pytest.fixture(autouse=True)
+def clear_exchange_rate_cache():
+    exchange_rate._cache.update(
+        {
+            "rate": None,
+            "fetched_at": None,
+            "from_currency": "USD",
+            "to_currency": "IDR",
+        }
+    )
+    yield
+    exchange_rate._cache.update(
+        {
+            "rate": None,
+            "fetched_at": None,
+            "from_currency": "USD",
+            "to_currency": "IDR",
+        }
+    )
 
 
 def test_networth_no_data(client):
@@ -234,7 +259,12 @@ def test_spending_by_account(client, sample_expense):
     assert data[0]["color"] == "#0066AE"
 
 
-def test_networth_mixed_currency_accounts(client):
+def test_networth_mixed_currency_accounts(client, monkeypatch):
+    async def fetch_rate(from_currency: str, to_currency: str) -> float:
+        return 15750.0
+
+    monkeypatch.setattr(exchange_rate, "_fetch_exchange_rate", fetch_rate)
+
     usd_account = client.post(
         "/api/v1/accounts",
         json={
@@ -284,7 +314,31 @@ def test_networth_mixed_currency_accounts(client):
     response = client.get("/api/v1/analytics/networth")
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == "406000.00"
+    assert data["total"] == "415000.00"
+
+
+def test_networth_with_usd_values_returns_503_without_exchange_rate(
+    client, monkeypatch
+):
+    async def fail_fetch(from_currency: str, to_currency: str) -> float:
+        raise HTTPException(status_code=503, detail="provider unavailable")
+
+    monkeypatch.setattr(exchange_rate, "_fetch_exchange_rate", fail_fetch)
+    client.post(
+        "/api/v1/accounts",
+        json={
+            "name": "USD Savings",
+            "bank": "BCA",
+            "type": "SAVINGS",
+            "color": "#0066AE",
+            "currency": "USD",
+        },
+    )
+
+    response = client.get("/api/v1/analytics/networth")
+
+    assert response.status_code == 503
+    assert "no cached rate exists" in response.json()["error"]
 
 
 def test_spending_by_account_empty(client):
