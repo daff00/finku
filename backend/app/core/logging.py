@@ -1,9 +1,12 @@
 import sys
 import time
+from pathlib import Path
 
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+
+from app.core.config import settings
 
 
 def setup_logging() -> None:
@@ -23,20 +26,32 @@ def setup_logging() -> None:
         colorize=True,
     )
 
-    # ── File handler — rotates daily, keeps 7 days ────────────────
-    logger.add(
-        "logs/finku.log",
-        format=(
-            "{time:YYYY-MM-DD HH:mm:ss} | "
-            "{level: <8} | "
-            "{name}:{line} | "
-            "{message}"
-        ),
-        level="INFO",
-        rotation="1 day",
-        retention="7 days",
-        encoding="utf-8",
-    )
+    log_file = settings.LOG_FILE
+    if log_file is None and settings.ENVIRONMENT.lower() != "production":
+        log_file = "logs/finku.log"
+
+    if log_file:
+        try:
+            Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+            logger.add(
+                log_file,
+                format=(
+                    "{time:YYYY-MM-DD HH:mm:ss} | "
+                    "{level: <8} | "
+                    "{name}:{line} | "
+                    "{message}"
+                ),
+                level="INFO",
+                rotation="1 day",
+                retention="7 days",
+                encoding="utf-8",
+            )
+        except OSError as error:
+            logger.warning(
+                "File logging unavailable at {}: {}. Continuing with console logging only.",
+                log_file,
+                error,
+            )
 
     logger.info("✅ Logging initialized")
 

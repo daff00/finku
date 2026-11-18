@@ -2,7 +2,7 @@ from datetime import date as date_type
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # import your enums from models
 from app.models.models import (
@@ -155,6 +155,15 @@ class CategoryBreakdownOut(BaseModel):
     category: CategoryEnum
     total: Decimal
     percentage: float
+
+
+class ExchangeRateOut(BaseModel):
+    from_currency: str = Field(alias="from")
+    to: str
+    rate: float
+    fetched_at: datetime
+    cached: bool
+    is_stale: bool
 
 # Auth Schemas
 class UserCreate(BaseModel):

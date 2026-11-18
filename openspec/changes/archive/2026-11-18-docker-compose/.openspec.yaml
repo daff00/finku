@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-18
+goal: Start migrations, API, and static frontend in dependency order with a
+  durable data volume and fail-fast secrets.

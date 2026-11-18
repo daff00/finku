@@ -13,7 +13,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 **Why:**
 - Solo developer — no need for independent deployment pipelines
 - One `git clone` for the entire project
-- Docker Compose is a planned deployment option; Compose files are not currently provided
+- Docker Compose packages the frontend and backend for single-instance home-server deployment; see [Docker Deployment](#15-docker-deployment)
 - Easier context switching between frontend and backend
 
 **Trade-off:**
@@ -122,7 +122,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - When real balance snapshots are recorded (`POST /api/v1/balances`), they establish new reference points.
 - `compute_current_balance` live-calculates:
   `latest_snapshot + income_after - expense_after + transfers_in_after - transfers_out_after`
-- Multi-currency reporting (`USD` and `IDR`) converts amounts to base currency (`IDR`) using cached exchange rates (`GET /api/v1/exchange-rate`) before aggregation.
+- Multi-currency reporting (`USD` and `IDR`) converts amounts to base currency (`IDR`) using the `exchangerate-api.com` provider and the exchange-rate cache before aggregation; if a USD conversion is required but no rate is available, the API returns HTTP 503 rather than using an invented rate.
 - Fee transactions cannot be deleted directly. The user must delete the parent transfer instead.
 
 ---
@@ -198,7 +198,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 **Access options:**
 - Local WiFi only → `192.168.x.x`
-- Secure remote access via Tailscale VPN (zero-config, encrypted, private)
+- Secure remote access via Tailscale VPN (zero-config, encrypted, private). Installing the PWA on phones requires HTTPS; Tailscale Serve is the recommended documented path for a private HTTPS endpoint.
 
 **Security guardrails:**
 - Rate limiting via slowapi (user-based and IP-based limiters)
@@ -207,7 +207,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 ---
 
-## 13. Exchange Rate — External API with 24h Cache
+## 13. Exchange Rate — exchangerate-api.com with 24h Cache
 
 **Decision:** Fetch exchange rates from `exchangerate-api.com` and cache the most recently fetched currency pair in memory for up to 24 hours.
 
@@ -216,10 +216,11 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - No API key is required by the current integration
 - Avoids adding exchange-rate credentials to the local configuration
 
-**Caching and fallback strategy:**
+**Caching and failure strategy:**
 - The backend keeps one in-memory cache slot for the latest fetched pair with a 24-hour TTL; it is not a per-pair cache.
 - `force_refresh=true` requests a fresh rate even when the cache is still valid.
-- If fetching fails, the last cached rate is returned as stale when available; otherwise, the app returns a fallback rate of `15300.0`.
+- If fetching fails, a cached rate for the requested pair is returned as stale and marked `is_stale: true`; if no matching cached rate exists, the API returns HTTP 503 rather than inventing a rate.
+- The frontend indicates stale or unavailable rates and does not display a numeric conversion when no rate is available.
 - The request to the external provider contains the source currency only; account, transaction, and balance data are not sent.
 
 **Trade-off:**
@@ -244,3 +245,29 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 **Why:** Cached balances can look current even when stale. Keeping financial data out of browser caches ensures balances and transactions are fetched through the authenticated API rather than presented as a live snapshot from an old app session.
 
 Offline UI, install banners, network-versus-auth error handling, and logout cleanup remain Phase 2 work; they do not justify caching financial data.
+
+---
+
+## 15. Docker Deployment
+
+**Decision:** Deploy the frontend and backend with Docker Compose as a single backend instance using SQLite.
+
+**Runtime layout:**
+- `migrate` is a one-shot service that runs `alembic upgrade head` against the shared database volume before the backend starts.
+- The database file lives at `/data/finku.db` on the named `finku-data` volume, not in an image layer. Use backups before destructive volume operations.
+- The backend runs as a non-root user and is not published to the host. The nginx frontend is the only published service; it serves the SPA and proxies `/api/` and `/health` to the backend on the same origin.
+- Compose waits for migration completion before starting the backend, and for backend health before starting the frontend.
+- The production stack does not run `seed.py` or a development server.
+
+**Secrets and configuration:**
+- The root `.env` supplies the required `SECRET_KEY`, `JWT_SECRET_KEY`, and `ADMIN_SECRET_KEY` values used for Compose interpolation. It is local-only; the committed `.env.example` leaves these values blank so Compose fails fast until configured.
+- `backend/.env` contains backend runtime settings, including `ALLOWED_ORIGINS`. Never commit either populated `.env` file or bake secrets into an image.
+- Configure the allowed browser origin to match the deployed origin.
+
+**Why SQLite and one backend instance:**
+- SQLite remains the supported and verified database for this personal home-server deployment; PostgreSQL driver, migrations, and behavior have not been validated, so moving to PostgreSQL is deferred.
+- SQLite is not configured for multi-replica backend writes. Keep exactly one backend instance; do not scale or replicate it.
+
+**Remote access:**
+- Phone installation of the PWA requires HTTPS. `tailscale serve 8080` can provide a tailnet-only HTTPS URL for the published nginx port after Tailscale Serve and HTTPS are enabled for the tailnet.
+- Tailscale configuration is not part of this repository's deployment. Do not expose backend port 8000 directly.

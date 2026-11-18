@@ -1,0 +1,47 @@
+services:
+  migrate:
+    build:
+      context: ./backend
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - ./backend/.env
+    environment: &backend_environment
+      DATABASE_URL: sqlite:////data/finku.db
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in the host environment or project .env}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in the host environment or project .env}
+      ADMIN_SECRET_KEY: ${ADMIN_SECRET_KEY:?Set ADMIN_SECRET_KEY in the host environment or project .env}
+      ACCOUNTS_RATE_LIMIT: ${ACCOUNTS_RATE_LIMIT:-100/minute}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-100/minute}
+      TRANSACTIONS_RATE_LIMIT: ${TRANSACTIONS_RATE_LIMIT:-100/minute}
+    volumes:
+      - finku-data:/data
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment: *backend_environment
+    volumes:
+      - finku-data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FINKU_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  finku-data:

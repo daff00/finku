@@ -1,0 +1,15 @@
+.env
+**/.env
+*.db
+**/*.db
+logs/
+**/logs/
+.venv/
+**/.venv/
+node_modules/
+**/node_modules/
+.git/
+**/.git/
+__pycache__/
+**/__pycache__/
+*.py[cod]

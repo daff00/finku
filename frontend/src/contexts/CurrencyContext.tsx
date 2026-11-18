@@ -11,6 +11,7 @@ interface CurrencyContextType {
   setCurrency: (currency: Currency) => void;
   rate: number | undefined;
   isLoading: boolean;
+  rateStatus: "loading" | "fresh" | "stale" | "unavailable";
   formatAmount: (amount: number, sourceCurrency?: Currency) => string;
 }
 
@@ -24,8 +25,15 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return (stored as Currency) || "IDR";
   });
 
-  const { data, isLoading } = useExchangeRate();
-  const rate = data?.rate;
+  const { data, isLoading, isError } = useExchangeRate();
+  const rate = isError ? undefined : data?.rate;
+  const rateStatus = isLoading
+    ? "loading"
+    : isError || !data
+      ? "unavailable"
+      : data.is_stale
+        ? "stale"
+        : "fresh";
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, currency);
@@ -38,8 +46,6 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const formatAmount = (amount: number, sourceCurrency: Currency = "IDR"): string => {
     const formatAsCurrency = (value: number, target: Currency) => {
       if (target === "IDR") return formatIDR(value);
-      if (isLoading) return "$ •••";
-      if (!rate) return "$ —";
       return `$${value.toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -51,7 +57,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
 
     if (sourceCurrency === "USD" && currency === "IDR") {
-      const value = amount * (rate ?? 0);
+      if (!rate) return "Rp —";
+      const value = amount * rate;
       return formatIDR(value);
     }
 
@@ -76,6 +83,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         setCurrency,
         rate,
         isLoading,
+        rateStatus,
         formatAmount,
       }}
     >

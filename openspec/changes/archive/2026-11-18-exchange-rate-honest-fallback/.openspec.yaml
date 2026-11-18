@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-18
+goal: Never invent a rate when provider and cache are unavailable; explicitly
+  mark stale conversions.
