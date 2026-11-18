@@ -3,7 +3,7 @@ import type { Account, AccountCreate, AccountUpdate, Transaction } from '@/types
 
 export const accountService = {
     getAll: async (params?: { include_inactive?: boolean }): Promise<Account[]> => {
-        const response = await api.get('/accounts', { params })
+        const response = await api.get('/accounts/', { params })
         return response.data
     },
     getById: async (id: number): Promise<Account> => {
@@ -15,7 +15,7 @@ export const accountService = {
         return response.data
     },
     create: async (data: AccountCreate): Promise<Account> => {
-        const response = await api.post(`/accounts`, data)
+        const response = await api.post('/accounts/', data)
         return response.data
     },
     update: async (id: number, data: AccountUpdate): Promise<Account> => {

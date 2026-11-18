@@ -80,6 +80,34 @@ curl http://localhost:8080/health
 
 On Windows, use `curl.exe http://localhost:8080/health`. The `migrate` service applies Alembic migrations before the backend starts. Only the frontend port is published; the backend listens behind nginx.
 
+### Verify API collection paths
+
+Collection endpoints must respond directly, without a 307 redirect. In PowerShell, sign in and store the returned access token, then check the collection GETs and POSTs through nginx. Use an existing account ID for the transaction and balance requests; choose a unique transaction date, amount, and note so the idempotency guard does not mistake the check for an earlier transaction.
+
+```powershell
+$Login = Invoke-RestMethod -Uri 'http://localhost:8080/api/v1/auth/login' `
+  -Method Post -ContentType 'application/x-www-form-urlencoded' `
+  -Body @{ username = 'YOUR_USERNAME'; password = 'YOUR_PASSWORD' }
+$AccessToken = $Login.access_token
+
+curl.exe -i -H "Authorization: Bearer $AccessToken" http://localhost:8080/api/v1/accounts/
+curl.exe -i -H "Authorization: Bearer $AccessToken" http://localhost:8080/api/v1/transactions/
+curl.exe -i -H "Authorization: Bearer $AccessToken" http://localhost:8080/api/v1/balances/
+
+$AccountId = 1 # Replace with an account ID returned for this user.
+$Transaction = @{
+  account_id = $AccountId; date = '2026-11-18'; amount = '1.00'
+  type = 'INCOME'; category = 'OTHER'; note = "Collection smoke test $(Get-Date -Format o)"
+} | ConvertTo-Json -Compress
+$Balance = @{ account_id = $AccountId; amount = '1.00' } | ConvertTo-Json -Compress
+curl.exe -i -X POST http://localhost:8080/api/v1/transactions/ `
+  -H "Authorization: Bearer $AccessToken" -H 'Content-Type: application/json' --data-raw $Transaction
+curl.exe -i -X POST http://localhost:8080/api/v1/balances/ `
+  -H "Authorization: Bearer $AccessToken" -H 'Content-Type: application/json' --data-raw $Balance
+```
+
+Each GET should return `200 OK` and each POST should return `201 Created`, with no `307` status or `Location` header.
+
 ### Provision the first user
 
 Register through the nginx-published origin. Enter the admin key configured in the root `.env` and choose a strong user password when prompted:
