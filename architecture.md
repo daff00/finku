@@ -13,7 +13,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 **Why:**
 - Solo developer — no need for independent deployment pipelines
 - One `git clone` for the entire project
-- `docker-compose up` spins up everything at once
+- Docker Compose is a planned deployment option; Compose files are not currently provided
 - Easier context switching between frontend and backend
 
 **Trade-off:**
@@ -21,20 +21,20 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 ---
 
-## 2. SQLite → PostgreSQL-Ready
+## 2. SQLite (PostgreSQL Migration Not Yet Validated)
 
-**Decision:** SQLite for now, PostgreSQL later via Alembic + SQLAlchemy.
+**Decision:** SQLite is the currently supported and tested database.
 
 **Why SQLite:**
 - Zero setup — just a file
 - Perfect for 1-10 users
 - Privacy-first — data stays on your machine
-- SQLAlchemy abstracts the DB so switching is painless
+- SQLAlchemy provides a database abstraction, but changing database engines still requires compatibility and migration testing
 
-**Migration path:**
-- Change `DATABASE_URL` in `.env` to PostgreSQL connection string
-- Run `alembic upgrade head` — all migrations apply automatically
-- No code changes needed
+**PostgreSQL status:**
+- SQLAlchemy is used for database access, but PostgreSQL compatibility has not been validated.
+- A PostgreSQL driver is not currently listed as a backend dependency.
+- Do not assume changing `DATABASE_URL` alone is sufficient; driver support, migrations, and tests must be verified before using PostgreSQL.
 
 **Why not PostgreSQL now:**
 - Overkill for personal use
@@ -185,7 +185,9 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - Bank colors as subtle accents only
 
 **Implementation:**
-- Theme toggle in Settings with instant transition and persistence
+- Theme toggle in the shared AppShell header, immediately after the currency toggle, with instant transition and persistence
+- Settings has no separate Appearance section; the shared theme control is available on mobile and desktop
+- Dashboard global amount visibility clears per-section overrides; section controls can override the global setting afterward
 - Clean responsive layout for both desktop and mobile viewports
 
 ---
@@ -207,7 +209,7 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 
 ## 13. Exchange Rate — External API with 24h Cache
 
-**Decision:** Fetch exchange rates from `exchangerate-api.com` and cache them in memory for 24 hours.
+**Decision:** Fetch exchange rates from `exchangerate-api.com` and cache the most recently fetched currency pair in memory for up to 24 hours.
 
 **Why this provider:**
 - Provides a simple REST API for currency rates
@@ -215,10 +217,30 @@ Written so future-me (or AI agents) understand the WHY, not just the WHAT.
 - Avoids adding exchange-rate credentials to the local configuration
 
 **Caching and fallback strategy:**
-- Successful rates are cached per currency pair with a 24-hour TTL.
+- The backend keeps one in-memory cache slot for the latest fetched pair with a 24-hour TTL; it is not a per-pair cache.
 - `force_refresh=true` requests a fresh rate even when the cache is still valid.
 - If fetching fails, the last cached rate is returned as stale when available; otherwise, the app returns a fallback rate of `15300.0`.
+- The request to the external provider contains the source currency only; account, transaction, and balance data are not sent.
 
 **Trade-off:**
 - The in-memory cache resets when the server restarts.
 - Rates are not guaranteed to be real-time; this is acceptable for personal finance tracking.
+
+---
+
+## 14. PWA — Shell-Only Caching
+
+**Decision:** Use `vite-plugin-pwa` with `registerType: 'prompt'` to make the frontend installable while keeping updates under explicit user control.
+
+**Caching boundary:**
+- The service worker precaches only the app shell and static build assets needed to render it.
+- API responses and financial data MUST NOT be stored in Cache Storage, IndexedDB, or persisted TanStack Query state. There is no API runtime-caching route or Background Sync queue.
+- Client-side navigations use `/index.html` as the fallback, while `/api` paths are excluded.
+
+**Update behavior:**
+- A waiting service-worker update is announced without blocking the current page.
+- The app applies the update and reloads only after the user selects the update action; it never silently reloads an active transaction form.
+
+**Why:** Cached balances can look current even when stale. Keeping financial data out of browser caches ensures balances and transactions are fetched through the authenticated API rather than presented as a live snapshot from an old app session.
+
+Offline UI, install banners, network-versus-auth error handling, and logout cleanup remain Phase 2 work; they do not justify caching financial data.

@@ -12,12 +12,14 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import { Toaster } from "sonner";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import AdminCreateUserPage from "./pages/AdminCreateUserPage";
+import UpdatePrompt from "@/components/shared/UpdatePrompt";
 
 function App() {
   return (
     <>
       <CurrencyProvider>
         {/* Toaster is now outside Routes — always available */}
+        <UpdatePrompt />
         <Toaster position="top-right" richColors closeButton />
 
         <Routes>

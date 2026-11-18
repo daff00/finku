@@ -1,17 +1,16 @@
 // frontend/src/hooks/useAmountVisibility.ts
 import { useState, useEffect, useCallback, useRef } from "react";
-
-type SectionName = "netWorth" | "accounts" | "cashflow";
-
-interface VisibilityState {
-  global: boolean;
-  overrides: Partial<Record<SectionName, boolean>>;
-}
+import {
+  getSectionVisibility,
+  HIDDEN_STATE,
+  toggleGlobalVisibilityState,
+  toggleSectionVisibilityState,
+  type SectionName,
+  type VisibilityState,
+} from "./amountVisibilityState";
 
 const STORAGE_KEY = "dashboard_amount_visibility";
 const LAST_USER_KEY = "dashboard_amount_visibility_user";
-
-const HIDDEN_STATE: VisibilityState = { global: false, overrides: {} };
 
 function getInitialState(): VisibilityState {
   if (typeof window === "undefined") return HIDDEN_STATE;
@@ -72,33 +71,16 @@ export function useAmountVisibility(userId?: string | number | null) {
   }, [normalizedUserId]);
 
   const toggleGlobal = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      global: !prev.global,
-    }));
+    setState(toggleGlobalVisibilityState);
   }, []);
 
   const getSectionVisible = useCallback(
-    (section: SectionName): boolean => {
-      if (section in state.overrides) {
-        return state.overrides[section]!;
-      }
-      return state.global;
-    },
-    [state.global, state.overrides]
+    (section: SectionName): boolean => getSectionVisibility(state, section),
+    [state]
   );
 
   const toggleSection = useCallback((section: SectionName) => {
-    setState((prev) => {
-      const currentOverride = prev.overrides[section];
-      const newOverrides = { ...prev.overrides };
-      if (currentOverride === undefined) {
-        newOverrides[section] = !prev.global;
-      } else {
-        delete newOverrides[section];
-      }
-      return { ...prev, overrides: newOverrides };
-    });
+    setState((prev) => toggleSectionVisibilityState(prev, section));
   }, []);
 
   const resetAll = useCallback(() => {
