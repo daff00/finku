@@ -19,6 +19,15 @@ cd frontend
 npm run dev                 # runs on localhost:5173
 ```
 
+### Docker home-server deployment
+From the repository root, copy `.env.example` to `.env` and `backend/.env.example` to `backend/.env`, fill in the required secrets and deployed `ALLOWED_ORIGINS`, then run:
+```bash
+docker compose up -d --build
+docker compose ps
+curl.exe http://localhost:8080/health
+```
+See README.md for first-user provisioning, backup/restore, updates, and remote-access guidance.
+
 ### Tests
 ```bash
 cd backend
@@ -327,7 +336,7 @@ Base URL: `http://localhost:8000/api/v1`
 
 **Exchange Rate:**
 - GET /exchange-rate/USD
-- GET /exchange-rate/{from_currency}?to_currency=IDR&force_refresh=false (24h latest-pair cache + fallback)
+- GET /exchange-rate/{from_currency}?to_currency=IDR&force_refresh=false (24h latest-pair cache; returns 503 when no rate is available)
 - POST /exchange-rate/clear-cache (admin only)
 
 **Import:**
@@ -386,7 +395,7 @@ npm test
 - **Phase 0 architecture integrity fixes complete**: atomic account/baseline creation, live database health check, protected transfer fee deletion, transaction direction contract, and production seed guard
 - Backend: complete CRUD for accounts, transactions, balances, and analytics
 - Backend: balance snapshot endpoints (`POST /api/v1/balances` and `GET /api/v1/balances`) fully restored, dynamic balance calculation (`compute_current_balance`) verified
-- Backend: complete test suite passing (94/94 tests green)
+- Backend: complete test suite passing (114/114 tests green)
 - Backend: JWT auth, strict admin-only user onboarding via `X-Admin-Key`, user isolation, and rate limiting active
 - Backend: multi-currency transaction/account support (IDR and USD) with cached exchange rate endpoint
 - Backend: negative-balance rejection, insufficient-funds validation, and transfer fee linkage
@@ -399,18 +408,16 @@ npm test
 - Frontend: Admin user provisioning page at `/admin/create-user` using `ADMIN_SECRET_KEY`
 - Frontend: PWA foundation with install manifest, generated icons, shell-only service-worker precache, and user-confirmed updates
 - OpenSpec: all core capabilities (`accounts-rate-limiting`, `api-idempotency`, `bank-statement-import`, `multi-currency-transactions`, `balance-snapshots`, `local-admin-auth`, `database-health`, `seed-environment-guard`, `pwa-foundation`, `dashboard-display-controls`) documented and validated
+- Deployment: Docker Compose home-server stack with persistent SQLite volume, one-shot migrations, nginx proxy, and backup/restore operations
 
 ### In Progress / Deferred ⏳
 - Backend: remaining bank statement parsers (Mandiri, Jago, Seabank) deferred
 - Backend: CSV import support deferred
 - Frontend: PWA Phase 2 offline UX (offline UI, install banner, network-error vs. 401 handling, and logout cleanup) deferred
-- Deployment: Docker compose and home server configuration deferred
 
 ### Next Backlog 🎯
 1. PWA Phase 2 — Offline UX
    - Offline UI state and install banner
    - Distinguish network errors from authentication failures and clear local session state on logout
-2. Home Server Deployment
-   - Docker Compose setup for backend + frontend static hosting
-3. Statement Parser Expansion
+2. Statement Parser Expansion
    - Mandiri, Bank Jago, and Seabank PDF parsers
